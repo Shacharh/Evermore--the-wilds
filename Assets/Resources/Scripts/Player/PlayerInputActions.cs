@@ -100,6 +100,15 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Jump"",
+                    ""type"": ""Button"",
+                    ""id"": ""7b2d618d-5344-492f-a55d-25d4218853e0"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -168,6 +177,98 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""action"": ""Move"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""41dcccec-a5dd-4cfd-b2ae-205d5b52e17c"",
+                    ""path"": ""<Keyboard>/space"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Jump"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""09184df1-4190-4e02-a49a-75f7d149f6f6"",
+                    ""path"": ""<Gamepad>/buttonSouth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Jump"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
+        },
+        {
+            ""name"": ""CemeraControls"",
+            ""id"": ""2e40494b-716e-41de-ab42-33ad8df9d5bc"",
+            ""actions"": [
+                {
+                    ""name"": ""MouseZoom"",
+                    ""type"": ""Value"",
+                    ""id"": ""f3d389f6-7a02-424f-9cc1-9c50ac9ccafc"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""GamePadZoom"",
+                    ""type"": ""Value"",
+                    ""id"": ""4ff582ed-83cf-4395-b7ee-6c4309afd8c4"",
+                    ""expectedControlType"": ""Axis"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""599b9f31-28fc-4cb5-986b-5aaa732b6f9d"",
+                    ""path"": ""<Mouse>/scroll"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""MouseZoom"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""1D Axis"",
+                    ""id"": ""b9d793e3-4650-4234-9164-fcfb6e42d5af"",
+                    ""path"": ""1DAxis"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""GamePadZoom"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""negative"",
+                    ""id"": ""85ccfc91-14aa-4fa5-a665-6c4d347180a9"",
+                    ""path"": ""<Gamepad>/leftTrigger"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""GamePadZoom"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""positive"",
+                    ""id"": ""d6a6524e-c916-412c-92f8-858d62f06833"",
+                    ""path"": ""<Gamepad>/rightTrigger"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""GamePadZoom"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
                 }
             ]
         }
@@ -177,11 +278,17 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         // Player
         m_Player = asset.FindActionMap("Player", throwIfNotFound: true);
         m_Player_Move = m_Player.FindAction("Move", throwIfNotFound: true);
+        m_Player_Jump = m_Player.FindAction("Jump", throwIfNotFound: true);
+        // CemeraControls
+        m_CemeraControls = asset.FindActionMap("CemeraControls", throwIfNotFound: true);
+        m_CemeraControls_MouseZoom = m_CemeraControls.FindAction("MouseZoom", throwIfNotFound: true);
+        m_CemeraControls_GamePadZoom = m_CemeraControls.FindAction("GamePadZoom", throwIfNotFound: true);
     }
 
     ~@PlayerInputActions()
     {
         UnityEngine.Debug.Assert(!m_Player.enabled, "This will cause a leak and performance issues, PlayerInputActions.Player.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_CemeraControls.enabled, "This will cause a leak and performance issues, PlayerInputActions.CemeraControls.Disable() has not been called.");
     }
 
     /// <summary>
@@ -258,6 +365,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
     private readonly InputActionMap m_Player;
     private List<IPlayerActions> m_PlayerActionsCallbackInterfaces = new List<IPlayerActions>();
     private readonly InputAction m_Player_Move;
+    private readonly InputAction m_Player_Jump;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -273,6 +381,10 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/Move".
         /// </summary>
         public InputAction @Move => m_Wrapper.m_Player_Move;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/Jump".
+        /// </summary>
+        public InputAction @Jump => m_Wrapper.m_Player_Jump;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -302,6 +414,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Move.started += instance.OnMove;
             @Move.performed += instance.OnMove;
             @Move.canceled += instance.OnMove;
+            @Jump.started += instance.OnJump;
+            @Jump.performed += instance.OnJump;
+            @Jump.canceled += instance.OnJump;
         }
 
         /// <summary>
@@ -316,6 +431,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Move.started -= instance.OnMove;
             @Move.performed -= instance.OnMove;
             @Move.canceled -= instance.OnMove;
+            @Jump.started -= instance.OnJump;
+            @Jump.performed -= instance.OnJump;
+            @Jump.canceled -= instance.OnJump;
         }
 
         /// <summary>
@@ -349,6 +467,113 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
     /// Provides a new <see cref="PlayerActions" /> instance referencing this action map.
     /// </summary>
     public PlayerActions @Player => new PlayerActions(this);
+
+    // CemeraControls
+    private readonly InputActionMap m_CemeraControls;
+    private List<ICemeraControlsActions> m_CemeraControlsActionsCallbackInterfaces = new List<ICemeraControlsActions>();
+    private readonly InputAction m_CemeraControls_MouseZoom;
+    private readonly InputAction m_CemeraControls_GamePadZoom;
+    /// <summary>
+    /// Provides access to input actions defined in input action map "CemeraControls".
+    /// </summary>
+    public struct CemeraControlsActions
+    {
+        private @PlayerInputActions m_Wrapper;
+
+        /// <summary>
+        /// Construct a new instance of the input action map wrapper class.
+        /// </summary>
+        public CemeraControlsActions(@PlayerInputActions wrapper) { m_Wrapper = wrapper; }
+        /// <summary>
+        /// Provides access to the underlying input action "CemeraControls/MouseZoom".
+        /// </summary>
+        public InputAction @MouseZoom => m_Wrapper.m_CemeraControls_MouseZoom;
+        /// <summary>
+        /// Provides access to the underlying input action "CemeraControls/GamePadZoom".
+        /// </summary>
+        public InputAction @GamePadZoom => m_Wrapper.m_CemeraControls_GamePadZoom;
+        /// <summary>
+        /// Provides access to the underlying input action map instance.
+        /// </summary>
+        public InputActionMap Get() { return m_Wrapper.m_CemeraControls; }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Enable()" />
+        public void Enable() { Get().Enable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Disable()" />
+        public void Disable() { Get().Disable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.enabled" />
+        public bool enabled => Get().enabled;
+        /// <summary>
+        /// Implicitly converts an <see ref="CemeraControlsActions" /> to an <see ref="InputActionMap" /> instance.
+        /// </summary>
+        public static implicit operator InputActionMap(CemeraControlsActions set) { return set.Get(); }
+        /// <summary>
+        /// Adds <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <param name="instance">Callback instance.</param>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c> or <paramref name="instance"/> have already been added this method does nothing.
+        /// </remarks>
+        /// <seealso cref="CemeraControlsActions" />
+        public void AddCallbacks(ICemeraControlsActions instance)
+        {
+            if (instance == null || m_Wrapper.m_CemeraControlsActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_CemeraControlsActionsCallbackInterfaces.Add(instance);
+            @MouseZoom.started += instance.OnMouseZoom;
+            @MouseZoom.performed += instance.OnMouseZoom;
+            @MouseZoom.canceled += instance.OnMouseZoom;
+            @GamePadZoom.started += instance.OnGamePadZoom;
+            @GamePadZoom.performed += instance.OnGamePadZoom;
+            @GamePadZoom.canceled += instance.OnGamePadZoom;
+        }
+
+        /// <summary>
+        /// Removes <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <remarks>
+        /// Calling this method when <paramref name="instance" /> have not previously been registered has no side-effects.
+        /// </remarks>
+        /// <seealso cref="CemeraControlsActions" />
+        private void UnregisterCallbacks(ICemeraControlsActions instance)
+        {
+            @MouseZoom.started -= instance.OnMouseZoom;
+            @MouseZoom.performed -= instance.OnMouseZoom;
+            @MouseZoom.canceled -= instance.OnMouseZoom;
+            @GamePadZoom.started -= instance.OnGamePadZoom;
+            @GamePadZoom.performed -= instance.OnGamePadZoom;
+            @GamePadZoom.canceled -= instance.OnGamePadZoom;
+        }
+
+        /// <summary>
+        /// Unregisters <param cref="instance" /> and unregisters all input action callbacks via <see cref="CemeraControlsActions.UnregisterCallbacks(ICemeraControlsActions)" />.
+        /// </summary>
+        /// <seealso cref="CemeraControlsActions.UnregisterCallbacks(ICemeraControlsActions)" />
+        public void RemoveCallbacks(ICemeraControlsActions instance)
+        {
+            if (m_Wrapper.m_CemeraControlsActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        /// <summary>
+        /// Replaces all existing callback instances and previously registered input action callbacks associated with them with callbacks provided via <param cref="instance" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c>, calling this method will only unregister all existing callbacks but not register any new callbacks.
+        /// </remarks>
+        /// <seealso cref="CemeraControlsActions.AddCallbacks(ICemeraControlsActions)" />
+        /// <seealso cref="CemeraControlsActions.RemoveCallbacks(ICemeraControlsActions)" />
+        /// <seealso cref="CemeraControlsActions.UnregisterCallbacks(ICemeraControlsActions)" />
+        public void SetCallbacks(ICemeraControlsActions instance)
+        {
+            foreach (var item in m_Wrapper.m_CemeraControlsActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_CemeraControlsActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    /// <summary>
+    /// Provides a new <see cref="CemeraControlsActions" /> instance referencing this action map.
+    /// </summary>
+    public CemeraControlsActions @CemeraControls => new CemeraControlsActions(this);
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Player" which allows adding and removing callbacks.
     /// </summary>
@@ -363,5 +588,34 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnMove(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Jump" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnJump(InputAction.CallbackContext context);
+    }
+    /// <summary>
+    /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "CemeraControls" which allows adding and removing callbacks.
+    /// </summary>
+    /// <seealso cref="CemeraControlsActions.AddCallbacks(ICemeraControlsActions)" />
+    /// <seealso cref="CemeraControlsActions.RemoveCallbacks(ICemeraControlsActions)" />
+    public interface ICemeraControlsActions
+    {
+        /// <summary>
+        /// Method invoked when associated input action "MouseZoom" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnMouseZoom(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "GamePadZoom" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnGamePadZoom(InputAction.CallbackContext context);
     }
 }
