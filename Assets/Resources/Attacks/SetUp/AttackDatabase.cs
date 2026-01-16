@@ -14,6 +14,7 @@ public class AttackDatabase : ScriptableObject
 
         foreach (var attack in attacks)
         {
+            if (attack.ID == null) continue;
             if (!lookup.ContainsKey(attack.ID))
                 lookup.Add(attack.ID, attack);
             else
