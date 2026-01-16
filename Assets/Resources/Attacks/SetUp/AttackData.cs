@@ -1,10 +1,11 @@
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Battle/Attack")]
+[CreateAssetMenu(menuName = "Attack Moves/Create Attack")]
 public class AttackData : ScriptableObject
 {
     [Header("ID (do NOT change after release)")]
-    public string id;
+    [SerializeField] private string id;
+    public string ID => id;
 
     [Header("Display")]
     public string displayName;
@@ -15,7 +16,6 @@ public class AttackData : ScriptableObject
     public int maxPP;
 
     private int currentPP;
-
     public int CurrentPP
     {
         get { return currentPP; }

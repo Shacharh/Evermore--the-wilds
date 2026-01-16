@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Battle/Attack Database")]
+[CreateAssetMenu(menuName = "Attack Moves/Attack Database")]
 public class AttackDatabase : ScriptableObject
 {
     public AttackData[] attacks;
@@ -14,10 +14,10 @@ public class AttackDatabase : ScriptableObject
 
         foreach (var attack in attacks)
         {
-            if (!lookup.ContainsKey(attack.id))
-                lookup.Add(attack.id, attack);
+            if (!lookup.ContainsKey(attack.ID))
+                lookup.Add(attack.ID, attack);
             else
-                Debug.LogWarning($"Duplicate attack ID: {attack.id}");
+                Debug.LogWarning($"Duplicate attack ID: {attack.ID}");
         }
     }
 

@@ -8,9 +8,9 @@ public class Monster : MonoBehaviour
     private int currentHP;
 
     // Runtime learned attacks
-    // for debug change this to public but for production use private with a getter
-    public List<AttackData> learnedAttacks = new List<AttackData>();
-    [SerializeField] private const int MaxAttacks = 2;
+    [SerializeField] // for debug add [SerializeField], for prodaction remove it
+    private List<AttackData> learnedAttacks = new List<AttackData>();
+    private const int MaxAttacks = 2;
 
     private void Start()
     {
@@ -47,7 +47,17 @@ public class Monster : MonoBehaviour
 
     public void UseAttack(int index, int usePP)
     {
-        if (index < 0 || index >= learnedAttacks.Count) return;
+        if (index < 0 || index >= learnedAttacks.Count)
+        {
+            Debug.LogWarning("Invalid attack index!");
+            return;
+        }
+
+        if (usePP <= 0)
+        {
+            Debug.LogWarning("usePP must be greater than 0!");
+            return;
+        }
 
         var attack = learnedAttacks[index];
         Debug.Log($"{data.displayName} uses {attack.displayName}");
