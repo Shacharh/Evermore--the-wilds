@@ -13,12 +13,11 @@ public class MonsterSetup : MonoBehaviour
     [SerializeField] private string[] startingAttackIds;
     [SerializeField] private Monster monster;
 
-    private void Awake()
+    private void Start()
     {
         foreach (string id in startingAttackIds)
         {
-            AttackData attack =
-                GameInitializer.Instance.attackDatabase.GetAttackById(id);
+            AttackData attack = GameInitializer.Instance.attackDatabase.GetAttackById(id);
 
             if (attack != null)
                 monster.LearnAttack(attack);

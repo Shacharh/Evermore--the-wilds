@@ -8,7 +8,9 @@ public class Monster : MonoBehaviour
     private int currentHP;
 
     // Runtime learned attacks
-    private List<AttackData> learnedAttacks = new List<AttackData>();
+    // for debug change this to public but for production use private with a getter
+    public List<AttackData> learnedAttacks = new List<AttackData>();
+    [SerializeField] private const int MaxAttacks = 2;
 
     private void Start()
     {
@@ -17,8 +19,13 @@ public class Monster : MonoBehaviour
 
     public void LearnAttack(AttackData attack)
     {
-        if (attack == null || learnedAttacks.Contains(attack))
+        if (attack == null || learnedAttacks.Contains(attack)) return;
+
+        if (learnedAttacks.Count >= MaxAttacks)
+        {
+            Debug.Log($"{gameObject.name} cannot learn more than {MaxAttacks} attacks!");
             return;
+        }
 
         learnedAttacks.Add(attack);
 
@@ -38,11 +45,12 @@ public class Monster : MonoBehaviour
         return learnedAttacks;
     }
 
-    public void UseAttack(int index)
+    public void UseAttack(int index, int usePP)
     {
-        if (index < 0 || index >= learnedAttacks.Count)
-            return;
+        if (index < 0 || index >= learnedAttacks.Count) return;
 
-        Debug.Log($"{data.displayName} uses {learnedAttacks[index].displayName}");
+        var attack = learnedAttacks[index];
+        Debug.Log($"{data.displayName} uses {attack.displayName}");
+        attack.CurrentPP -= usePP;
     }
 }
