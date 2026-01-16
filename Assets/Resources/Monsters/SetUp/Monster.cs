@@ -8,7 +8,8 @@ public class Monster : MonoBehaviour
     private int currentHP;
 
     // Runtime learned attacks
-    private List<AttackData> learnedAttacks = new List<AttackData>();
+    // for debug change this to public but for production use private with a getter
+    public List<AttackData> learnedAttacks = new List<AttackData>();
 
     private void Start()
     {
