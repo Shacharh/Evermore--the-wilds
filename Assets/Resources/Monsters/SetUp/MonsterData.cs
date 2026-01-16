@@ -7,6 +7,13 @@ public class MonsterData : ScriptableObject
     public string displayName;
     public int maxHP;
 
-    [Tooltip("Attack IDs this monster can use")]
-    public string[] attackIds;
+    [Tooltip("Attacks this monster can learn and the level at which it learns them")]
+    public AttackEntry[] attacks;
+}
+
+[System.Serializable]
+public class AttackEntry
+{
+    public string attackId;  // The ID of the attack
+    public int levelLearned; // Level at which the monster learns this attack
 }

@@ -15,4 +15,8 @@ MonoBehaviour:
   monsterId: Ork
   displayName: Ork
   maxHP: 500
-  attackIds: []
+  attacks:
+  - attackId: fire_bolt
+    levelLearned: 1
+  - attackId: fire_ball
+    levelLearned: 50

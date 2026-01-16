@@ -1251,6 +1251,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Monster
   data: {fileID: 11400000, guid: 2a90438ffd21e4147ae2787f2b428d4b, type: 2}
+  learnedAttacks: []
 --- !u!4 &497596389
 Transform:
   m_ObjectHideFlags: 0
