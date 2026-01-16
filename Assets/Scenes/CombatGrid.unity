@@ -432,7 +432,7 @@ Transform:
   m_GameObject: {fileID: 693570317}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -114.75994, y: 0.00001, z: 191.01585}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -550,7 +550,12 @@ MonoBehaviour:
   cameraTarget: {fileID: 693570318}
   inputActions: {fileID: -944628639613478452, guid: cd629eed4eb79594ea847e362c283f1d, type: 3}
   moveSpeed: 20
+  smoothTime: 0.2
   zoomSpeed: 10
+  minZoom: 5
+  maxZoom: 40
+  currentZoom: 15
+  cameraAngle: 45
 --- !u!1 &1657011086
 GameObject:
   m_ObjectHideFlags: 0
