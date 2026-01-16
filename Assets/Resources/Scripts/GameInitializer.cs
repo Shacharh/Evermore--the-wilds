@@ -1,5 +1,5 @@
+using System.Reflection;
 using UnityEngine;
-
 public class GameInitializer : MonoBehaviour
 {
     public static GameInitializer Instance { get; private set; }
