@@ -14,11 +14,13 @@ public class AttackData : ScriptableObject
     public AttackEnum.ElementType element;
     public int power;
     public int maxPP;
+    public int consumeActionPoints = 1;
 
-    private int currentPP;
-    public int CurrentPP
+    private void OnValidate()
     {
-        get { return currentPP; }
-        set { currentPP = Mathf.Clamp(value, 0, maxPP); }
+        power = Mathf.Max(0, power);
+        maxPP = Mathf.Max(0, maxPP);
+        consumeActionPoints = Mathf.Max(0, consumeActionPoints);
     }
+
 }

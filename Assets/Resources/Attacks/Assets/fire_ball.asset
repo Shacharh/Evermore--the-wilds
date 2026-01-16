@@ -17,3 +17,4 @@ MonoBehaviour:
   element: 0
   power: 60
   maxPP: 10
+  consumeActionPoints: 2
