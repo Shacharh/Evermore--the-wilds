@@ -13,4 +13,12 @@ public class AttackData : ScriptableObject
     public AttackEnum.ElementType element;
     public int power;
     public int maxPP;
+
+    private int currentPP;
+
+    public int CurrentPP
+    {
+        get { return currentPP; }
+        set { currentPP = Mathf.Clamp(value, 0, maxPP); }
+    }
 }

@@ -19,7 +19,7 @@ MonoBehaviour:
     width: 1920
     height: 989
   m_ShowMode: 4
-  m_Title: Game
+  m_Title: Inspector
   m_RootView: {fileID: 3}
   m_MinSize: {x: 875, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
@@ -145,7 +145,7 @@ MonoBehaviour:
   m_MinSize: {x: 400, y: 112}
   m_MaxSize: {x: 32384, y: 16192}
   vertical: 0
-  controlID: 132
+  controlID: 50
   draggingID: 0
 --- !u!114 &7
 MonoBehaviour:
@@ -171,7 +171,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 112}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 1
-  controlID: 79
+  controlID: 51
   draggingID: 0
 --- !u!114 &8
 MonoBehaviour:
@@ -198,7 +198,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 56}
   m_MaxSize: {x: 24288, y: 8096}
   vertical: 0
-  controlID: 44
+  controlID: 52
   draggingID: 0
 --- !u!114 &9
 MonoBehaviour:
@@ -659,10 +659,10 @@ MonoBehaviour:
       m_LastClickedID:
         m_Data: 0
       m_ExpandedIDs:
-      - m_Data: -1294
-      - m_Data: 53320
-      - m_Data: 53424
-      - m_Data: 53436
+      - m_Data: -7588
+      - m_Data: -7136
+      - m_Data: -6962
+      - m_Data: -3792
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -1465,9 +1465,9 @@ MonoBehaviour:
   m_AudioPlay: 0
   m_DebugDrawModesUseInteractiveLightBakingData: 0
   m_Position:
-    m_Target: {x: 13.948999, y: 17.8, z: -1.0584149}
+    m_Target: {x: 8.45, y: 18.09912, z: -2.24396}
     speed: 2
-    m_Value: {x: 13.948999, y: 17.8, z: -1.0584149}
+    m_Value: {x: 8.45, y: 18.09912, z: -2.24396}
   m_RenderMode: 0
   m_CameraMode:
     drawMode: 0
@@ -1513,13 +1513,13 @@ MonoBehaviour:
     m_GridAxis: 1
     m_gridOpacity: 0.5
   m_Rotation:
-    m_Target: {x: 0.121789634, y: 0.069914445, z: -0.008600146, w: 0.990055}
+    m_Target: {x: -0.08717229, y: 0.89959055, z: -0.21045254, w: -0.3726226}
     speed: 2
-    m_Value: {x: -0.12178963, y: -0.069914445, z: 0.008600145, w: -0.990055}
+    m_Value: {x: -0.08717229, y: 0.89959055, z: -0.21045254, w: -0.3726226}
   m_Size:
-    m_Target: 2.2809556
+    m_Target: 0.8660254
     speed: 2
-    m_Value: 2.2809556
+    m_Value: 0.8660254
   m_Ortho:
     m_Target: 0
     speed: 2
@@ -1657,7 +1657,7 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 0
     m_Folders:
-    - Assets/Resources/Scripts/Player
+    - Assets/Resources/Monsters/SetUp
     m_Globs: []
     m_ProductIds: 
     m_AnyWithAssetOrigin: 0
@@ -1667,25 +1667,26 @@ MonoBehaviour:
   m_ViewMode: 1
   m_StartGridSize: 64
   m_LastFolders:
-  - Assets/Resources/Scripts/Player
+  - Assets/Resources/Monsters/SetUp
   m_LastFoldersGridSize: 64
   m_LastProjectPath: C:\Users\Pinkus\source\repos\Evermore--the-wilds
   m_LockTracker:
     m_IsLocked: 0
   m_LastLocalAssetsSearchArea: 0
   m_FolderTreeState:
-    scrollPos: {x: 0, y: 20}
+    scrollPos: {x: 0, y: 56}
     m_SelectedIDs:
-    - m_Data: 53952
+    - m_Data: 54668
     m_LastClickedID:
-      m_Data: 53952
+      m_Data: 54668
     m_ExpandedIDs:
     - m_Data: 0
-    - m_Data: 53672
-    - m_Data: 53674
-    - m_Data: 53676
-    - m_Data: 53678
-    - m_Data: 53680
+    - m_Data: 53736
+    - m_Data: 53738
+    - m_Data: 53740
+    - m_Data: 53742
+    - m_Data: 53744
+    - m_Data: 53746
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1718,11 +1719,12 @@ MonoBehaviour:
       m_Data: 0
     m_ExpandedIDs:
     - m_Data: 0
-    - m_Data: 53672
-    - m_Data: 53674
-    - m_Data: 53676
-    - m_Data: 53678
-    - m_Data: 53680
+    - m_Data: 53736
+    - m_Data: 53738
+    - m_Data: 53740
+    - m_Data: 53742
+    - m_Data: 53744
+    - m_Data: 53746
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1750,9 +1752,9 @@ MonoBehaviour:
       m_ResourceFile: 
   m_ListAreaState:
     m_SelectedInstanceIDs:
-    - m_Data: 53436
-    m_LastClickedInstanceID: 53436
-    m_HadKeyboardFocusLastEvent: 0
+    - m_Data: 54406
+    m_LastClickedInstanceID: 54406
+    m_HadKeyboardFocusLastEvent: 1
     m_ExpandedInstanceIDs:
     - m_Data: 49944
     - m_Data: 50958

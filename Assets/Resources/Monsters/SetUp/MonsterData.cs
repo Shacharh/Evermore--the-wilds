@@ -14,6 +14,6 @@ public class MonsterData : ScriptableObject
 [System.Serializable]
 public class AttackEntry
 {
-    public string attackId;  // The ID of the attack
+    public AttackData attack;  // The ID of the attack
     public int levelLearned; // Level at which the monster learns this attack
 }

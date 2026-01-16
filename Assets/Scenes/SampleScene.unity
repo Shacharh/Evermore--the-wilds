@@ -1235,8 +1235,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   startingAttackIds:
-  - fire_bolt
   - fire_ball
+  - fire_bolt
   monster: {fileID: 497596388}
 --- !u!114 &497596388
 MonoBehaviour:
