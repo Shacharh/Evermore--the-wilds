@@ -46,13 +46,14 @@ public class Monster : MonoBehaviour
 
     public void LearnAttack(AttackData attack)
     {
+        if (attack == null) throw new System.ArgumentException("Attack canot be null at Monster.LearnAttack");
+       
         MonsterAttack monsterAttack = new MonsterAttack(attack);
-        if (attack == null || learnedAttacks.Contains(monsterAttack)) return;
+        if (learnedAttacks.Contains(monsterAttack)) throw new System.ArgumentException("Cannot Learn The Same Attack Twice at Monster.LearnAttack");
 
         if (learnedAttacks.Count >= MaxAttacks)
         {
-            Debug.Log($"{gameObject.name} cannot learn more than {MaxAttacks} attacks!");
-            return;
+            throw new System.ArgumentException($"{gameObject.name} cannot learn more than {MaxAttacks} attacks at Monster.LearnAttack");
         }
 
         learnedAttacks.Add(monsterAttack);
@@ -62,6 +63,7 @@ public class Monster : MonoBehaviour
 
     public void ForgetAttack(AttackData attack)
     {
+        if (attack == null) throw new System.ArgumentException("Attack canot be null at Monster.ForgetAttack"); ;
         learnedAttacks.Remove(new MonsterAttack(attack));
     }
 
