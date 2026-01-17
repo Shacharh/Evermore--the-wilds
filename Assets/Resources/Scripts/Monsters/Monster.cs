@@ -18,6 +18,7 @@ public class Monster : MonoBehaviour
     private string customeName;
     private int currentHP;
     private long exp;
+    private long expByLevel;
     private float xpMultiplier = 25f;
     #endregion
 
@@ -116,7 +117,7 @@ public class Monster : MonoBehaviour
         return learnedAttacks;
     }
 
-    public void UseAttack(int index, Monster target)
+    public void UseAttack(int index, Monster target, bool isDirect)
     {
         if (index < 0 || index >= learnedAttacks.Count)
         {
@@ -126,7 +127,15 @@ public class Monster : MonoBehaviour
         var attack = learnedAttacks[index];
         Debug.Log($"{data.displayName} uses {attack.data.displayName}");
         attack.usePP();
-        target.currentHP -= CalculateDamage(target, attack.data);
+
+        if (
+            (attack.data.category == AttackEnum.AttackCategory.buff) ||
+            (attack.data.category == AttackEnum.AttackCategory.debuff)
+        ) 
+        {
+            CalculateBuff(target, attack.data); ///need to add miss logic here
+        }
+        else target.currentHP -= CalculateDamage(target, attack.data, isDirect);
     }
     #endregion
     
@@ -146,6 +155,7 @@ public class Monster : MonoBehaviour
         // Use the formula: exp = xpMultiplier * ((2*level - 1)^2 - 1) / 4
         long temp = (2 * l - 1);
         this.exp = multiplier * (temp * temp - 1) / 4;
+        UpdateExpByLevel();
     }
 
     private int CalculateStat(int baseStat, int iv, bool isHP = false)
@@ -153,10 +163,17 @@ public class Monster : MonoBehaviour
         return Mathf.FloorToInt(((baseStat + iv) * level) / 50f) + ((isHP) ? 10 : 5);
     }
 
-    private int CalculateDamage(Monster target, AttackData attack)
+    private int CalculateDamage(Monster target, AttackData attack, bool isDirect)
     {
         if (target == null) throw new System.ArgumentNullException(nameof(target));
         if (attack == null) throw new System.ArgumentNullException(nameof(attack));
+
+
+        //check for heal attack
+        if (attack.category == AttackEnum.AttackCategory.heal)
+        {
+            return -Mathf.FloorToInt(((level * attack.power) / 50f) + 2f);
+        }
 
         // --- Hit chance check: accuracy vs dodge ---
         float hitChance = attack.accuracy - target.Dodge; // simple formula
@@ -170,8 +187,7 @@ public class Monster : MonoBehaviour
         float levelFactor = (2f * level) / 5f + 2f;
         float attackDefenseRatio = (float)Attack / Mathf.Max(1, target.Defense);
 
-        float baseDamage =
-            ((levelFactor * attack.power * attackDefenseRatio) / 50f) + 2f;
+        float baseDamage = ((levelFactor * attack.power * attackDefenseRatio) / 50f) + 2f;
 
         // Critical hit
         bool isCrit = Random.value < (CritRate / 100f);
@@ -180,12 +196,23 @@ public class Monster : MonoBehaviour
             baseDamage *= CritMod;
         }
 
+        // Indirect hit modifier
+        if ((!attack.isDirect)&&(!isDirect))
+        {
+            baseDamage *= attack.inDirectHitPrecent;
+        }
+
         // Random variance
         float randomModifier = Random.Range(0.85f, 1f);
 
         int finalDamage = Mathf.FloorToInt(baseDamage * randomModifier);
 
         return Mathf.Max(1, finalDamage);
+    }
+
+    private void CalculateBuff(Monster target, AttackData attack) 
+    {
+        ///need to add miss logic here
     }
     #endregion
 
@@ -206,6 +233,16 @@ public class Monster : MonoBehaviour
         int oldMaxHP = MaxHP;
 
         currentHP += (MaxHP - oldMaxHP);
+    }
+
+    public void UpdateExpByLevel()
+    {
+        long l = this.level;
+        long multiplier = (long)this.xpMultiplier;
+
+        // Formula: exp required to reach the current level
+        long temp = (2 * l - 1);
+        this.expByLevel = multiplier * (temp * temp - 1) / 4;
     }
 
     #endregion

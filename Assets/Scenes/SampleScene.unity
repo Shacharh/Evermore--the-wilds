@@ -1807,6 +1807,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: Ork
       objectReference: {fileID: 0}
+    - target: {fileID: 6894274213777115937, guid: 40070ba98c7a4fd4db7e8306c97b9047, type: 3}
+      propertyPath: startingAttackIds.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6894274213777115937, guid: 40070ba98c7a4fd4db7e8306c97b9047, type: 3}
+      propertyPath: 'startingAttackIds.Array.data[1]'
+      value: fire_bolt
+      objectReference: {fileID: 0}
+    - target: {fileID: 6894274213777115937, guid: 40070ba98c7a4fd4db7e8306c97b9047, type: 3}
+      propertyPath: 'startingAttackIds.Array.data[2]'
+      value: splashe
+      objectReference: {fileID: 0}
     - target: {fileID: 7236233360024531427, guid: 40070ba98c7a4fd4db7e8306c97b9047, type: 3}
       propertyPath: m_LocalPosition.x
       value: 8.29

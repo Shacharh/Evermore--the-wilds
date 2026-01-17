@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using UnityEngine;
+using Unity.Services.Analytics;
 
 public class FileLogger : MonoBehaviour
 {
@@ -52,10 +53,19 @@ public class FileLogger : MonoBehaviour
         {
             string msg = $"{message}\n=============================================================================\n\n";
             File.AppendAllText(logFilePath, msg);
+            //LogSimpleEvent(msg);
         }
         catch (Exception e)
         {
             Debug.LogError("Failed to write log file: " + e.Message);
         }
     }
+
+    public void LogSimpleEvent(string msg)
+    {
+        AnalyticsService.Instance.RecordEvent(msg);
+        Debug.Log("Event Sent!");
+    }
+
+
 }

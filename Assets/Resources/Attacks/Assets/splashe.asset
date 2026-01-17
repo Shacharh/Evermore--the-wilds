@@ -15,6 +15,9 @@ MonoBehaviour:
   id: splashe
   displayName: splashe
   element: 1
+  category: 0
   power: 0
   maxPP: 10
   consumeActionPoints: 1
+  guaranteedHit: 0
+  accuracy: 100
