@@ -15,12 +15,15 @@ public class AttackData : ScriptableObject
     public int power;
     public int maxPP;
     public int consumeActionPoints = 1;
+    public int accuracy = 100;
+    public bool guaranteedHit = false;
 
     private void OnValidate()
     {
         power = Mathf.Max(0, power);
         maxPP = Mathf.Max(0, maxPP);
         consumeActionPoints = Mathf.Max(0, consumeActionPoints);
+        accuracy = Mathf.Clamp(accuracy, 0, 100);
     }
 
 }

@@ -18,3 +18,5 @@ MonoBehaviour:
   power: 60
   maxPP: 10
   consumeActionPoints: 2
+  accuracy: 100
+  guaranteedHit: 0

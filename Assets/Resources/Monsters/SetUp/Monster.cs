@@ -3,15 +3,9 @@ using UnityEngine;
 
 public class Monster : MonoBehaviour
 {
+    #region properties
     [SerializeField] private MonsterData data;
     [SerializeField] private bool enemyMonster;
-    [SerializeField] private int maxHP;
-    private string customeName;
-    
-    private int currentHP;
-    private long exp;
-    private float xpMultiplier = 25f;
-
     [SerializeField, ShowIf("enemyMonster")]
     [Range(1, 100)] private int level;
 
@@ -20,30 +14,80 @@ public class Monster : MonoBehaviour
     private List<MonsterAttack> learnedAttacks = new List<MonsterAttack>();
     private const int MaxAttacks = 2;
 
+
+    private string customeName;
+    private int currentHP;
+    private long exp;
+    private float xpMultiplier = 25f;
+    #endregion
+
+    #region ivs
+    private int ivHP;
+    private int ivAttack;
+    private int ivDefense;
+    private int ivSpeed;
+    private int ivCritRate;
+    private int ivCritMod;
+    private int ivDodge;
+    #endregion
+
+    #region Calculated Stats
+    private const int MaxIV = 24;
+    public int MaxHP => CalculateStat(data.baseHP, ivHP, true);
+    public int Attack => CalculateStat(data.baseAttack, ivAttack);
+    public int Defense => CalculateStat(data.baseDefense, ivDefense);
+    public int Speed => CalculateStat(data.baseSpeed, ivSpeed);
+    public int CritRate => CalculateStat(data.baseCritRate, ivCritRate);
+    public int CritMod => CalculateStat(data.baseCritMod, ivCritMod);
+    public int Dodge => CalculateStat(data.baseDodge, ivDodge);
+    #endregion
+
+    #region Unity Hookes
     private void Start()
     {
         if (!enemyMonster) loadPlayerMonster();
         else loadEnemyMonster();
-        
+
         Debug.Log($"EXP: {this.exp}, Level: {this.level}");
     }
+    #endregion
 
+    #region loaders
     private void loadPlayerMonster()
     {
         //this data blobk will be loaded from the save file
-        currentHP = maxHP;
+        currentHP = MaxHP;
         this.level = 40;
         CaculateExp();
         customeName = "custome name";
+
+        //load ivs from save file
+        ivHP = 10;
+        ivAttack = 12;
+        ivDefense = 8;
+        ivSpeed = 14;
+        ivCritRate = 5;
+        ivCritMod = 3;
+        ivDodge = 7;
     }
 
     private void loadEnemyMonster() 
     {
-        currentHP = maxHP;
+        currentHP = MaxHP;
         customeName = data.displayName;
         CaculateExp();
-    }
 
+        ivHP = Random.Range(0, MaxIV);
+        ivAttack = Random.Range(0, MaxIV);
+        ivDefense = Random.Range(0, MaxIV);
+        ivSpeed = Random.Range(0, MaxIV);
+        ivCritRate = Random.Range(0, MaxIV);
+        ivCritMod = Random.Range(0, MaxIV);
+        ivDodge = Random.Range(0, MaxIV);
+    }
+    #endregion
+
+    #region Attack Manupiolation
     public void LearnAttack(AttackData attack)
     {
         if (attack == null) throw new System.ArgumentException("Attack canot be null at Monster.LearnAttack");
@@ -72,35 +116,21 @@ public class Monster : MonoBehaviour
         return learnedAttacks;
     }
 
-    public void UseAttack(int index, int usePP)
+    public void UseAttack(int index, Monster target)
     {
         if (index < 0 || index >= learnedAttacks.Count)
         {
-            Debug.LogWarning("Invalid attack index!");
-            return;
+            throw new System.ArgumentNullException("Invalid attack index!");
         }
 
-        if (usePP <= 0)
-        {
-            Debug.LogWarning("usePP must be greater than 0!");
-            return;
-        }
-
-        var monsterAttack = learnedAttacks[index];
-        Debug.Log($"{data.displayName} uses {monsterAttack.data.displayName}");
-        monsterAttack.usePP();
-        this.currentHP -= monsterAttack.data.power;
+        var attack = learnedAttacks[index];
+        Debug.Log($"{data.displayName} uses {attack.data.displayName}");
+        attack.usePP();
+        target.currentHP -= CalculateDamage(target, attack.data);
     }
-
-    public void addExp(long exp)
-    {
-        if (exp < 0)
-        {
-            throw new System.ArgumentException("Experience points must be positive.");
-        }
-        this.exp += exp;
-    }
-
+    #endregion
+    
+    #region calculations
     public void CalculateLevel()
     {
         // Formula to calculate the level from total XP
@@ -117,5 +147,67 @@ public class Monster : MonoBehaviour
         long temp = (2 * l - 1);
         this.exp = multiplier * (temp * temp - 1) / 4;
     }
+
+    private int CalculateStat(int baseStat, int iv, bool isHP = false)
+    {
+        return Mathf.FloorToInt(((baseStat + iv) * level) / 50f) + ((isHP) ? 10 : 5);
+    }
+
+    private int CalculateDamage(Monster target, AttackData attack)
+    {
+        if (target == null) throw new System.ArgumentNullException(nameof(target));
+        if (attack == null) throw new System.ArgumentNullException(nameof(attack));
+
+        // --- Hit chance check: accuracy vs dodge ---
+        float hitChance = attack.accuracy - target.Dodge; // simple formula
+        hitChance = Mathf.Clamp(hitChance, 5f, 100f);   // ensure at least 5% chance to hit
+        if ((!attack.guaranteedHit) && (Random.value * 100f > hitChance))
+        {
+            Debug.Log($"{target.customeName} avoided the attack!");
+            return 0; // Attack missed
+        }
+
+        float levelFactor = (2f * level) / 5f + 2f;
+        float attackDefenseRatio = (float)Attack / Mathf.Max(1, target.Defense);
+
+        float baseDamage =
+            ((levelFactor * attack.power * attackDefenseRatio) / 50f) + 2f;
+
+        // Critical hit
+        bool isCrit = Random.value < (CritRate / 100f);
+        if (isCrit)
+        {
+            baseDamage *= CritMod;
+        }
+
+        // Random variance
+        float randomModifier = Random.Range(0.85f, 1f);
+
+        int finalDamage = Mathf.FloorToInt(baseDamage * randomModifier);
+
+        return Mathf.Max(1, finalDamage);
+    }
+    #endregion
+
+    #region general
+    public void addExp(long exp)
+    {
+        if (exp < 0)
+        {
+            throw new System.ArgumentException("Experience points must be positive.");
+        }
+        this.exp += exp;
+    }
+
+    private void LevelUp(long exp)
+    {
+        addExp(exp);
+        CalculateLevel();
+        int oldMaxHP = MaxHP;
+
+        currentHP += (MaxHP - oldMaxHP);
+    }
+
+    #endregion
 
 }
