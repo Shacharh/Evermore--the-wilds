@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb0f046aa1a0e54409f94af7cead9638, type: 3}
+  m_Name: Wind_Monster
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterData
+  monsterId: Wind_monster
+  displayName: wind- place holder
+  elementType: Wind
+  baseHP: 250
+  baseAttack: 150
+  baseDefense: 100
+  baseSpeed: 6
+  baseCritRate: 75
+  baseCritMod: 2
+  baseDodge: 30
+  movePool:
+  - attack: {fileID: 11400000, guid: b6a69ae52e4feec4d9eaa3662a4ea9d9, type: 2}
+    levelLearned: 0
+  - attack: {fileID: 11400000, guid: 661b02ee254faa44cb9dabf76fe58999, type: 2}
+    levelLearned: 1
+  - attack: {fileID: 11400000, guid: e2268f855608cd9409ba57f76d17d032, type: 2}
+    levelLearned: 1

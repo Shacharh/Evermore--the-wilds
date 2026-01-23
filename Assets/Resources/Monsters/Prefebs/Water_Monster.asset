@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb0f046aa1a0e54409f94af7cead9638, type: 3}
+  m_Name: Water_Monster
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterData
+  monsterId: Water_monster
+  displayName: water- place holder
+  elementType: Water
+  baseHP: 200
+  baseAttack: 25
+  baseDefense: 50
+  baseSpeed: 4
+  baseCritRate: 10
+  baseCritMod: 1
+  baseDodge: 45
+  movePool:
+  - attack: {fileID: 11400000, guid: 66e8c84f663a384408e15064164eef2c, type: 2}
+    levelLearned: 0
+  - attack: {fileID: 11400000, guid: 40ca0b2993a77c94a9b684a8d3972535, type: 2}
+    levelLearned: 1
+  - attack: {fileID: 11400000, guid: 8052ce5010b5d714b9765a887a2c4032, type: 2}
+    levelLearned: 1
