@@ -1,12 +1,5 @@
 using UnityEngine;
 
-
-/* 
- * This component sets up a Monster with its starting attacks
- * note that in this version it is used as a debug to see if the learn
- * function works but can be expended on fucher to load from save files or other sources
- */
-
 [RequireComponent(typeof(Monster))]
 public class MonsterSetup : MonoBehaviour
 {
@@ -17,10 +10,27 @@ public class MonsterSetup : MonoBehaviour
     {
         foreach (string id in startingAttackIds)
         {
-            AttackData attack = GameInitializer.Instance.attackDatabase.GetAttackById(id);
+            AttackEntry entry = FindAttackInMovePool(id);
 
-            if (attack != null)
-                monster.LearnAttack(attack);
+            if (entry != null)
+            {
+                monster.LearnAttack(entry.attack);
+            }
+            else
+            {
+                Debug.LogWarning($"Attack {id} not found in move pool of {monster.Data.displayName}");
+            }
         }
+    }
+
+    private AttackEntry FindAttackInMovePool(string attackId)
+    {
+        foreach (AttackEntry entry in monster.Data.movePool)
+        {
+            if (entry.attack != null && entry.attack.ID == attackId)
+                return entry;
+        }
+
+        return null;
     }
 }

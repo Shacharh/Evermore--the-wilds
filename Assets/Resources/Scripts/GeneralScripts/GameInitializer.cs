@@ -8,8 +8,8 @@ public class GameInitializer : MonoBehaviour
 {
     public static GameInitializer Instance { get; private set; }
 
-    [Header("Databases")]
-    public AttackDatabase attackDatabase;
+    //[Header("Databases")]
+    //public AttackDatabase attackDatabase;
 
     private void Awake()
     {
@@ -22,7 +22,7 @@ public class GameInitializer : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        attackDatabase.Init();
+        //attackDatabase.Init();
     }
 
     private async void Start() 

@@ -454,4 +454,9 @@ public class Monster : MonoBehaviour
 
     }
     #endregion
+
+    #region getters
+    public MonsterData Data => data;
+
+    #endregion
 }
