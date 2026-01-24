@@ -14,9 +14,34 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
   id: fire_ball
   displayName: Fire Ball
+  description: 
   element: 0
-  power: 60
+  effects:
+  - category: 0
+    value: 50
+    selfInflicted: 0
+    buffType: 0
+    chance: 0
+    isDebuff: 1
+    duration: 1
+    isInstantHeal: 0
+    statusEffect: {fileID: 0}
+  - category: 3
+    value: 50
+    selfInflicted: 0
+    buffType: 0
+    chance: 24
+    isDebuff: 0
+    duration: 1
+    isInstantHeal: 0
+    statusEffect: {fileID: 11400000, guid: 229b7ed5b02ca0c49b8750c6fae03800, type: 2}
   maxPP: 10
   consumeActionPoints: 2
-  accuracy: 100
   guaranteedHit: 0
+  accuracy: 100
+  range: 1
+  target: 0
+  targetShape: 0
+  rangeTargetShapeSize: 1
+  isDirect: 1
+  inDirectHitPrecent: 0

@@ -22,6 +22,15 @@ public class Monster : MonoBehaviour
     private float xpMultiplier = 25f;
     #endregion
 
+    #region Active Effects
+    // All buffs/debuffs currently on the monster
+    private List<ActiveEffect> activeEffects = new List<ActiveEffect>();
+    #endregion
+
+    #region Active Status Effects
+    private List<ActiveStatus> activeStatuses = new();
+    #endregion
+
     #region ivs
     private int ivHP;
     private int ivAttack;
@@ -72,7 +81,7 @@ public class Monster : MonoBehaviour
         ivDodge = 7;
     }
 
-    private void loadEnemyMonster() 
+    private void loadEnemyMonster()
     {
         currentHP = MaxHP;
         customeName = data.displayName;
@@ -92,7 +101,7 @@ public class Monster : MonoBehaviour
     public void LearnAttack(AttackData attack)
     {
         if (attack == null) throw new System.ArgumentException("Attack canot be null at Monster.LearnAttack");
-       
+
         MonsterAttack monsterAttack = new MonsterAttack(attack);
         if (learnedAttacks.Contains(monsterAttack)) throw new System.ArgumentException("Cannot Learn The Same Attack Twice at Monster.LearnAttack");
 
@@ -103,42 +112,131 @@ public class Monster : MonoBehaviour
 
         learnedAttacks.Add(monsterAttack);
 
-        Debug.Log($"{gameObject.name} learned attack: {attack.displayName}");
+        Debug.Log($"{gameObject.name} learned attack: {attack.DisplayName}");
     }
 
     public void ForgetAttack(AttackData attack)
     {
-        if (attack == null) throw new System.ArgumentException("Attack canot be null at Monster.ForgetAttack"); ;
-        learnedAttacks.Remove(new MonsterAttack(attack));
+        if (attack == null) throw new System.ArgumentException("Attack cannot be null at Monster.ForgetAttack");
+        learnedAttacks.RemoveAll(ma => ma.data == attack);
     }
+
 
     public IReadOnlyList<MonsterAttack> GetAttacks()
     {
         return learnedAttacks;
     }
 
-    public void UseAttack(int index, Monster target, bool isDirect)
+    //public void UseAttack(int index, Monster target, bool isDirect)
+    //{
+    //    if (index < 0 || index >= learnedAttacks.Count)
+    //    {
+    //        throw new System.ArgumentNullException("Invalid attack index!");
+    //    }
+
+    //    var attack = learnedAttacks[index];
+    //    Debug.Log($"{data.displayName} uses {attack.data.DisplayName}");
+    //    attack.UsePP();
+
+    //    foreach (var effect in attack.data.Effects)
+    //    {
+    //        switch (effect.category)
+    //        {
+    //            case AttackEnum.AttackCategory.buff:
+    //                // Apply buffs/debuffs immediately
+    //                CalculateBuff(target, effect);
+    //                break;
+
+    //            case AttackEnum.AttackCategory.damage:
+    //                // Apply damage
+    //                target.currentHP -= CalculateDamage(target, attack.data, isDirect, effect);
+    //                break;
+
+    //            case AttackEnum.AttackCategory.heal:
+    //                // Apply instant heal immediately
+    //                // For heal-over-time, also apply first tick now, then the buff continues each turn
+    //                if (!effect.isInstantHeal) 
+    //                {
+    //                    // Apply heal-over-time as a buff
+    //                    CalculateBuff(target, effect);
+    //                }
+    //                target.currentHP -= CalculateDamage(target, attack.data, isDirect, effect);
+    //                break;
+    //            case AttackEnum.AttackCategory.status:
+    //                // Apply status effect
+    //                if (effect.statusEffect != null)
+    //                {
+    //                    //target.activeEffects.Add(new ActiveEffect(effect.statusEffect, effect.duration));
+    //                    //Debug.Log($"{target.customeName} is affected by status: {effect.statusEffect.displayName} for {effect.duration} turns!");
+    //                }
+    //                break;
+    //        }
+    //    }
+
+
+
+    //}
+
+    public void UseAttackEffect(
+        Monster attacker,
+        Monster target,
+        int attackIndex,
+        int effectIndex,
+        bool isDirect
+    )
     {
-        if (index < 0 || index >= learnedAttacks.Count)
+        if (attacker == null || target == null)
+            throw new System.ArgumentNullException("Attacker or target is null");
+
+        if (attackIndex < 0 || attackIndex >= attacker.learnedAttacks.Count)
+            throw new System.ArgumentException("Invalid attack index");
+
+        MonsterAttack monsterAttack = attacker.learnedAttacks[attackIndex];
+        AttackData attackData = monsterAttack.data;
+
+        if (effectIndex < 0 || effectIndex >= attackData.Effects.Count)
+            throw new System.ArgumentException("Invalid effect index");
+
+        AttackEffect effect = attackData.Effects[effectIndex];
+
+        Debug.Log($"{attacker.customeName} triggers {attackData.DisplayName} effect {effect.category}");
+
+        // PP is consumed once (usually first animation event)
+        if (effectIndex == 0)
+            monsterAttack.UsePP();
+
+        Monster monster = target;
+
+        if (effect.selfInflicted) 
         {
-            throw new System.ArgumentNullException("Invalid attack index!");
+            monster = attacker;
         }
 
-        var attack = learnedAttacks[index];
-        Debug.Log($"{data.displayName} uses {attack.data.displayName}");
-        attack.usePP();
-
-        if (
-            (attack.data.category == AttackEnum.AttackCategory.buff) ||
-            (attack.data.category == AttackEnum.AttackCategory.debuff)
-        ) 
+        switch (effect.category)
         {
-            CalculateBuff(target, attack.data); ///need to add miss logic here
+            case AttackEnum.AttackCategory.damage:
+                monster.currentHP -= attacker.CalculateDamage(target, attackData, isDirect, effect);
+                break;
+
+            case AttackEnum.AttackCategory.heal:
+                int healAmount = attacker.CalculateDamage(target, attackData, isDirect, effect);
+                monster.currentHP -= healAmount; // heal is negative damage
+                break;
+
+            case AttackEnum.AttackCategory.buff:
+                monster.CalculateBuff(target, effect);
+                break;
+
+            case AttackEnum.AttackCategory.status:
+                monster.CalculateStatus(target, effect);
+                break;
         }
-        else target.currentHP -= CalculateDamage(target, attack.data, isDirect);
+
+
     }
+
     #endregion
-    
+
     #region calculations
     public void CalculateLevel()
     {
@@ -160,25 +258,45 @@ public class Monster : MonoBehaviour
 
     private int CalculateStat(int baseStat, int iv, bool isHP = false)
     {
-        return Mathf.FloorToInt(((baseStat + iv) * level) / 50f) + ((isHP) ? 10 : 5);
+        int stat = Mathf.FloorToInt(((baseStat + iv) * level) / 50f) + ((isHP) ? 10 : 5);
+
+        // Apply active effects
+        foreach (var effect in activeEffects)
+        {
+            if (effect.stat == AttackEnum.AttackBuffType.HP && isHP) stat += effect.value;
+            else if (!isHP)
+            {
+                switch (effect.stat)
+                {
+                    case AttackEnum.AttackBuffType.Attack: stat += effect.value; break;
+                    case AttackEnum.AttackBuffType.Defense: stat += effect.value; break;
+                    case AttackEnum.AttackBuffType.Speed: stat += effect.value; break;
+                    case AttackEnum.AttackBuffType.CritRate: stat += effect.value; break;
+                    case AttackEnum.AttackBuffType.CritMod: stat += effect.value; break;
+                    case AttackEnum.AttackBuffType.Dodge: stat += effect.value; break;
+                }
+            }
+        }
+
+        return Mathf.Max(0, stat); // Stat cannot go below 0
     }
 
-    private int CalculateDamage(Monster target, AttackData attack, bool isDirect)
+    private int CalculateDamage(Monster target, AttackData attack, bool isDirect, AttackEffect attackEffect)
     {
         if (target == null) throw new System.ArgumentNullException(nameof(target));
         if (attack == null) throw new System.ArgumentNullException(nameof(attack));
 
 
         //check for heal attack
-        if (attack.category == AttackEnum.AttackCategory.heal)
+        if (attackEffect.category == AttackEnum.AttackCategory.heal)
         {
-            return -Mathf.FloorToInt(((level * attack.power) / 50f) + 2f);
+            return -Mathf.FloorToInt(((level * attackEffect.value) / 50f) + 2f);
         }
 
         // --- Hit chance check: accuracy vs dodge ---
-        float hitChance = attack.accuracy - target.Dodge; // simple formula
+        float hitChance = attack.Accuracy - target.Dodge; // simple formula
         hitChance = Mathf.Clamp(hitChance, 5f, 100f);   // ensure at least 5% chance to hit
-        if ((!attack.guaranteedHit) && (Random.value * 100f > hitChance))
+        if ((!attack.GuaranteedHit) && (Random.value * 100f > hitChance))
         {
             Debug.Log($"{target.customeName} avoided the attack!");
             return 0; // Attack missed
@@ -187,7 +305,7 @@ public class Monster : MonoBehaviour
         float levelFactor = (2f * level) / 5f + 2f;
         float attackDefenseRatio = (float)Attack / Mathf.Max(1, target.Defense);
 
-        float baseDamage = ((levelFactor * attack.power * attackDefenseRatio) / 50f) + 2f;
+        float baseDamage = ((levelFactor * attackEffect.value * attackDefenseRatio) / 50f) + 2f;
 
         // Critical hit
         bool isCrit = Random.value < (CritRate / 100f);
@@ -197,9 +315,9 @@ public class Monster : MonoBehaviour
         }
 
         // Indirect hit modifier
-        if ((!attack.isDirect)&&(!isDirect))
+        if ((!attack.IsDirect) && (!isDirect))
         {
-            baseDamage *= attack.inDirectHitPrecent;
+            baseDamage *= attack.InDirectHitPercent;
         }
 
         // Random variance
@@ -210,9 +328,61 @@ public class Monster : MonoBehaviour
         return Mathf.Max(1, finalDamage);
     }
 
-    private void CalculateBuff(Monster target, AttackData attack) 
+    private void CalculateBuff(Monster target, AttackEffect effect)
     {
-        ///need to add miss logic here
+        // Check chance
+        if (Random.Range(0f, 100f) > effect.chance)
+        {
+            Debug.Log($"{target.customeName} avoided the effect!");
+            return;
+        }
+
+        int appliedValue = effect.value;
+
+        if (effect.isDebuff) appliedValue = -appliedValue;
+
+        target.activeEffects.Add(new ActiveEffect(effect.buffType, appliedValue, effect.duration));
+
+        Debug.Log($"{target.customeName} received {(appliedValue >= 0 ? "buff" : "debuff")} {effect.buffType} for {effect.duration} turns!");
+    }
+
+    private void CalculateStatus(Monster target, AttackEffect effect)
+    {
+        if (effect.statusEffect == null)
+            return;
+
+        // Chance check (reuse chance field or add one for status)
+        if (Random.Range(0f, 100f) > effect.chance)
+        {
+            Debug.Log($"{target.customeName} resisted the status!");
+            return;
+        }
+
+        // Prevent duplicate status (simple rule)
+        for (int i = 0; i < target.activeStatuses.Count; i++)
+        {
+            if (target.activeStatuses[i].data == effect.statusEffect)
+            {
+                if (!effect.statusEffect.Stacks)
+                {
+                    target.activeStatuses[i].remainingTurns = effect.duration;
+                    Debug.Log($"{target.customeName}'s {effect.statusEffect.name} duration refreshed to {effect.duration} turns!");
+                }
+                else 
+                {
+                    target.activeStatuses[i].remainingTurns += effect.duration;
+                    Debug.Log($"{target.customeName}'s {effect.statusEffect.name} duration extended by {effect.duration} turns!");
+                }
+
+                return;
+            }
+        }
+
+        target.activeStatuses.Add(
+            new ActiveStatus(effect.statusEffect, effect.duration)
+        );
+
+        Debug.Log($"{target.customeName} is affected by {effect.statusEffect.name}!");
     }
     #endregion
 
@@ -247,4 +417,41 @@ public class Monster : MonoBehaviour
 
     #endregion
 
+    #region level stages handlers
+    private void TickEffects()
+    {
+        // Buffs / debuffs
+        for (int i = activeEffects.Count - 1; i >= 0; i--)
+        {
+            activeEffects[i].remainingTurns--;
+
+            if (activeEffects[i].remainingTurns <= 0)
+                activeEffects.RemoveAt(i);
+        }
+    }
+
+    private void TickStatuses()
+    {
+        for (int i = activeStatuses.Count - 1; i >= 0; i--)
+        {
+            activeStatuses[i].remainingTurns--;
+            if (activeStatuses[i].remainingTurns <= 0)
+            {
+                Debug.Log($"{customeName} is no longer affected by {activeStatuses[i].data.name}.");
+                activeStatuses.RemoveAt(i);
+            }
+        }
+    }
+
+    public void OnStartTurn() 
+    {
+        TickEffects();
+        TickStatuses();
+    }
+
+    public void OnEndTurn() 
+    {
+
+    }
+    #endregion
 }

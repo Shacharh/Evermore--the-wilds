@@ -4,23 +4,51 @@ using UnityEditor;
 [CustomPropertyDrawer(typeof(ShowIfAttribute))]
 public class ShowIfDrawer : PropertyDrawer
 {
-    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+    private bool ShouldShow(SerializedProperty property)
     {
         ShowIfAttribute showIf = (ShowIfAttribute)attribute;
 
-        bool invert = false;
-        string fieldName = showIf.boolFieldName;
+        // Correctly find nested fields
+        string relativePath = property.propertyPath.Replace(property.name, showIf.conditionFieldName);
+        SerializedProperty conditionField = property.serializedObject.FindProperty(relativePath);
 
-        // Check for ! at the start
-        if (fieldName.StartsWith("!"))
+        if (conditionField == null)
+            return true;
+
+        bool show = false;
+
+        if (!string.IsNullOrEmpty(showIf.compareValue))
         {
-            invert = true;
-            fieldName = fieldName.Substring(1); // remove the !
+            if (conditionField.propertyType == SerializedPropertyType.Enum)
+            {
+                string currentEnumValue = conditionField.enumNames[conditionField.enumValueIndex];
+                string[] compareValues = showIf.compareValue.Split('|');
+
+                foreach (var compareValue in compareValues)
+                {
+                    if (currentEnumValue.Equals(compareValue.Trim(), System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        show = true;
+                        break;
+                    }
+                }
+            }
+        }
+        else if (conditionField.propertyType == SerializedPropertyType.Boolean)
+        {
+            show = conditionField.boolValue;
+        }
+        else
+        {
+            show = true;
         }
 
-        SerializedProperty boolProp = property.serializedObject.FindProperty(fieldName);
+        return showIf.invert ? !show : show;
+    }
 
-        if (boolProp != null && (boolProp.boolValue != invert))
+    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+    {
+        if (ShouldShow(property))
         {
             EditorGUI.PropertyField(position, property, label, true);
         }
@@ -28,22 +56,9 @@ public class ShowIfDrawer : PropertyDrawer
 
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
     {
-        ShowIfAttribute showIf = (ShowIfAttribute)attribute;
-
-        bool invert = false;
-        string fieldName = showIf.boolFieldName;
-
-        if (fieldName.StartsWith("!"))
-        {
-            invert = true;
-            fieldName = fieldName.Substring(1);
-        }
-
-        SerializedProperty boolProp = property.serializedObject.FindProperty(fieldName);
-
-        if (boolProp != null && (boolProp.boolValue != invert))
+        if (ShouldShow(property))
             return EditorGUI.GetPropertyHeight(property, label, true);
 
-        return 0f; // hide the field
+        return 0f;
     }
 }

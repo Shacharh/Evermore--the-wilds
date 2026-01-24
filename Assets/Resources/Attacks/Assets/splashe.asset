@@ -14,10 +14,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
   id: splashe
   displayName: splashe
+  description: 
   element: 1
-  category: 0
-  power: 0
+  effects:
+  - category: 3
+    value: 0
+    buffType: 0
+    chance: 0
+    isDebuff: 0
+    duration: 1
+    isInstantHeal: 0
+    statusEffect: {fileID: 0}
   maxPP: 10
   consumeActionPoints: 1
   guaranteedHit: 0
   accuracy: 100
+  range: 1
+  target: 0
+  targetShape: 0
+  rangeTargetShapeSize: 1
+  isDirect: 1
+  inDirectHitPrecent: 0

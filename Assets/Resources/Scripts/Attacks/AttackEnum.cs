@@ -11,12 +11,21 @@ public class AttackEnum : MonoBehaviour
         Electric
     }
 
+    public enum StatusEffect
+    {
+        Burn,
+        Freeze,
+        Shock,
+        Poison,
+        Sleep
+    }
+
     public enum AttackCategory
     {
         damage,
         heal,
         buff,
-        debuff
+        status
     }
 
     public enum AttackTarget
@@ -34,4 +43,15 @@ public class AttackEnum : MonoBehaviour
         column
     }
 
+
+    public enum AttackBuffType
+    {
+        HP,
+        Attack,
+        Defense,
+        Speed,
+        CritRate,
+        CritMod,
+        Dodge
+    }
 }
