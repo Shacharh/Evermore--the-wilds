@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 4278a11b873deee41bb498eb37b46cf5
+labels:
+- Animation
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 64248
+  packageName: 'Little Dragons: Tiger'
+  packageVersion: 3.9a
+  assetPath: Assets/Malbers Animations/Dragons/Common/Animators/Blink Eyes/Eye Toon
+    Animator.controller
+  uploadId: 639431
