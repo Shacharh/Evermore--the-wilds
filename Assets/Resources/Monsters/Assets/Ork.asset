@@ -14,9 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterData
   monsterId: Ork
   displayName: Ork
-  maxHP: 500
-  enemyMonster: 1
-  level: 29
+  elementType: 
+  baseHP: 0
+  baseAttack: 0
+  baseDefense: 0
+  baseSpeed: 0
+  baseCritRate: 0
+  baseCritMod: 0
+  baseDodge: 0
   movePool:
   - attack: {fileID: 11400000, guid: b6d4a8aad70ac1940808e639ec999609, type: 2}
     levelLearned: 5

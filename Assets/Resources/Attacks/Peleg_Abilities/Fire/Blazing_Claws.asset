@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5bec574241e95d64f874367ce5a4cc34, type: 3}
+  m_Name: Blazing_Claws
+  m_EditorClassIdentifier: Assembly-CSharp::AttackData
+  id: Blazing_Claws
+  displayName: Blazing Claws
+  description: scratch an enemy
+  category: 0
+  element: 0
+  power: 150
+  maxPP: 0
+  consumeActionPoints: 5
+  guaranteedHit: 0
+  accuracy: 100
+  range: 1
+  target: 1
+  targetShape: 0
+  rangeTargetShapeSize: 1
+  isDirect: 1
+  inDirectHitPrecent: 0

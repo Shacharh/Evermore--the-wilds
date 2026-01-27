@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: c17fdf29e0a7e8d43bbaa421df317da4
+timeCreated: 1475815865
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 64248
+  packageName: 'Little Dragons: Tiger'
+  packageVersion: 3.9a
+  assetPath: Assets/Malbers Animations/Dragons/Common/Animators/Blink Eyes/Eye BlendShapes
+    Animator.controller
+  uploadId: 639431
