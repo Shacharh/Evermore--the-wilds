@@ -26,7 +26,7 @@ Material:
   m_Name: TigerDrago Real Yellow
   m_Shader: {fileID: -6465566751694194690, guid: 38fbdfc05eb118b439cadf4899477678, type: 3}
   m_Parent: {fileID: 2100000, guid: d06fe8af04bfa0d40b546579440216cc, type: 2}
-  m_ModifiedSerializedProperties: 16
+  m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _DISABLE_SSR_TRANSPARENT
   m_InvalidKeywords:
