@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="0b96e358-9c8a-4487-815a-9aeabc27563c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Dragons.meta" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Dragons.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Dragons/Common.meta" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Dragons/Common.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Dragons/Common/Shaders.meta" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Dragons/Common/Shaders.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Dragons/Common/Shaders/Malbers_HDRP_15.unitypackage.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Dragons/Common/Shaders/Malbers_HDRP_16.unitypackage.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Dragons/Common/Shaders/Malbers_HDRP_17.unitypackage.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Dragons/Common/Shaders/Malbers_Standard.unitypackage.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Dragons/Common/Shaders/Malbers_URP_14.unitypackage.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Dragons/Common/Shaders/Malbers_URP_16.unitypackage.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Dragons/Common/Shaders/Malbers_URP_17.unitypackage.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Dragons/Dragons.meta" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Dragons/Dragons.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Dragons/Dragons/1 - Little Tiger Dragon.meta" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Dragons/Dragons/1 - Little Tiger Dragon.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Dragons/Dragons/1 - Little Tiger Dragon/1 - LDTiger AC.meta" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Dragons/Dragons/1 - Little Tiger Dragon/1 - LDTiger AC.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Dragons/Dragons/1 - Little Tiger Dragon/1 - LDTiger AC/LD Tiger 4.0 (AC 1.5.0).unitypackage.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Dragons/Dragons/1 - Little Tiger Dragon/Little Dragon Tiger (Legacy).meta" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Dragons/Dragons/1 - Little Tiger Dragon/Little Dragon Tiger (Legacy).meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Dragons/Dragons/1 - Little Tiger Dragon/Little Dragon Tiger (Legacy)/Little Dragon Tiger 2.71.unitypackage.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Malbers Animations.meta" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Malbers Animations.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Malbers Animations/Common.meta" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Malbers Animations/Common.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Malbers Animations/Common/Shaders.meta" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Malbers Animations/Common/Shaders.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Malbers Animations/Common/Shaders/Malbers_HDRP_15.unitypackage.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Malbers Animations/Common/Shaders/Malbers_HDRP_16.unitypackage.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Malbers Animations/Common/Shaders/Malbers_HDRP_17.unitypackage.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Malbers Animations/Common/Shaders/Malbers_Standard.unitypackage.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Malbers Animations/Common/Shaders/Malbers_URP_14.unitypackage.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Malbers Animations/Common/Shaders/Malbers_URP_16.unitypackage.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Malbers Animations/Common/Shaders/Malbers_URP_17.unitypackage.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Malbers Animations/Dragons.meta" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Malbers Animations/Dragons.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Malbers Animations/Dragons/1 - Little Tiger Dragon.meta" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Malbers Animations/Dragons/1 - Little Tiger Dragon.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Malbers Animations/Dragons/1 - Little Tiger Dragon/1 - LDTiger AC.meta" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Malbers Animations/Dragons/1 - Little Tiger Dragon/1 - LDTiger AC.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Malbers Animations/Dragons/1 - Little Tiger Dragon/1 - LDTiger AC/LD Tiger 4.0 (AC 1.5.0).unitypackage.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Malbers Animations/Dragons/1 - Little Tiger Dragon/Little Dragon Tiger (Legacy).meta" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Malbers Animations/Dragons/1 - Little Tiger Dragon/Little Dragon Tiger (Legacy).meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Malbers Animations/Dragons/1 - Little Tiger Dragon/Little Dragon Tiger (Legacy)/Little Dragon Tiger 2.71.unitypackage.meta" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "customColor": "",
+  "associatedIndex": 5
+}]]></component>
+  <component name="ProjectId" id="38qVauwj2BdLkCadvbpHzQN5nOY" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "nodejs_package_manager_path": "npm"
+  }
+}]]></component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="0b96e358-9c8a-4487-815a-9aeabc27563c" name="Changes" comment="" />
+      <created>1769527156179</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1769527156179</updated>
+      <workItem from="1769527159347" duration="3000" />
+    </task>
+    <servers />
+  </component>
+  <component name="UnityProjectDiscoverer">
+    <option name="unityProject" value="true" />
+    <option name="unityProjectFolder" value="true" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <breakpoint enabled="true" type="DotNet_Exception_Breakpoints">
+          <properties exception="System.OperationCanceledException" breakIfHandledByOtherCode="false" displayValue="System.OperationCanceledException" />
+          <option name="timeStamp" value="1" />
+        </breakpoint>
+        <breakpoint enabled="true" type="DotNet_Exception_Breakpoints">
+          <properties exception="System.Threading.Tasks.TaskCanceledException" breakIfHandledByOtherCode="false" displayValue="System.Threading.Tasks.TaskCanceledException" />
+          <option name="timeStamp" value="2" />
+        </breakpoint>
+        <breakpoint enabled="true" type="DotNet_Exception_Breakpoints">
+          <properties exception="System.Threading.ThreadAbortException" breakIfHandledByOtherCode="false" displayValue="System.Threading.ThreadAbortException" />
+          <option name="timeStamp" value="3" />
+        </breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>

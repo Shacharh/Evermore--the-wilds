@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: af1efe526d501c2419be90a8058e28b3
+timeCreated: 1469848571
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 64248
+  packageName: 'Little Dragons: Tiger'
+  packageVersion: 3.9a
+  assetPath: Assets/Malbers Animations/Dragons/Common/Animations/Blink.anim
+  uploadId: 639431

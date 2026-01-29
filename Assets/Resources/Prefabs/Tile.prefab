@@ -127,9 +127,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9d291e2a64cd384dae941ca1c46a0a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Tile
-  playerSideColor: {r: 0.3, g: 0.5, b: 0.9, a: 1}
-  enemySideColor: {r: 0.9, g: 0.3, b: 0.3, a: 1}
-  neutralColor: {r: 0.7, g: 0.7, b: 0.7, a: 1}
+  baseTileColor: {r: 0.7, g: 0.7, b: 0.7, a: 1}
+  checkerboardDarkenAmount: 0.85
   hoverHeightOffset: 0.05
 --- !u!1 &4390144625004061574
 GameObject:
@@ -159,7 +158,7 @@ Transform:
   m_GameObject: {fileID: 4390144625004061574}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -0.2, z: 0}
   m_LocalScale: {x: 1.1, y: 1.1, z: 1.1}
   m_ConstrainProportionsScale: 0
   m_Children: []

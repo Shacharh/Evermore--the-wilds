@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 3312425034af5674693b9f2856292730
+timeCreated: 1530939444
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 64248
+  packageName: 'Little Dragons: Tiger'
+  packageVersion: 3.9a
+  assetPath: Assets/Malbers Animations/Dragons/Common/Animations/Fly Cleaned/LDFly
+    Get Hit R.anim
+  uploadId: 639431
