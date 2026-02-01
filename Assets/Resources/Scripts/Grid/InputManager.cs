@@ -100,9 +100,10 @@ public class InputManager : MonoBehaviour
         }
         
         // Select the tile
-        if (selectedTile != null)
+        if (selectedTile != null && selectedTile != currentHoveredTile)
         {
             selectedTile.SetSelected(false);
+            selectedTile.ResetVisuals(); // Force it back to original color
         }
         
         selectedTile = currentHoveredTile;

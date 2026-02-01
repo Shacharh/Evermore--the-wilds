@@ -135,8 +135,11 @@ public class Tile : MonoBehaviour
         }
         else
         {
-            currentTargetColor = isHovered ? hoverColor : originalColor;
-            currentTargetHeight = isHovered ? hoverHeightOffset : 0f;
+            currentTargetColor = originalColor;
+            currentTargetHeight = 0f;
+            isHovered = false;
+            //currentTargetColor = isHovered ? hoverColor : originalColor;
+            //currentTargetHeight = isHovered ? hoverHeightOffset : 0f;
         }
     }
     
