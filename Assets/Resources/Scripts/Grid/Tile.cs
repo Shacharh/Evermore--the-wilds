@@ -181,4 +181,9 @@ public class Tile : MonoBehaviour
     {
         return Occupation == OccupationType.Empty || Occupation == OccupationType.Trap;
     }
+
+    public Monster GetMonster()
+    {
+        return OccupyingObject != null ? OccupyingObject.GetComponent<Monster>() : null;
+    }
 }

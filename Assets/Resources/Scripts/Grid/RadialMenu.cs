@@ -67,25 +67,46 @@ public class RadialMenu : MonoBehaviour
             }
         }
     }
-    
+
+    /*
     List<MenuAction> GetAvailableActions()
     {
         List<MenuAction> actions = new List<MenuAction>();
-        
-        // Always available: Deselect
         actions.Add(new MenuAction("Deselect", null));
-        
-        // If tile has a monster
+
         if (targetTile.Occupation == Tile.OccupationType.Monster)
         {
             actions.Add(new MenuAction("Movement", null));
-            actions.Add(new MenuAction("Abilities", null));
-            // Future: Items, Defend, etc.
+
+            // Let's see if the monster has attacks!
+            Monster monster = targetTile.GetMonster();
+            if (monster != null && monster.GetAttacks().Count > 0)
+            {
+                actions.Add(new MenuAction("Abilities", null));
+            }
         }
-        
         return actions;
     }
-    
+    */
+    List<MenuAction> GetAvailableActions()
+    {
+        List<MenuAction> actions = new List<MenuAction>();
+
+        // Always add Deselect so the menu isn't empty
+        actions.Add(new MenuAction("Deselect", null));
+
+        if (targetTile.Occupation == Tile.OccupationType.Monster)
+        {
+            actions.Add(new MenuAction("Movement", null));
+
+            Monster monster = targetTile.GetMonster();
+            // Even if attacks failed to load, let's show the button for testing
+            actions.Add(new MenuAction("Abilities", null));
+        }
+
+        return actions;
+    }
+
     void PositionMenu()
     {
         // Keep menu facing camera

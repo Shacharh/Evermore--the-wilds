@@ -15,8 +15,16 @@ public class MonsterSetup : MonoBehaviour
 
     private void Start()
     {
+        // Check if the global Instance exists first
+        if (GameInitializer.Instance == null)
+        {
+            Debug.LogError("GameInitializer Instance is null! Make sure the GameInitializer script is on a GameObject in your scene.");
+            return;
+        }
+
         foreach (string id in startingAttackIds)
         {
+            // Now it's safe to access the database
             AttackData attack = GameInitializer.Instance.attackDatabase.GetAttackById(id);
 
             if (attack != null)
