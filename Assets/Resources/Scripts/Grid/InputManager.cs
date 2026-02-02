@@ -143,7 +143,7 @@ public class InputManager : MonoBehaviour
         }
         
         // Calculate world position above the tile
-        Vector3 menuPosition = tile.transform.position + Vector3.up * 0.5f;
+        Vector3 menuPosition = tile.transform.position + Vector3.up * 2.0f;
         
         // Instantiate menu
         activeMenu = Instantiate(radialMenuPrefab, menuPosition, Quaternion.identity);
