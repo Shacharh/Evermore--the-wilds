@@ -29,8 +29,8 @@ RectTransform:
   m_GameObject: {fileID: 3521064110572353182}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 0.005, y: 0.005, z: 0.005}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 2884547723842637732}
   m_Father: {fileID: 0}
@@ -38,7 +38,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 160, y: 30}
+  m_SizeDelta: {x: 400, y: 400}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3632378358994907722
 CanvasRenderer:
@@ -136,10 +136,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RadialMenuButton
   labelText: {fileID: 3693987380310111312}
   iconImage: {fileID: 0}
-  button: {fileID: 0}
-  backgroundImage: {fileID: 0}
+  button: {fileID: 279152206773549600}
+  backgroundImage: {fileID: 2988486822644255596}
   normalColor: {r: 0.2, g: 0.2, b: 0.2, a: 0.8}
-  hoverColor: {r: 0.3, g: 0.6, b: 1, a: 0.9}
+  hoverColor: {r: 0.38679248, g: 0.36307406, b: 0.36307406, a: 1}
   scaleOnHover: 1.2
 --- !u!1 &4467898782279538271
 GameObject:

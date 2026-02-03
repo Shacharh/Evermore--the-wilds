@@ -9,73 +9,66 @@ public class RadialMenuButton : MonoBehaviour
     [SerializeField] private Image iconImage;
     [SerializeField] private Button button;
     [SerializeField] private Image backgroundImage;
-    
+
     [Header("Visual Settings")]
     [SerializeField] private Color normalColor = new Color(0.2f, 0.2f, 0.2f, 0.8f);
     [SerializeField] private Color hoverColor = new Color(0.3f, 0.6f, 1f, 0.9f);
-    [SerializeField] private float scaleOnHover = 1.2f;
-    
+    [SerializeField] private float scaleOnHover = 1.1f;
+
     private string actionLabel;
     private RadialMenu parentMenu;
     private Vector3 originalScale;
-    
+
     void Awake()
     {
-        if (button == null)
-            button = GetComponent<Button>();
-        
+        // Auto-assign components if Shachar forgot
+        if (button == null) button = GetComponent<Button>();
+        if (backgroundImage == null) backgroundImage = GetComponent<Image>();
+
         if (button != null)
-        {
             button.onClick.AddListener(OnClick);
-        }
-        
+
         originalScale = transform.localScale;
     }
-    
+
     public void Initialize(string label, Sprite icon, RadialMenu menu)
     {
         actionLabel = label;
         parentMenu = menu;
-        
+
         if (labelText != null)
             labelText.text = label;
-        
-        if (iconImage != null && icon != null)
+
+        // Safety check: prevent the icon logic from hiding the whole button
+        if (iconImage != null)
         {
             iconImage.sprite = icon;
-            iconImage.enabled = true;
+            iconImage.enabled = (icon != null);
         }
-        else if (iconImage != null)
-        {
-            iconImage.enabled = false;
-        }
-        
+
         if (backgroundImage != null)
+        {
+            backgroundImage.enabled = true; // FORCE this on
             backgroundImage.color = normalColor;
+        }
     }
-    
+
     void OnClick()
     {
         if (parentMenu != null)
-        {
             parentMenu.OnButtonClicked(actionLabel);
-        }
     }
-    
-    // Mouse hover effects (if using UI)
+
+    // UI hover effects
     public void OnPointerEnter()
     {
-        if (backgroundImage != null)
-            backgroundImage.color = hoverColor;
-        
+        if (backgroundImage != null) backgroundImage.color = hoverColor;
         transform.localScale = originalScale * scaleOnHover;
     }
-    
+
     public void OnPointerExit()
     {
-        if (backgroundImage != null)
-            backgroundImage.color = normalColor;
-        
+        if (backgroundImage != null) backgroundImage.color = normalColor;
         transform.localScale = originalScale;
     }
 }
