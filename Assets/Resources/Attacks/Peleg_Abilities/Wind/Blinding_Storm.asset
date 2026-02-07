@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5bec574241e95d64f874367ce5a4cc34, type: 3}
+  m_Name: Blinding_Storm
+  m_EditorClassIdentifier: Assembly-CSharp::AttackData
+  id: Blinding_Storm
+  displayName: Blinding Storm
+  description: "make a storm in an area. for X amount of turns, each monster that
+    were within the area when the ability was casted, have all it's range abilities
+    max range lower by 2\u05DC\u05E9\u05E0\u05D5\u05EA \u05DC\u05DC\u05D4\u05E2\u05DC\u05D5\u05EA
+    \u05DE\u05D7\u05D9\u05E8 AP?"
+  category: 3
+  element: 2
+  power: 0
+  maxPP: 0
+  consumeActionPoints: 8
+  guaranteedHit: 1
+  accuracy: 100
+  range: 1
+  target: 2
+  targetShape: 1
+  rangeTargetShapeSize: 3
+  isDirect: 1
+  inDirectHitPrecent: 0

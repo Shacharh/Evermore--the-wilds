@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: cfa900351cec57a468c4c5f27b989913
+timeCreated: 1530938247
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 64248
+  packageName: 'Little Dragons: Tiger'
+  packageVersion: 3.9a
+  assetPath: Assets/Malbers Animations/Dragons/Common/Animations/Mouse Pose Fix.anim
+  uploadId: 639431
