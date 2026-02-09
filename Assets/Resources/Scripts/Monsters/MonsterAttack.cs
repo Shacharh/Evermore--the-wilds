@@ -1,6 +1,5 @@
 using UnityEngine;
 
-
 [System.Serializable]
 public class MonsterAttack
 {
@@ -10,17 +9,13 @@ public class MonsterAttack
     public MonsterAttack(AttackData data)
     {
         this.data = data;
-        currentPP = data.maxPP;
+        currentPP = data.MaxPP;
     }
 
+    public int CurrentPP => currentPP;
 
-    public int getPP() 
+    public void UsePP()
     {
-        return this.currentPP;
-    }
-
-    public void usePP()
-    {
-        this.currentPP--;
+        currentPP = Mathf.Max(0, currentPP - 1);
     }
 }

@@ -8,7 +8,7 @@ public class GameInitializer : MonoBehaviour
 {
     public static GameInitializer Instance { get; private set; }
 
-    [Header("Databases")]
+    //[Header("Databases")]
     public AttackDatabase attackDatabase;
 
     private void Awake()
