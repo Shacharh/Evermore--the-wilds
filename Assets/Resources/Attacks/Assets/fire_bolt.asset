@@ -14,7 +14,25 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
   id: fire_bolt
   displayName: Fire Bolt
+  description: 
   element: 0
-  power: 60
+  effects:
+  - category: 0
+    value: 66
+    selfInflicted: 0
+    buffType: 0
+    chance: 0
+    isDebuff: 0
+    duration: 1
+    isInstantHeal: 0
+    statusEffect: {fileID: 0}
   maxPP: 10
   consumeActionPoints: 1
+  guaranteedHit: 0
+  accuracy: 100
+  range: 1
+  target: 0
+  targetShape: 0
+  rangeTargetShapeSize: 1
+  isDirect: 1
+  inDirectHitPrecent: 0
