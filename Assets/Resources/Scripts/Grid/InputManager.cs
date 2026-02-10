@@ -7,28 +7,48 @@ public class InputManager : MonoBehaviour
     [SerializeField] private GridManager gridManager;
     [SerializeField] private RadialMenu radialMenuPrefab;
     [SerializeField] private Camera mainCamera;
-    
+
     [Header("Input Settings")]
     [SerializeField] private InputActionAsset inputActions;
     [SerializeField] private LayerMask tileLayerMask;
-    
+
+    [Header("Movement Settings")]
+    [SerializeField] private Color movementRangeColor = new Color(0.3f, 0.6f, 1f, 0.5f);
+    [SerializeField] private Color selectedMoveColor = new Color(0.2f, 1f, 0.3f, 0.7f);
+    [SerializeField] private float movementSpeed = 5f;
+
     private InputAction mousePositionAction;
     private InputAction leftClickAction;
     private InputAction rightClickAction;
-    
+
     private Tile currentHoveredTile;
     private Tile selectedTile;
     private RadialMenu activeMenu;
-    
+
+    // Time-based click prevention
+    private float menuOpenTime = -1f;
+    private const float MenuClickDelay = 0.1f;
+
+    private enum InputState
+    {
+        Normal,
+        MovementMode,
+        Moving
+    }
+
+    private InputState currentState = InputState.Normal;
+    private Monster movingMonster;
+    private Tile movementOriginTile;
+    private System.Collections.Generic.List<Tile> validMovementTiles;
+
     void Awake()
     {
         if (mainCamera == null)
             mainCamera = Camera.main;
-        
+
         if (gridManager == null)
             gridManager = FindFirstObjectByType<GridManager>();
-        
-        // Set up input actions
+
         if (inputActions != null)
         {
             var playerMap = inputActions.FindActionMap("Player");
@@ -37,50 +57,52 @@ public class InputManager : MonoBehaviour
                 mousePositionAction = playerMap.FindAction("MousePosition");
                 leftClickAction = playerMap.FindAction("LeftClick");
                 rightClickAction = playerMap.FindAction("RightClick");
-                
+
                 if (leftClickAction != null)
                     leftClickAction.performed += OnLeftClick;
-                
+
                 if (rightClickAction != null)
                     rightClickAction.performed += OnRightClick;
-                
+
                 inputActions.Enable();
             }
         }
     }
-    
+
     void Update()
     {
         HandleTileHovering();
     }
-    
+
     void HandleTileHovering()
     {
         if (mousePositionAction == null || mainCamera == null) return;
-        
+
         Vector2 mousePos = mousePositionAction.ReadValue<Vector2>();
         Ray ray = mainCamera.ScreenPointToRay(mousePos);
-        
+
         if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, tileLayerMask))
         {
             Tile hitTile = hit.collider.GetComponent<Tile>();
-            
+
             if (hitTile != null && hitTile != currentHoveredTile)
             {
-                // Unhover previous tile
                 if (currentHoveredTile != null)
                 {
                     currentHoveredTile.SetHovered(false);
                 }
-                
-                // Hover new tile
+
                 currentHoveredTile = hitTile;
-                currentHoveredTile.SetHovered(true);
+
+                if (currentState == InputState.Normal ||
+                    (currentState == InputState.MovementMode && IsValidMovementDestination(hitTile)))
+                {
+                    currentHoveredTile.SetHovered(true);
+                }
             }
         }
         else
         {
-            // Mouse not over any tile
             if (currentHoveredTile != null)
             {
                 currentHoveredTile.SetHovered(false);
@@ -88,46 +110,162 @@ public class InputManager : MonoBehaviour
             }
         }
     }
-    
+
+    /*void OnLeftClick(InputAction.CallbackContext context)
+    {
+        // NEW: Proper UI check for the New Input System
+        if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
+        {
+            Debug.Log("Click blocked by UI");
+            return;
+        }
+        
+        // CRITICAL FIX: Prevent clicks immediately after opening menu
+        if (Time.time - menuOpenTime < MenuClickDelay)
+        {
+            Debug.Log("Ignoring click - menu just opened");
+            return;
+        }
+
+        if (currentHoveredTile == null) return;
+
+        switch (currentState)
+        {
+            case InputState.Normal:
+                HandleNormalClick(currentHoveredTile);
+                break;
+
+            case InputState.MovementMode:
+                HandleMovementClick(currentHoveredTile);
+                break;
+
+            case InputState.Moving:
+                Debug.Log("Monster is moving, please wait...");
+                break;
+        }
+    }*/
+
     void OnLeftClick(InputAction.CallbackContext context)
     {
+        // Ignore UI during the showcase to prevent menu conflicts
+        if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) return;
+
         if (currentHoveredTile == null) return;
-        
-        // Close existing menu if clicking elsewhere
-        if (activeMenu != null && selectedTile != currentHoveredTile)
-        {
-            CloseRadialMenu();
-        }
-        
-        // Select the tile
-        if (selectedTile != null && selectedTile != currentHoveredTile)
-        {
-            selectedTile.SetSelected(false);
-            selectedTile.ResetVisuals(); // Force it back to original color
-        }
-        
-        selectedTile = currentHoveredTile;
-        selectedTile.SetSelected(true);
-        
-        // Open radial menu
-        OpenRadialMenu(selectedTile);
+
+        HandleAlphaShowcaseLogic(currentHoveredTile);
     }
-    
-    void OnRightClick(InputAction.CallbackContext context)
+
+    void HandleAlphaShowcaseLogic(Tile clickedTile)
     {
-        // Right-click to deselect/cancel
-        if (activeMenu != null)
+        // CASE 1: We click a monster (Initial Selection OR Changing Selection)
+        if (clickedTile.Occupation == Tile.OccupationType.Monster)
         {
-            CloseRadialMenu();
+            // Clear old selection visuals if they exist
+            if (selectedTile != null) selectedTile.SetSelected(false);
+
+            selectedTile = clickedTile;
+            movingMonster = clickedTile.GetMonster();
+            selectedTile.SetSelected(true);
+
+            Debug.Log($"Alpha: Selected Monster {movingMonster.name} at {clickedTile.GridPosition}");
+            return;
         }
-        
+
+        // CASE 2: We have a monster selected and click an EMPTY tile (Movement)
+        if (selectedTile != null && movingMonster != null && clickedTile.IsWalkable())
+        {
+            Debug.Log($"Alpha: Moving {movingMonster.name} to {clickedTile.GridPosition}");
+
+            // Start the movement coroutine you already have!
+            movementOriginTile = selectedTile;
+            StartCoroutine(MoveMonsterToTile(clickedTile));
+
+            // Note: MoveMonsterToTile already calls ExitMovementMode which clears variables
+            return;
+        }
+
+        // CASE 3: Clicked something else or empty ground without a selection
         if (selectedTile != null)
         {
             selectedTile.SetSelected(false);
             selectedTile = null;
+            movingMonster = null;
         }
     }
-    
+
+    void HandleNormalClick(Tile clickedTile)
+    {
+        if (clickedTile == null) return;
+
+        // 1. If we are clicking a tile that is already selected, do nothing.
+        if (selectedTile == clickedTile) return;
+
+        // 2. If we have a menu open and we click a DIFFERENT tile, close the old one.
+        if (activeMenu != null && clickedTile != null)
+        {
+            CloseRadialMenu();
+        }
+
+        // 3. Clear old selection visuals
+        if (selectedTile != null)
+        {
+            selectedTile.SetSelected(false);
+            selectedTile.ResetVisuals();
+        }
+
+        // 4. Set new selection and open menu ONLY if we actually hit a tile
+        selectedTile = clickedTile;
+        if (selectedTile != null)
+        {
+            selectedTile.SetSelected(true);
+            OpenRadialMenu(selectedTile);
+        }
+    }
+    void HandleMovementClick(Tile clickedTile)
+    {
+        if (IsValidMovementDestination(clickedTile))
+        {
+            Debug.Log($"Moving monster to {clickedTile.GridPosition}");
+            StartCoroutine(MoveMonsterToTile(clickedTile));
+        }
+        else
+        {
+            Debug.Log("Invalid movement destination!");
+        }
+    }
+
+    void OnRightClick(InputAction.CallbackContext context)
+    {
+        CancelCurrentAction();
+    }
+
+    void CancelCurrentAction()
+    {
+        switch (currentState)
+        {
+            case InputState.Normal:
+                if (activeMenu != null)
+                {
+                    CloseRadialMenu();
+                }
+
+                if (selectedTile != null)
+                {
+                    selectedTile.SetSelected(false);
+                    selectedTile = null;
+                }
+                break;
+
+            case InputState.MovementMode:
+                ExitMovementMode();
+                break;
+
+            case InputState.Moving:
+                Debug.Log("Cannot cancel while monster is moving");
+                break;
+        }
+    }
+
     void OpenRadialMenu(Tile tile)
     {
         if (radialMenuPrefab == null)
@@ -135,82 +273,174 @@ public class InputManager : MonoBehaviour
             Debug.LogWarning("RadialMenu prefab not assigned!");
             return;
         }
-        
-        // Close existing menu
+
+        // Destroy existing menu if any
         if (activeMenu != null)
         {
             Destroy(activeMenu.gameObject);
         }
 
-        // Calculate world position above the tile
         Vector3 menuPosition = tile.transform.position + Vector3.up * 2.0f;
-
-        // Instantiate menu
         activeMenu = Instantiate(radialMenuPrefab, menuPosition, Quaternion.identity);
         activeMenu.Initialize(tile, this);
+
+        // Record when menu opens
+        menuOpenTime = Time.time;
+
+        Debug.Log($"Radial menu opened for tile {tile.GridPosition} at time {menuOpenTime}");
     }
-    
+
     public void CloseRadialMenu()
     {
+        Debug.Log("Closing radial menu");
+
         if (activeMenu != null)
         {
             Destroy(activeMenu.gameObject);
             activeMenu = null;
         }
-        
+
         if (selectedTile != null)
         {
             selectedTile.SetSelected(false);
             selectedTile = null;
         }
+
+        // Reset menu time
+        menuOpenTime = -1f;
     }
-    
+
     public void OnMenuActionSelected(string action, Tile tile)
     {
         Debug.Log($"Action '{action}' selected for tile {tile.GridPosition}");
-        
+
         switch (action)
         {
             case "Deselect":
                 CloseRadialMenu();
                 break;
-            
+
             case "Movement":
                 HandleMovementAction(tile);
                 break;
-            
+
             case "Abilities":
                 HandleAbilitiesAction(tile);
+                if (activeMenu != null) activeMenu.ShowAbilitiesSubMenu();
                 break;
-            
+
             default:
                 Debug.LogWarning($"Unknown action: {action}");
                 break;
         }
     }
-    
+
     void HandleMovementAction(Tile tile)
     {
         Debug.Log($"Movement selected for monster at {tile.GridPosition}");
-        // TODO: Show movement range, highlight tiles, calculate AP cost
+
+        Monster monster = tile.GetMonster();
+        if (monster == null)
+        {
+            Debug.LogError("No monster found on tile!");
+            return;
+        }
+
         CloseRadialMenu();
+        EnterMovementMode(tile, monster);
     }
-    
+
+    void EnterMovementMode(Tile originTile, Monster monster)
+    {
+        currentState = InputState.MovementMode;
+        movingMonster = monster;
+        movementOriginTile = originTile;
+
+        int movementRange = Mathf.CeilToInt(monster.Speed / 20f);
+        movementRange = Mathf.Max(1, movementRange);
+
+        validMovementTiles = gridManager.GetTilesInRange(originTile, movementRange, walkableOnly: true);
+        gridManager.HighlightTiles(validMovementTiles, movementRangeColor, 0.15f);
+
+        Debug.Log($"Movement mode. Monster Speed: {monster.Speed}, Range: {movementRange}, {validMovementTiles.Count} tiles highlighted.");
+    }
+
+    void ExitMovementMode()
+    {
+        Debug.Log("Exiting movement mode");
+
+        gridManager.ClearAllHighlights();
+
+        currentState = InputState.Normal;
+        movingMonster = null;
+        movementOriginTile = null;
+        validMovementTiles = null;
+    }
+
+    bool IsValidMovementDestination(Tile tile)
+    {
+        if (validMovementTiles == null) return false;
+        return validMovementTiles.Contains(tile);
+    }
+
+    System.Collections.IEnumerator MoveMonsterToTile(Tile destinationTile)
+    {
+        if (movingMonster == null || movementOriginTile == null)
+        {
+            Debug.LogError("Invalid movement state!");
+            yield break;
+        }
+
+        currentState = InputState.Moving;
+        gridManager.ClearAllHighlights();
+        destinationTile.Highlight(selectedMoveColor, 0.2f);
+
+        GameObject monsterObj = movingMonster.gameObject;
+        Vector3 startPos = monsterObj.transform.position;
+        Vector3 endPos = destinationTile.transform.position;
+
+        float distance = Vector3.Distance(startPos, endPos);
+        float duration = distance / movementSpeed;
+        float elapsed = 0f;
+
+        Debug.Log($"Moving monster from {startPos} to {endPos}, distance: {distance}, duration: {duration}s");
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            float smoothT = Mathf.SmoothStep(0, 1, t);
+            monsterObj.transform.position = Vector3.Lerp(startPos, endPos, smoothT);
+
+            yield return null;
+        }
+
+        monsterObj.transform.position = endPos;
+
+        movementOriginTile.ClearOccupation();
+        destinationTile.SetOccupation(Tile.OccupationType.Monster, monsterObj);
+
+        Debug.Log($"Monster moved from {movementOriginTile.GridPosition} to {destinationTile.GridPosition}. 1 AP consumed (TODO: implement AP system)");
+
+        yield return new UnityEngine.WaitForSeconds(0.3f);
+        destinationTile.ResetVisuals();
+
+        ExitMovementMode();
+    }
+
     void HandleAbilitiesAction(Tile tile)
     {
         Debug.Log($"Abilities menu requested for monster at {tile.GridPosition}");
-        // TODO: Open abilities submenu
-        CloseRadialMenu();
     }
-    
+
     void OnDestroy()
     {
         if (leftClickAction != null)
             leftClickAction.performed -= OnLeftClick;
-        
+
         if (rightClickAction != null)
             rightClickAction.performed -= OnRightClick;
-        
+
         if (inputActions != null)
             inputActions.Disable();
     }

@@ -157,7 +157,7 @@ public class RadialMenu : MonoBehaviour
             Vector3 tilePosition = targetTile.transform.position;
             transform.position = tilePosition + Vector3.up * 2.0f;
 
-            Debug.Log($"Menu positioned at {transform.position}");
+            // Debug.Log($"Menu positioned at {transform.position}"); // Removed: was logging every frame
         }
 
         // BILLBOARD: Make the menu always face the camera
@@ -176,8 +176,11 @@ public class RadialMenu : MonoBehaviour
 
     void Update()
     {
-        // Continuously update position to face camera
-        PositionMenu();
+        // Billboard effect: make menu face camera (position set once in Initialize)
+        if (Camera.main != null)
+        {
+            transform.rotation = Quaternion.LookRotation(transform.position - Camera.main.transform.position);
+        }
     }
 
     void LateUpdate()
@@ -230,6 +233,35 @@ public class RadialMenu : MonoBehaviour
         {
             this.label = label;
             this.iconSprite = icon;
+        }
+    }
+
+    public void ShowAbilitiesSubMenu()
+    {
+        // 1. Clear existing buttons (Movement, Abilities, etc.)
+        foreach (var btn in buttons) Destroy(btn.gameObject);
+        buttons.Clear();
+
+        // 2. Get the actual learned attacks from the monster
+        Monster monster = targetTile.GetMonster();
+        if (monster == null) return;
+
+        var attacks = monster.GetAttacks(); // This returns IReadOnlyList<MonsterAttack>
+
+        // 3. Create new buttons for each attack
+        float angleStep = 360f / attacks.Count;
+        for (int i = 0; i < attacks.Count; i++)
+        {
+            float angle = i * angleStep * Mathf.Deg2Rad;
+            Vector3 pos = new Vector3(Mathf.Cos(angle) * menuRadius, Mathf.Sin(angle) * menuRadius, 0);
+
+            GameObject btnObj = Instantiate(buttonPrefab, transform);
+            btnObj.transform.localPosition = pos;
+
+            RadialMenuButton btn = btnObj.GetComponent<RadialMenuButton>();
+            // Initialize with the Attack Display Name from AttackData
+            btn.Initialize(attacks[i].data.DisplayName, null, this);
+            buttons.Add(btn);
         }
     }
 }
