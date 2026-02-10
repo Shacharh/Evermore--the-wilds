@@ -45,9 +45,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9f1c48c7daece5f46ae0c06798ec1a13, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RadialMenu
-  menuRadius: 1.5
+  menuRadius: 150
   buttonPrefab: {fileID: 3521064110572353182, guid: 9d54899e02db7e6439450f71a2f7c501, type: 3}
-  buttonsContainer: {fileID: 553803511956208494}
 --- !u!1 &3359532110178638938
 GameObject:
   m_ObjectHideFlags: 0

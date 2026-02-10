@@ -141,10 +141,10 @@ public class InputManager : MonoBehaviour
         {
             Destroy(activeMenu.gameObject);
         }
-        
+
         // Calculate world position above the tile
         Vector3 menuPosition = tile.transform.position + Vector3.up * 2.0f;
-        
+
         // Instantiate menu
         activeMenu = Instantiate(radialMenuPrefab, menuPosition, Quaternion.identity);
         activeMenu.Initialize(tile, this);
