@@ -30,6 +30,13 @@ public class RadialMenuButton : MonoBehaviour, IPointerEnterHandler, IPointerExi
     private Vector3 targetScale;
     private bool isHovered = false;
 
+    void Start()
+    {
+        // Set original scale after the object is fully initialized
+        originalScale = transform.localScale;
+        targetScale = originalScale;
+    }
+
     void Awake()
     {
         Debug.Log($"RadialMenuButton Awake: {gameObject.name}");
@@ -203,4 +210,4 @@ public class RadialMenuButton : MonoBehaviour, IPointerEnterHandler, IPointerExi
             targetColor = hoverColor;
         }
     }
-}
+}//old vertion
