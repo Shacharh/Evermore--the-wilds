@@ -27,7 +27,7 @@ public class InputManager : MonoBehaviour
 
     // Time-based click prevention
     private float menuOpenTime = -1f;
-    private const float MenuClickDelay = 0.1f;
+    private const float MenuClickDelay = 0.2f;//0.1f;
 
     private enum InputState
     {
@@ -111,23 +111,38 @@ public class InputManager : MonoBehaviour
         }
     }
 
-    /*void OnLeftClick(InputAction.CallbackContext context)
+
+    void OnLeftClick(InputAction.CallbackContext context)
     {
-        // NEW: Proper UI check for the New Input System
-        if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
-        {
-            Debug.Log("Click blocked by UI");
-            return;
-        }
-        
+        Debug.Log($"=== CLICK FRAME {Time.frameCount} TIME {Time.time} ===");
+        Debug.Log($"Menu open time: {menuOpenTime}, Delay check: {Time.time - menuOpenTime}");
+
         // CRITICAL FIX: Prevent clicks immediately after opening menu
         if (Time.time - menuOpenTime < MenuClickDelay)
         {
-            Debug.Log("Ignoring click - menu just opened");
+            Debug.Log($"BLOCKED - Menu just opened (delay: {Time.time - menuOpenTime:F3}s < {MenuClickDelay}s)");
             return;
         }
 
-        if (currentHoveredTile == null) return;
+        // NEW INPUT SYSTEM FIX: Check if pointer is over UI
+        bool isOverUI = IsPointerOverUIElement();
+        Debug.Log($"Is over UI: {isOverUI}");
+
+        if (isOverUI)
+        {
+            Debug.Log("BLOCKED - Click is over UI element");
+            return;
+        }
+
+        Debug.Log($"Hovered tile: {(currentHoveredTile != null ? currentHoveredTile.GridPosition.ToString() : "NULL")}");
+
+        if (currentHoveredTile == null)
+        {
+            Debug.Log("BLOCKED - No tile hovered");
+            return;
+        }
+
+        Debug.Log($"PROCESSING CLICK - State: {currentState}");
 
         switch (currentState)
         {
@@ -143,17 +158,34 @@ public class InputManager : MonoBehaviour
                 Debug.Log("Monster is moving, please wait...");
                 break;
         }
-    }*/
-
-    void OnLeftClick(InputAction.CallbackContext context)
-    {
-        // Ignore UI during the showcase to prevent menu conflicts
-        if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) return;
-
-        if (currentHoveredTile == null) return;
-
-        HandleAlphaShowcaseLogic(currentHoveredTile);
     }
+    private bool IsPointerOverUIElement()
+{
+    if (UnityEngine.EventSystems.EventSystem.current == null)
+        return false;
+
+    // Create pointer event data
+    var pointerData = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current)
+    {
+        position = mousePositionAction.ReadValue<Vector2>()
+    };
+
+    // Raycast against UI
+    var results = new System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult>();
+    UnityEngine.EventSystems.EventSystem.current.RaycastAll(pointerData, results);
+
+    return results.Count > 0;
+}
+
+    //void OnLeftClick(InputAction.CallbackContext context)
+    //{
+    //    // Ignore UI during the showcase to prevent menu conflicts
+    //    if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) return;
+
+    //    if (currentHoveredTile == null) return;
+
+    //    HandleAlphaShowcaseLogic(currentHoveredTile);
+    //}
 
     void HandleAlphaShowcaseLogic(Tile clickedTile)
     {
@@ -195,31 +227,32 @@ public class InputManager : MonoBehaviour
 
     void HandleNormalClick(Tile clickedTile)
     {
+        Debug.Log("Current total frame count: " + Time.frameCount);
         if (clickedTile == null) return;
 
-        // 1. If we are clicking a tile that is already selected, do nothing.
-        if (selectedTile == clickedTile) return;
+        // 1. If clicking the same tile that's already selected, do nothing
+        if (selectedTile == clickedTile)
+        {
+            Debug.Log("Same tile clicked, ignoring");
+            return;
+        }
 
-        // 2. If we have a menu open and we click a DIFFERENT tile, close the old one.
-        if (activeMenu != null && clickedTile != null)
+        // 2. If clicking a different tile, close old menu and clear old selection
+        if (activeMenu != null)
         {
             CloseRadialMenu();
         }
 
-        // 3. Clear old selection visuals
         if (selectedTile != null)
         {
             selectedTile.SetSelected(false);
             selectedTile.ResetVisuals();
         }
 
-        // 4. Set new selection and open menu ONLY if we actually hit a tile
+        // 3. Set new selection and open menu
         selectedTile = clickedTile;
-        if (selectedTile != null)
-        {
-            selectedTile.SetSelected(true);
-            OpenRadialMenu(selectedTile);
-        }
+        selectedTile.SetSelected(true);
+        OpenRadialMenu(selectedTile);
     }
     void HandleMovementClick(Tile clickedTile)
     {
@@ -268,6 +301,8 @@ public class InputManager : MonoBehaviour
 
     void OpenRadialMenu(Tile tile)
     {
+        Debug.Log($">>> OPENING MENU - Frame {Time.frameCount}, Time {Time.time}");
+
         if (radialMenuPrefab == null)
         {
             Debug.LogWarning("RadialMenu prefab not assigned!");
@@ -277,6 +312,7 @@ public class InputManager : MonoBehaviour
         // Destroy existing menu if any
         if (activeMenu != null)
         {
+            Debug.Log("Destroying old menu before opening new one");
             Destroy(activeMenu.gameObject);
         }
 
@@ -287,12 +323,13 @@ public class InputManager : MonoBehaviour
         // Record when menu opens
         menuOpenTime = Time.time;
 
-        Debug.Log($"Radial menu opened for tile {tile.GridPosition} at time {menuOpenTime}");
+        Debug.Log($"<<< MENU OPENED - Frame {Time.frameCount}, menuOpenTime set to {menuOpenTime}");
     }
 
     public void CloseRadialMenu()
     {
-        Debug.Log("Closing radial menu");
+        Debug.Log($"!!! CLOSING MENU - Frame {Time.frameCount}, Time {Time.time}");
+        Debug.Log($"Stack trace: {System.Environment.StackTrace}");
 
         if (activeMenu != null)
         {
@@ -444,4 +481,4 @@ public class InputManager : MonoBehaviour
         if (inputActions != null)
             inputActions.Disable();
     }
-}
+}//old vertion
