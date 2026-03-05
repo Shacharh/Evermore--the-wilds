@@ -17,6 +17,10 @@ public class MonsterData : ScriptableObject
     public int baseCritMod;
     [Range(0, 100)] public int baseDodge;
 
+    [Header("Action Points")]
+    [Tooltip("AP cost for this monster to move one tile.")]
+    public int moveCost = 1;
+
     [Tooltip("Attacks this monster can learn and the level at which it learns them")]
     public AttackEntry[] movePool;
 
@@ -29,14 +33,21 @@ public class MonsterData : ScriptableObject
         baseCritRate = Mathf.Clamp(baseCritRate, 0, 100);
         baseCritMod = Mathf.Max(0, baseCritMod);
         baseDodge = Mathf.Clamp(baseDodge, 0, 100);
+        moveCost = Mathf.Max(1, moveCost);
     }
-
 }
-
 
 [System.Serializable]
 public class AttackEntry
 {
-    public AttackData attack;  // The ID of the attack
-    [Range(1,100)] public int levelLearned; // Level at which the monster learns this attack
+    public AttackData attack;
+    [Range(1, 100)] public int levelLearned;
+
+    /// <summary>
+    /// The Animator Trigger to fire when this attack is executed.
+    /// Shows a dropdown of every Trigger parameter found in the project's
+    /// AnimatorControllers -- no typos possible.
+    /// </summary>
+    [AnimatorTrigger]
+    public string AnimationTrigger;
 }

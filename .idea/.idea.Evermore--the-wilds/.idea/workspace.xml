@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="b768b79d-c1b7-466e-881a-f3c06b76f31b" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Animations/Dragon/Attack_1.anim" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/Animations/Dragon/Attack_1.anim" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Animations/Dragon/Attack_1.anim.meta" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/Animations/Dragon/Attack_1.anim.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Animations/Dragon/Dragon.fbx.meta" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/Animations/Dragon/Dragon.fbx.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Animations/Dragon/Flyting_finishes.anim" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/Animations/Dragon/Flyting_finishes.anim" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Animations/Dragon/Flyting_finishes.anim.meta" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/Animations/Dragon/Flyting_finishes.anim.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Animations/Dragon/Getting_Hit.anim" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/Animations/Dragon/Getting_Hit.anim" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Animations/Dragon/Getting_Hit.anim.meta" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/Animations/Dragon/Getting_Hit.anim.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Animations/Dragon/Idle_Smooth.anim" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/Animations/Dragon/Idle_Smooth.anim" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Animations/Dragon/Idle_Smooth.anim.meta" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/Animations/Dragon/Idle_Smooth.anim.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Dragons/Dragons/1 - Little Tiger Dragon/Models/Tiger Drago Toon.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/Monsters/Models/Dragons/Dragons/1 - Little Tiger Dragon/Models/Tiger Drago Toon.prefab" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 8
+}]]></component>
+  <component name="ProjectId" id="3AUOYlK8EMZB8b7XQsg6L7HYK6m" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "Peleg__Animator",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="b768b79d-c1b7-466e-881a-f3c06b76f31b" name="Changes" comment="" />
+      <created>1772643733387</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1772643733387</updated>
+      <workItem from="1772643735183" duration="3000" />
+    </task>
+    <servers />
+  </component>
+  <component name="UnityProjectConfiguration" hasMinimizedUI="true" />
+  <component name="UnityProjectDiscoverer">
+    <option name="unityProject" value="true" />
+    <option name="unityProjectFolder" value="true" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+  </component>
+</project>

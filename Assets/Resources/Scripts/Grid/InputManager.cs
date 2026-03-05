@@ -1,12 +1,18 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+/// <summary>
+/// Handles all player input on the grid.
+/// AP integration: before any action, asks PlayerTurnController whether
+/// the AP can be afforded and whether the monster has already acted.
+/// </summary>
 public class InputManager : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private GridManager gridManager;
     [SerializeField] private RadialMenu radialMenuPrefab;
     [SerializeField] private Camera mainCamera;
+    [SerializeField] private PlayerTurnController playerTurnController; // <- NEW
 
     [Header("Input Settings")]
     [SerializeField] private InputActionAsset inputActions;
@@ -17,29 +23,32 @@ public class InputManager : MonoBehaviour
     [SerializeField] private Color selectedMoveColor = new Color(0.2f, 1f, 0.3f, 0.7f);
     [SerializeField] private float movementSpeed = 5f;
 
+    // -- Input Actions ---------------------------------------------------------
+
     private InputAction mousePositionAction;
     private InputAction leftClickAction;
     private InputAction rightClickAction;
+
+    // -- Hover / Selection State -----------------------------------------------
 
     private Tile currentHoveredTile;
     private Tile selectedTile;
     private RadialMenu activeMenu;
 
-    // Time-based click prevention
+    // Time-based click prevention (unchanged from original)
     private float menuOpenTime = -1f;
-    private const float MenuClickDelay = 0.2f;//0.1f;
+    private const float MenuClickDelay = 0.2f;
 
-    private enum InputState
-    {
-        Normal,
-        MovementMode,
-        Moving
-    }
+    // -- Input State -----------------------------------------------------------
 
+    private enum InputState { Normal, MovementMode, Moving }
     private InputState currentState = InputState.Normal;
+
     private Monster movingMonster;
     private Tile movementOriginTile;
     private System.Collections.Generic.List<Tile> validMovementTiles;
+
+    // -- Lifecycle -------------------------------------------------------------
 
     void Awake()
     {
@@ -48,6 +57,10 @@ public class InputManager : MonoBehaviour
 
         if (gridManager == null)
             gridManager = FindFirstObjectByType<GridManager>();
+
+        // Auto-find PlayerTurnController if not assigned in Inspector
+        if (playerTurnController == null)
+            playerTurnController = FindFirstObjectByType<PlayerTurnController>();
 
         if (inputActions != null)
         {
@@ -58,11 +71,8 @@ public class InputManager : MonoBehaviour
                 leftClickAction = playerMap.FindAction("LeftClick");
                 rightClickAction = playerMap.FindAction("RightClick");
 
-                if (leftClickAction != null)
-                    leftClickAction.performed += OnLeftClick;
-
-                if (rightClickAction != null)
-                    rightClickAction.performed += OnRightClick;
+                if (leftClickAction != null) leftClickAction.performed += OnLeftClick;
+                if (rightClickAction != null) rightClickAction.performed += OnRightClick;
 
                 inputActions.Enable();
             }
@@ -73,6 +83,8 @@ public class InputManager : MonoBehaviour
     {
         HandleTileHovering();
     }
+
+    // -- Hovering (unchanged) --------------------------------------------------
 
     void HandleTileHovering()
     {
@@ -88,9 +100,7 @@ public class InputManager : MonoBehaviour
             if (hitTile != null && hitTile != currentHoveredTile)
             {
                 if (currentHoveredTile != null)
-                {
                     currentHoveredTile.SetHovered(false);
-                }
 
                 currentHoveredTile = hitTile;
 
@@ -111,38 +121,17 @@ public class InputManager : MonoBehaviour
         }
     }
 
+    // -- Left Click ------------------------------------------------------------
 
     void OnLeftClick(InputAction.CallbackContext context)
     {
-        Debug.Log($"=== CLICK FRAME {Time.frameCount} TIME {Time.time} ===");
-        Debug.Log($"Menu open time: {menuOpenTime}, Delay check: {Time.time - menuOpenTime}");
+        // Guard: menu just opened
+        if (Time.time - menuOpenTime < MenuClickDelay) return;
 
-        // CRITICAL FIX: Prevent clicks immediately after opening menu
-        if (Time.time - menuOpenTime < MenuClickDelay)
-        {
-            Debug.Log($"BLOCKED - Menu just opened (delay: {Time.time - menuOpenTime:F3}s < {MenuClickDelay}s)");
-            return;
-        }
+        // Guard: clicked on UI
+        if (IsPointerOverUIElement()) return;
 
-        // NEW INPUT SYSTEM FIX: Check if pointer is over UI
-        bool isOverUI = IsPointerOverUIElement();
-        Debug.Log($"Is over UI: {isOverUI}");
-
-        if (isOverUI)
-        {
-            Debug.Log("BLOCKED - Click is over UI element");
-            return;
-        }
-
-        Debug.Log($"Hovered tile: {(currentHoveredTile != null ? currentHoveredTile.GridPosition.ToString() : "NULL")}");
-
-        if (currentHoveredTile == null)
-        {
-            Debug.Log("BLOCKED - No tile hovered");
-            return;
-        }
-
-        Debug.Log($"PROCESSING CLICK - State: {currentState}");
+        if (currentHoveredTile == null) return;
 
         switch (currentState)
         {
@@ -159,134 +148,68 @@ public class InputManager : MonoBehaviour
                 break;
         }
     }
+
     private bool IsPointerOverUIElement()
-{
-    if (UnityEngine.EventSystems.EventSystem.current == null)
-        return false;
-
-    // Create pointer event data
-    var pointerData = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current)
     {
-        position = mousePositionAction.ReadValue<Vector2>()
-    };
+        if (UnityEngine.EventSystems.EventSystem.current == null) return false;
 
-    // Raycast against UI
-    var results = new System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult>();
-    UnityEngine.EventSystems.EventSystem.current.RaycastAll(pointerData, results);
+        var pointerData = new UnityEngine.EventSystems.PointerEventData(
+            UnityEngine.EventSystems.EventSystem.current)
+        { position = mousePositionAction.ReadValue<Vector2>() };
 
-    return results.Count > 0;
-}
+        var results = new System.Collections.Generic.List<
+            UnityEngine.EventSystems.RaycastResult>();
 
-    //void OnLeftClick(InputAction.CallbackContext context)
-    //{
-    //    // Ignore UI during the showcase to prevent menu conflicts
-    //    if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) return;
-
-    //    if (currentHoveredTile == null) return;
-
-    //    HandleAlphaShowcaseLogic(currentHoveredTile);
-    //}
-
-    void HandleAlphaShowcaseLogic(Tile clickedTile)
-    {
-        // CASE 1: We click a monster (Initial Selection OR Changing Selection)
-        if (clickedTile.Occupation == Tile.OccupationType.Monster)
-        {
-            // Clear old selection visuals if they exist
-            if (selectedTile != null) selectedTile.SetSelected(false);
-
-            selectedTile = clickedTile;
-            movingMonster = clickedTile.GetMonster();
-            selectedTile.SetSelected(true);
-
-            Debug.Log($"Alpha: Selected Monster {movingMonster.name} at {clickedTile.GridPosition}");
-            return;
-        }
-
-        // CASE 2: We have a monster selected and click an EMPTY tile (Movement)
-        if (selectedTile != null && movingMonster != null && clickedTile.IsWalkable())
-        {
-            Debug.Log($"Alpha: Moving {movingMonster.name} to {clickedTile.GridPosition}");
-
-            // Start the movement coroutine you already have!
-            movementOriginTile = selectedTile;
-            StartCoroutine(MoveMonsterToTile(clickedTile));
-
-            // Note: MoveMonsterToTile already calls ExitMovementMode which clears variables
-            return;
-        }
-
-        // CASE 3: Clicked something else or empty ground without a selection
-        if (selectedTile != null)
-        {
-            selectedTile.SetSelected(false);
-            selectedTile = null;
-            movingMonster = null;
-        }
+        UnityEngine.EventSystems.EventSystem.current.RaycastAll(pointerData, results);
+        return results.Count > 0;
     }
+
+    // -- Normal Click ----------------------------------------------------------
 
     void HandleNormalClick(Tile clickedTile)
     {
-        Debug.Log("Current total frame count: " + Time.frameCount);
         if (clickedTile == null) return;
 
-        // 1. If clicking the same tile that's already selected, do nothing
-        if (selectedTile == clickedTile)
+        // -- NEW: block all selection if it's not the player's turn -------------
+        if (TurnManager.Instance != null && !TurnManager.Instance.IsPlayerTurn)
         {
-            Debug.Log("Same tile clicked, ignoring");
+            Debug.Log("[InputManager] Not the player's turn.");
             return;
         }
 
-        // 2. If clicking a different tile, close old menu and clear old selection
-        if (activeMenu != null)
-        {
-            CloseRadialMenu();
-        }
+        // Clicked the already-selected tile -- do nothing
+        if (selectedTile == clickedTile) return;
 
-        if (selectedTile != null)
-        {
-            selectedTile.SetSelected(false);
-            selectedTile.ResetVisuals();
-        }
+        // Close any open menu and clear old selection
+        if (activeMenu != null) CloseRadialMenu();
+        if (selectedTile != null) { selectedTile.SetSelected(false); selectedTile.ResetVisuals(); }
 
-        // 3. Set new selection and open menu
         selectedTile = clickedTile;
         selectedTile.SetSelected(true);
         OpenRadialMenu(selectedTile);
     }
+
+    // -- Movement Click --------------------------------------------------------
+
     void HandleMovementClick(Tile clickedTile)
     {
         if (IsValidMovementDestination(clickedTile))
-        {
-            Debug.Log($"Moving monster to {clickedTile.GridPosition}");
             StartCoroutine(MoveMonsterToTile(clickedTile));
-        }
         else
-        {
-            Debug.Log("Invalid movement destination!");
-        }
+            Debug.Log("[InputManager] Invalid movement destination.");
     }
 
-    void OnRightClick(InputAction.CallbackContext context)
-    {
-        CancelCurrentAction();
-    }
+    // -- Right Click -----------------------------------------------------------
+
+    void OnRightClick(InputAction.CallbackContext context) => CancelCurrentAction();
 
     void CancelCurrentAction()
     {
         switch (currentState)
         {
             case InputState.Normal:
-                if (activeMenu != null)
-                {
-                    CloseRadialMenu();
-                }
-
-                if (selectedTile != null)
-                {
-                    selectedTile.SetSelected(false);
-                    selectedTile = null;
-                }
+                if (activeMenu != null) CloseRadialMenu();
+                if (selectedTile != null) { selectedTile.SetSelected(false); selectedTile = null; }
                 break;
 
             case InputState.MovementMode:
@@ -294,62 +217,36 @@ public class InputManager : MonoBehaviour
                 break;
 
             case InputState.Moving:
-                Debug.Log("Cannot cancel while monster is moving");
+                Debug.Log("Cannot cancel while monster is moving.");
                 break;
         }
     }
 
+    // -- Radial Menu -----------------------------------------------------------
+
     void OpenRadialMenu(Tile tile)
     {
-        Debug.Log($">>> OPENING MENU - Frame {Time.frameCount}, Time {Time.time}");
+        if (radialMenuPrefab == null) { Debug.LogWarning("RadialMenu prefab not assigned!"); return; }
 
-        if (radialMenuPrefab == null)
-        {
-            Debug.LogWarning("RadialMenu prefab not assigned!");
-            return;
-        }
+        if (activeMenu != null) Destroy(activeMenu.gameObject);
 
-        // Destroy existing menu if any
-        if (activeMenu != null)
-        {
-            Debug.Log("Destroying old menu before opening new one");
-            Destroy(activeMenu.gameObject);
-        }
-
-        Vector3 menuPosition = tile.transform.position + Vector3.up * 2.0f;
-        activeMenu = Instantiate(radialMenuPrefab, menuPosition, Quaternion.identity);
+        Vector3 menuPos = tile.transform.position + Vector3.up * 2f;
+        activeMenu = Instantiate(radialMenuPrefab, menuPos, Quaternion.identity);
         activeMenu.Initialize(tile, this);
 
-        // Record when menu opens
         menuOpenTime = Time.time;
-
-        Debug.Log($"<<< MENU OPENED - Frame {Time.frameCount}, menuOpenTime set to {menuOpenTime}");
     }
 
     public void CloseRadialMenu()
     {
-        Debug.Log($"!!! CLOSING MENU - Frame {Time.frameCount}, Time {Time.time}");
-        Debug.Log($"Stack trace: {System.Environment.StackTrace}");
-
-        if (activeMenu != null)
-        {
-            Destroy(activeMenu.gameObject);
-            activeMenu = null;
-        }
-
-        if (selectedTile != null)
-        {
-            selectedTile.SetSelected(false);
-            selectedTile = null;
-        }
-
-        // Reset menu time
+        if (activeMenu != null) { Destroy(activeMenu.gameObject); activeMenu = null; }
+        if (selectedTile != null) { selectedTile.SetSelected(false); selectedTile = null; }
         menuOpenTime = -1f;
     }
 
     public void OnMenuActionSelected(string action, Tile tile)
     {
-        Debug.Log($"Action '{action}' selected for tile {tile.GridPosition}");
+        Debug.Log($"[InputManager] Action '{action}' for tile {tile.GridPosition}");
 
         switch (action)
         {
@@ -372,15 +269,30 @@ public class InputManager : MonoBehaviour
         }
     }
 
+    // -- Movement Action -------------------------------------------------------
+
     void HandleMovementAction(Tile tile)
     {
-        Debug.Log($"Movement selected for monster at {tile.GridPosition}");
-
         Monster monster = tile.GetMonster();
-        if (monster == null)
+        if (monster == null) { Debug.LogError("No monster on tile!"); return; }
+
+        // -- NEW: AP & acted checks before entering movement mode ---------------
+        if (playerTurnController != null)
         {
-            Debug.LogError("No monster found on tile!");
-            return;
+            if (monster.HasActed)
+            {
+                Debug.Log($"[InputManager] {monster.name} has already acted this turn.");
+                CloseRadialMenu();
+                return;
+            }
+
+            if (!playerTurnController.CanAfford(monster.MoveCost))
+            {
+                Debug.Log($"[InputManager] Not enough AP to move {monster.name}. " +
+                          $"Needs {monster.MoveCost}, has {playerTurnController.CurrentAP}.");
+                CloseRadialMenu();
+                return;
+            }
         }
 
         CloseRadialMenu();
@@ -393,21 +305,17 @@ public class InputManager : MonoBehaviour
         movingMonster = monster;
         movementOriginTile = originTile;
 
-        int movementRange = Mathf.CeilToInt(monster.Speed / 20f);
-        movementRange = Mathf.Max(1, movementRange);
-
-        validMovementTiles = gridManager.GetTilesInRange(originTile, movementRange, walkableOnly: true);
+        int range = Mathf.Max(1, Mathf.CeilToInt(monster.Speed / 20f));
+        validMovementTiles = gridManager.GetTilesInRange(originTile, range, walkableOnly: true);
         gridManager.HighlightTiles(validMovementTiles, movementRangeColor, 0.15f);
 
-        Debug.Log($"Movement mode. Monster Speed: {monster.Speed}, Range: {movementRange}, {validMovementTiles.Count} tiles highlighted.");
+        Debug.Log($"[InputManager] Movement mode. Speed {monster.Speed}, " +
+                  $"range {range}, {validMovementTiles.Count} valid tiles.");
     }
 
     void ExitMovementMode()
     {
-        Debug.Log("Exiting movement mode");
-
         gridManager.ClearAllHighlights();
-
         currentState = InputState.Normal;
         movingMonster = null;
         movementOriginTile = null;
@@ -415,10 +323,9 @@ public class InputManager : MonoBehaviour
     }
 
     bool IsValidMovementDestination(Tile tile)
-    {
-        if (validMovementTiles == null) return false;
-        return validMovementTiles.Contains(tile);
-    }
+        => validMovementTiles != null && validMovementTiles.Contains(tile);
+
+    // -- Move Coroutine --------------------------------------------------------
 
     System.Collections.IEnumerator MoveMonsterToTile(Tile destinationTile)
     {
@@ -428,57 +335,72 @@ public class InputManager : MonoBehaviour
             yield break;
         }
 
+        // -- NEW: Spend AP before moving ----------------------------------------
+        if (playerTurnController != null)
+        {
+            if (!playerTurnController.TrySpendAPForMove(movingMonster))
+            {
+                // AP refused -- cancel movement
+                ExitMovementMode();
+                yield break;
+            }
+        }
+
         currentState = InputState.Moving;
         gridManager.ClearAllHighlights();
         destinationTile.Highlight(selectedMoveColor, 0.2f);
 
+        // Slide monster to destination
         GameObject monsterObj = movingMonster.gameObject;
         Vector3 startPos = monsterObj.transform.position;
         Vector3 endPos = destinationTile.transform.position;
-
         float distance = Vector3.Distance(startPos, endPos);
         float duration = distance / movementSpeed;
         float elapsed = 0f;
 
-        Debug.Log($"Moving monster from {startPos} to {endPos}, distance: {distance}, duration: {duration}s");
-
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
-            float t = elapsed / duration;
-            float smoothT = Mathf.SmoothStep(0, 1, t);
-            monsterObj.transform.position = Vector3.Lerp(startPos, endPos, smoothT);
-
+            monsterObj.transform.position =
+                Vector3.Lerp(startPos, endPos, Mathf.SmoothStep(0f, 1f, elapsed / duration));
             yield return null;
         }
 
         monsterObj.transform.position = endPos;
 
+        // Update tile occupancy
         movementOriginTile.ClearOccupation();
         destinationTile.SetOccupation(Tile.OccupationType.Monster, monsterObj);
 
-        Debug.Log($"Monster moved from {movementOriginTile.GridPosition} to {destinationTile.GridPosition}. 1 AP consumed (TODO: implement AP system)");
+        Debug.Log($"[InputManager] {movingMonster.name} moved to {destinationTile.GridPosition}. " +
+                  $"AP remaining: {playerTurnController?.CurrentAP}");
 
         yield return new UnityEngine.WaitForSeconds(0.3f);
         destinationTile.ResetVisuals();
 
         ExitMovementMode();
+
+        // -- NEW: after move, check if the turn should auto-end -----------------
+        playerTurnController?.CheckAutoEndTurn();
     }
+
+    // -- Abilities Action ------------------------------------------------------
 
     void HandleAbilitiesAction(Tile tile)
     {
-        Debug.Log($"Abilities menu requested for monster at {tile.GridPosition}");
+        // TODO: Implement attack target selection.
+        // When an attack is chosen, call:
+        //   playerTurnController.TrySpendAPForAttack(monster)
+        // before executing monster.ExecuteAttack(target, attackIndex, isDirect).
+        Debug.Log($"[InputManager] Abilities requested for {tile.GridPosition}.");
     }
+
+    // -- Cleanup ---------------------------------------------------------------
 
     void OnDestroy()
     {
-        if (leftClickAction != null)
-            leftClickAction.performed -= OnLeftClick;
-
-        if (rightClickAction != null)
-            rightClickAction.performed -= OnRightClick;
-
-        if (inputActions != null)
-            inputActions.Disable();
+        if (leftClickAction != null) leftClickAction.performed -= OnLeftClick;
+        if (rightClickAction != null) rightClickAction.performed -= OnRightClick;
+        if (inputActions != null) inputActions.Disable();
     }
-}//old vertion
+}
