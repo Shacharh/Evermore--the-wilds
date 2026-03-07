@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 4853264167776221705}
   - component: {fileID: 7288382376213174419}
   m_Layer: 0
-  m_Name: FireMon
+  m_Name: FireMonster
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -27,7 +27,7 @@ Transform:
   m_GameObject: {fileID: 1137650172831438392}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 8.86721, y: -0.07309, z: 3.39376}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -49,8 +49,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Monster
   data: {fileID: 11400000, guid: ab838ec2f746d454d83e56daec915847, type: 2}
   enemyMonster: 0
-  level: 0
+  level: 1
   learnedAttacks: []
+  anim: {fileID: 0}
 --- !u!114 &7288382376213174419
 MonoBehaviour:
   m_ObjectHideFlags: 0
