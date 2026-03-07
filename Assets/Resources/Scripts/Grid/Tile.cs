@@ -48,6 +48,14 @@ public class Tile : MonoBehaviour
         tileRenderer = GetComponent<Renderer>();
         propertyBlock = new MaterialPropertyBlock();
     }
+
+    void OnEnable()
+    {
+        // MaterialPropertyBlock is not serialized by Unity, so it gets wiped
+        // on domain reloads (script recompilation). Re-create it if needed.
+        if (propertyBlock == null)
+            propertyBlock = new MaterialPropertyBlock();
+    }
     
     public void Initialize(int x, int y, int gridHeight)
     {

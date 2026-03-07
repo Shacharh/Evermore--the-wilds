@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
+using System;
 
 public class RadialMenuButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
@@ -29,6 +30,8 @@ public class RadialMenuButton : MonoBehaviour, IPointerEnterHandler, IPointerExi
     private Color targetColor;
     private Vector3 targetScale;
     private bool isHovered = false;
+    private RadialActionType actionType;
+    private System.Action<RadialActionType> onActionSelected;
 
     void Start()
     {
@@ -138,6 +141,15 @@ public class RadialMenuButton : MonoBehaviour, IPointerEnterHandler, IPointerExi
         Debug.Log($"=== Button '{label}' initialization complete ===\n");
     }
 
+    public void Setup(string label, Sprite icon, RadialActionType type, System.Action<RadialActionType> callback)
+    {
+        labelText.text = label;
+        if (icon != null) iconImage.sprite = icon;
+        
+        actionType = type;
+        onActionSelected = callback;
+    }
+
     void Update()
     {
         // Smooth animations
@@ -181,18 +193,13 @@ public class RadialMenuButton : MonoBehaviour, IPointerEnterHandler, IPointerExi
     {
         Debug.Log($"*** BUTTON CLICKED: {actionLabel} ***");
 
+        // Invoke the callback with the action type
+        onActionSelected?.Invoke(actionType);
+
         // Visual feedback
         StartCoroutine(ClickAnimation());
 
-        // Notify parent menu
-        if (parentMenu != null)
-        {
-            parentMenu.OnButtonClicked(actionLabel);
-        }
-        else
-        {
-            Debug.LogError("Parent menu is NULL!");
-        }
+        // parentMenu notification removed — radial menu receives the selection via the callback above
     }
 
     private System.Collections.IEnumerator ClickAnimation()
@@ -210,4 +217,4 @@ public class RadialMenuButton : MonoBehaviour, IPointerEnterHandler, IPointerExi
             targetColor = hoverColor;
         }
     }
-}//old vertion
+}
