@@ -111,7 +111,9 @@ public class Monster : MonoBehaviour
     public int CritRate => CalculateStat(data.baseCritRate, ivCritRate);
     public int CritMod => CalculateStat(data.baseCritMod, ivCritMod);
     public int Dodge => CalculateStat(data.baseDodge, ivDodge);
-    public MonsterData Data => data;
+    public MonsterData Data  => data;
+    /// <summary>Monster's current level — shown in the info panel.</summary>
+    public int         Level => level;
     #endregion
 
     #region Unity Lifecycle

@@ -98,7 +98,7 @@ public class MonsterInfoPanel : MonoBehaviour
         string side = currentMonster.IsEnemy ? "<color=#FF6666>Enemy</color>"
                                               : "<color=#66FF88>Ally</color>";
 
-        titleText.text = $"<b>{displayName}</b>  {side}";
+        titleText.text = $"<b>{displayName}</b>  Lv.{currentMonster.Level}  {side}";
 
         hpText.text = $"HP   <color=#66FF88>{currentMonster.CurrentHP}</color> / {currentMonster.MaxHP}";
 

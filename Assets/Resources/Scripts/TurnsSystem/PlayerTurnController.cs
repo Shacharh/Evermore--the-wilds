@@ -54,6 +54,13 @@ public class PlayerTurnController : TurnController
                           $"'{attack.DisplayName}' (cost {attack.ConsumeActionPoints} AP)");
     }
 
+    /// <summary>
+    /// Validates and charges a variable AP cost for a multi-tile move.
+    /// The cost is pre-calculated by InputManager as ceil(distance / tilesPerAP).
+    /// </summary>
+    public bool TrySpendAPForDistanceMove(Monster monster, int apCost)
+        => TrySpendAP(monster, apCost, $"move ({apCost} AP)");
+
     // -- Helpers ---------------------------------------------------------------
 
     private bool TrySpendAP(Monster monster, int cost, string actionName)

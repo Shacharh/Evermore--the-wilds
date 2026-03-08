@@ -149,6 +149,50 @@ public class GridManager : MonoBehaviour
         return tilesInRange;
     }
     
+    /// <summary>
+    /// Returns all tiles that fall within an attack's shape and range, excluding
+    /// the origin tile itself.
+    ///
+    /// Shapes:
+    ///   sphere  — Manhattan diamond  (|dx|+|dy| ≤ range)
+    ///   cube    — Chebyshev square   (max(|dx|,|dy|) ≤ range)
+    ///   line    — Orthogonal cross   (|dx|=0 OR |dy|=0)
+    ///   column  — Diagonal cross     (|dx|=|dy|)
+    /// </summary>
+    public List<Tile> GetTilesInAttackShape(Tile origin, int range,
+                                             AttackEnum.AttackTargetShape shape)
+    {
+        var result = new List<Tile>();
+        if (origin == null || range <= 0) return result;
+
+        int cx = origin.GridPosition.x;
+        int cy = origin.GridPosition.y;
+
+        for (int x = cx - range; x <= cx + range; x++)
+        for (int y = cy - range; y <= cy + range; y++)
+        {
+            if (!IsValidPosition(x, y)) continue;
+            if (x == cx && y == cy)    continue;   // exclude origin
+
+            int dx = Mathf.Abs(x - cx);
+            int dy = Mathf.Abs(y - cy);
+
+            bool include = shape switch
+            {
+                AttackEnum.AttackTargetShape.sphere => dx + dy <= range,          // diamond
+                AttackEnum.AttackTargetShape.cube   => dx <= range && dy <= range, // square
+                AttackEnum.AttackTargetShape.line   => dx == 0 || dy == 0,        // plus / cross
+                AttackEnum.AttackTargetShape.column => dx == dy,                  // diagonal cross
+                _                                   => dx + dy <= range
+            };
+
+            if (include)
+                result.Add(grid[x, y]);
+        }
+
+        return result;
+    }
+
     // Highlight tiles (useful for showing movement range, attack range, etc.)
     public void HighlightTiles(List<Tile> tiles, Color highlightColor, float heightOffset = 0.1f)
     {

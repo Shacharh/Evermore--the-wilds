@@ -54,13 +54,20 @@ public class Tile : MonoBehaviour
     /// <summary>True while an external Highlight() colour is active on this tile.</summary>
     private bool  hasActiveHighlight;
 
-    // ── Pulse / Vibrate state (used for attack-target highlighting) ───────────
+    // ── Pulse state (used for attack-target colour cycling) ───────────────────
 
     private bool  isPulsing;
     private float pulseTimer;
     private Color pulseColorA;
     private Color pulseColorB;
     private float pulseSpeed;
+
+    // ── Jitter state (horizontal shimmy for enemy tiles in attack range) ──────
+
+    private bool  isJittering;
+    private float jitterTimer;
+    private float jitterAmplitude;
+    private float jitterFrequency;
 
     void Awake()
     {
@@ -137,7 +144,26 @@ public class Tile : MonoBehaviour
         // Smooth height transition
         float currentHeight = transform.position.y - originalPosition.y;
         float newHeight = Mathf.Lerp(currentHeight, currentTargetHeight, Time.deltaTime * transitionSpeed);
-        transform.position = originalPosition + Vector3.up * newHeight;
+
+        // ── Jitter animation (horizontal shimmy for enemy attack-target tiles) ─
+        // An offset is applied on the X axis using a fast sine wave.
+        // When jitter stops the tile snaps back to its originalPosition X/Z.
+        if (isJittering)
+        {
+            jitterTimer += Time.deltaTime;
+            float xOffset = Mathf.Sin(jitterTimer * jitterFrequency * Mathf.PI * 2f) * jitterAmplitude;
+            transform.position = new Vector3(
+                originalPosition.x + xOffset,
+                originalPosition.y + newHeight,
+                originalPosition.z);
+        }
+        else
+        {
+            transform.position = new Vector3(
+                originalPosition.x,
+                originalPosition.y + newHeight,
+                originalPosition.z);
+        }
     }
 
     private void SetColor(Color color)
@@ -170,6 +196,28 @@ public class Tile : MonoBehaviour
     public void StopPulse()
     {
         isPulsing = false;
+    }
+
+    // ── Jitter API ────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Starts a horizontal shimmy on this tile — the tile oscillates left/right
+    /// along the X axis at <paramref name="frequency"/> cycles per second with
+    /// <paramref name="amplitude"/> world-unit amplitude.
+    /// Call <see cref="StopJitter"/> or <see cref="ResetVisuals"/> to stop.
+    /// </summary>
+    public void StartJitter(float amplitude = 0.06f, float frequency = 10f)
+    {
+        isJittering     = true;
+        jitterAmplitude = amplitude;
+        jitterFrequency = frequency;
+        jitterTimer     = 0f;
+    }
+
+    /// <summary>Stops the jitter; the tile snaps back to its original X/Z position.</summary>
+    public void StopJitter()
+    {
+        isJittering = false;
     }
 
     public void SetHovered(bool hovered)
@@ -225,7 +273,8 @@ public class Tile : MonoBehaviour
 
     public void ResetVisuals()
     {
-        StopPulse();           // also stop any active pulse
+        StopPulse();           // stop colour cycle
+        StopJitter();          // stop horizontal shimmy — X/Z restored on next Update
         currentTargetColor    = originalColor;
         currentTargetHeight   = 0f;
         isHovered             = false;

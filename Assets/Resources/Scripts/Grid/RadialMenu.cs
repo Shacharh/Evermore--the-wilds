@@ -164,7 +164,8 @@ public class RadialMenu : MonoBehaviour
             btnRect.anchoredPosition = offset;
             btnRect.sizeDelta        = new Vector2(260f, 100f);
 
-            btn.Setup(attacks[i].data.DisplayName, null, actionType, OnActionSelected);
+            // Pass attacks[i].data so the button can show AttackInfoPanel on hover.
+            btn.Setup(attacks[i].data.DisplayName, null, actionType, OnActionSelected, attacks[i].data);
             buttons.Add(btn);
 
             Debug.Log($"[RadialMenu] Attack btn {i}: '{attacks[i].data.DisplayName}' → {actionType}");

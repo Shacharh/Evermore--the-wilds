@@ -24,12 +24,18 @@ public class InputManager : MonoBehaviour
     [SerializeField] private float movementSpeed = 5f;
 
     [Header("Attack Settings")]
-    [Tooltip("Bright pulse colour A for tiles in attack range.")]
-    [SerializeField] private Color attackPulseColorA = new Color(1f, 0.10f, 0.10f, 0.95f);
-    [Tooltip("Dim pulse colour B for tiles in attack range (creates the pulse effect).")]
-    [SerializeField] private Color attackPulseColorB = new Color(0.55f, 0.02f, 0.02f, 0.50f);
+    [Tooltip("Dim highlight shown on ALL tiles in the attack's range/shape.")]
+    [SerializeField] private Color attackRangeColor   = new Color(0.55f, 0.05f, 0.05f, 0.35f);
+    [Tooltip("Bright pulse colour A for enemy tiles in attack range.")]
+    [SerializeField] private Color attackPulseColorA  = new Color(1f, 0.10f, 0.10f, 0.95f);
+    [Tooltip("Dim pulse colour B for enemy tiles in attack range.")]
+    [SerializeField] private Color attackPulseColorB  = new Color(0.55f, 0.02f, 0.02f, 0.50f);
     [Tooltip("Pulse oscillations per second for attack-target tiles.")]
-    [SerializeField] private float attackPulseSpeed = 2.5f;
+    [SerializeField] private float attackPulseSpeed   = 2.5f;
+    [Tooltip("Horizontal jitter amplitude (world units) for enemy target tiles.")]
+    [SerializeField] private float attackJitterAmplitude  = 0.05f;
+    [Tooltip("Jitter frequency (cycles per second) for enemy target tiles.")]
+    [SerializeField] private float attackJitterFrequency  = 10f;
 
     // -- Input Actions ---------------------------------------------------------
 
@@ -55,6 +61,8 @@ public class InputManager : MonoBehaviour
     private Monster                              movingMonster;
     private Tile                                 movementOriginTile;
     private System.Collections.Generic.List<Tile> validMovementTiles;
+    /// <summary>Tiles covered per 1 AP for the currently-moving monster.</summary>
+    private int                                  movingMonsterTilesPerAP;
 
     // Attack state
     private Monster                              attackingMonster;
@@ -128,6 +136,19 @@ public class InputManager : MonoBehaviour
                 {
                     currentHoveredTile.SetHovered(true);
                 }
+
+                // Show AP cost hint while in movement mode
+                if (currentState == InputState.MovementMode && IsValidMovementDestination(hitTile)
+                    && movementOriginTile != null)
+                {
+                    int dist   = gridManager.GetDistanceBetweenTiles(movementOriginTile, hitTile);
+                    int apCost = Mathf.CeilToInt((float)dist / movingMonsterTilesPerAP);
+                    MoveCostHint.Show($"Move cost: {apCost} AP");
+                }
+                else if (currentState == InputState.MovementMode)
+                {
+                    MoveCostHint.Hide();
+                }
             }
         }
         else
@@ -137,6 +158,8 @@ public class InputManager : MonoBehaviour
                 currentHoveredTile.SetHovered(false);
                 currentHoveredTile = null;
             }
+            if (currentState == InputState.MovementMode)
+                MoveCostHint.Hide();
         }
     }
 
@@ -354,21 +377,30 @@ public class InputManager : MonoBehaviour
         movingMonster      = monster;
         movementOriginTile = originTile;
 
-        int range = Mathf.Max(1, Mathf.CeilToInt(monster.Speed / 20f));
+        // Speed / 10 tiles per AP (min 1 so a Speed of 0 never gets stuck).
+        movingMonsterTilesPerAP = Mathf.Max(1, monster.Speed / 10);
+
+        // Total reachable range = tiles-per-AP × remaining AP
+        int currentAP = playerTurnController != null ? playerTurnController.CurrentAP : 1;
+        int range     = movingMonsterTilesPerAP * currentAP;
+
         validMovementTiles = gridManager.GetTilesInRange(originTile, range, walkableOnly: true);
         gridManager.HighlightTiles(validMovementTiles, movementRangeColor, 0.15f);
 
-        Debug.Log($"[InputManager] Movement mode — speed {monster.Speed}, " +
-                  $"range {range}, {validMovementTiles.Count} valid tiles.");
+        Debug.Log($"[InputManager] Movement mode — Speed {monster.Speed}, " +
+                  $"{movingMonsterTilesPerAP} tile(s)/AP, range {range}, " +
+                  $"{validMovementTiles.Count} valid tile(s).");
     }
 
     void ExitMovementMode()
     {
+        MoveCostHint.Hide();
         gridManager.ClearAllHighlights();
-        currentState       = InputState.Normal;
-        movingMonster      = null;
-        movementOriginTile = null;
-        validMovementTiles = null;
+        currentState            = InputState.Normal;
+        movingMonster           = null;
+        movementOriginTile      = null;
+        validMovementTiles      = null;
+        movingMonsterTilesPerAP = 1;
     }
 
     bool IsValidMovementDestination(Tile tile)
@@ -386,12 +418,18 @@ public class InputManager : MonoBehaviour
 
         if (playerTurnController != null)
         {
-            if (!playerTurnController.TrySpendAPForMove(movingMonster))
+            // Compute the actual AP cost based on distance and tiles-per-AP for this monster.
+            int dist   = gridManager.GetDistanceBetweenTiles(movementOriginTile, destinationTile);
+            int apCost = Mathf.CeilToInt((float)dist / movingMonsterTilesPerAP);
+
+            if (!playerTurnController.TrySpendAPForDistanceMove(movingMonster, apCost))
             {
                 ExitMovementMode();
                 yield break;
             }
         }
+
+        MoveCostHint.Hide();   // hide hint as soon as movement commits
 
         currentState = InputState.Moving;
         gridManager.ClearAllHighlights();
@@ -516,36 +554,38 @@ public class InputManager : MonoBehaviour
             return;
         }
 
-        // Gather all tiles in range (walkableOnly=false — enemy tiles are occupied)
-        var allInRange = gridManager.GetTilesInRange(originTile, selectedAttackData.Range,
-                                                      walkableOnly: false);
+        // ── 1. Get ALL tiles in the attack's shape/range ────────────────────
+        var allShapeTiles = gridManager.GetTilesInAttackShape(
+            originTile, selectedAttackData.Range, selectedAttackData.TargetShape);
 
-        // Keep only tiles that hold an opposing monster
-        validTargetTiles = allInRange.FindAll(t =>
+        // ── 2. Dim-highlight every tile in range so the shape is visible ────
+        gridManager.HighlightTiles(allShapeTiles, attackRangeColor, 0.05f);
+
+        // ── 3. Find tiles with valid opposing-monster targets ────────────────
+        validTargetTiles = allShapeTiles.FindAll(t =>
             t.Occupation == Tile.OccupationType.Monster &&
             t.GetMonster() != null &&
             t.GetMonster().IsEnemy != attackingMonster.IsEnemy);
 
-        // ── No targets in range ─────────────────────────────────────────────
+        // ── 4. Pulse + jitter enemy tiles so they stand out ─────────────────
+        foreach (var t in validTargetTiles)
+        {
+            t.StartPulse(attackPulseColorA, attackPulseColorB, attackPulseSpeed);
+            t.StartJitter(attackJitterAmplitude, attackJitterFrequency);
+        }
+
+        // ── 5. Notify player if there are no targets ─────────────────────────
         if (validTargetTiles.Count == 0)
         {
             Debug.Log($"[InputManager] No targets for '{selectedAttackData.DisplayName}'.");
             BattleMessage.Show($"No targets in range for {selectedAttackData.DisplayName}!", 2.5f);
-
-            currentState     = InputState.Normal;
-            attackingMonster = null;
-            selectedAttackData = null;
-            if (selectedTile != null) { selectedTile.SetSelected(false); selectedTile = null; }
-            return;
+            // Stay in TargetSelection — the shape is still highlighted.
+            // Player can press right-click to cancel.
         }
-
-        // ── Pulse-highlight valid target tiles ──────────────────────────────
-        foreach (var t in validTargetTiles)
-            t.StartPulse(attackPulseColorA, attackPulseColorB, attackPulseSpeed);
 
         currentState = InputState.TargetSelection;
         Debug.Log($"[InputManager] Targeting '{selectedAttackData.DisplayName}' — " +
-                  $"{validTargetTiles.Count} target(s).");
+                  $"{validTargetTiles.Count} target(s), {allShapeTiles.Count} tile(s) highlighted.");
     }
 
     void HandleTargetClick(Tile clickedTile)
@@ -589,13 +629,16 @@ public class InputManager : MonoBehaviour
 
     void ExitTargetSelection()
     {
-        // Stop pulse on target tiles before clearing highlights
+        // Stop pulse + jitter on enemy target tiles before clearing all highlights
         if (validTargetTiles != null)
             foreach (var t in validTargetTiles)
+            {
                 t.StopPulse();
+                t.StopJitter();
+            }
 
-        gridManager.ClearAllHighlights();
-        currentState      = InputState.Normal;
+        gridManager.ClearAllHighlights();   // resets dim colour on all range tiles too
+        currentState       = InputState.Normal;
         attackingMonster   = null;
         selectedAttackData = null;
         validTargetTiles   = null;
