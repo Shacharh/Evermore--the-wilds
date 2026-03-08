@@ -50,7 +50,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9f1c48c7daece5f46ae0c06798ec1a13, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RadialMenu
-  menuRadius: 45
+  menuRadius: 150
   buttonPrefab: {fileID: 3521064110572353182, guid: 9d54899e02db7e6439450f71a2f7c501, type: 3}
   menuConfig: {fileID: 11400000, guid: fccb95885fe15f74582a091c3c6cffe6, type: 2}
 --- !u!223 &6224779510872774917

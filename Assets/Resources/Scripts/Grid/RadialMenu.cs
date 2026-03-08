@@ -3,179 +3,285 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Collections.Generic;
 
+/// <summary>
+/// Radial context menu rendered as a ScreenSpaceOverlay canvas.
+///
+/// ScreenSpaceOverlay means:
+///   • Always on top — never blocked by terrain, monsters, or any 3D object.
+///   • Static — no billboard rotation; buttons appear flat like HUD elements.
+///   • Position tracks the tile / monster in screen-space each frame.
+///
+/// The menu contains a "MenuPivot" child RectTransform that is repositioned
+/// every frame to match the target's screen position. All buttons are children
+/// of MenuPivot and keep their circle offsets unchanged.
+/// </summary>
 public class RadialMenu : MonoBehaviour
 {
     [Header("Menu Settings")]
+    [Tooltip("Radius of the button circle in screen pixels.")]
     [SerializeField] private float menuRadius = 150f;
     [SerializeField] private GameObject buttonPrefab;
 
     [Header("Configuration")]
     [SerializeField] private RadialMenuConfig menuConfig;
 
-    private Tile targetTile;
+    // -- Internal state --------------------------------------------------------
+
+    private Tile         targetTile;
     private InputManager inputManager;
-    private List<RadialMenuButton> buttons = new List<RadialMenuButton>();
-    private Camera mainCamera;
-    private Canvas canvas;
+    private Camera       mainCamera;
+    private Canvas       canvas;
     private RectTransform rectTransform;
+
+    /// <summary>Child pivot that moves to the tile's screen position each frame.</summary>
+    private RectTransform menuPivot;
+
+    /// <summary>World-space point the menu is anchored to (tile pos + offset).</summary>
+    private Vector3 menuWorldCenter;
+
+    private List<RadialMenuButton> buttons = new List<RadialMenuButton>();
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     void Awake()
     {
+        canvas        = GetComponent<Canvas>();
+        rectTransform = GetComponent<RectTransform>();
+
         SetupCanvas();
-        SetupEventSystem();
+        EnsureEventSystem();
     }
 
-    private void SetupEventSystem()
+    // ── Canvas Setup ──────────────────────────────────────────────────────────
+
+    private void SetupCanvas()
     {
-        // Ensure EventSystem exists in the scene
-        if (Object.FindAnyObjectByType<EventSystem>() == null)
-        {
-            GameObject eventSystemGO = new GameObject("EventSystem");
-            eventSystemGO.AddComponent<EventSystem>();
-            eventSystemGO.AddComponent<StandaloneInputModule>();
-            Debug.Log("Created new EventSystem");
-        }
-        else
-        {
-            Debug.Log("EventSystem already exists");
-        }
-    }
-
-    void SetupCanvas()
-    {
-        // Get or add Canvas component
-        if (canvas == null)
-            canvas = GetComponent<Canvas>();
-
-        // CRITICAL: Set Canvas to WorldSpace for 3D visibility
-        canvas.renderMode = RenderMode.WorldSpace;
-        canvas.worldCamera = Camera.main;
-
-        // Scale the canvas for world space (smaller value = bigger in world)
-        canvas.transform.localScale = Vector3.one * 0.05f;
-
-        // Set sorting order to appear above everything
+        // ScreenSpaceOverlay: always renders on top of all 3D geometry.
+        // No world camera needed. No billboard rotation needed.
+        canvas.renderMode  = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 1000;
+        canvas.transform.localScale = Vector3.one;
 
-        // Add GraphicRaycaster for UI interaction
+        // Stretch the canvas rect to fill the entire screen
+        rectTransform.anchorMin        = Vector2.zero;
+        rectTransform.anchorMax        = Vector2.one;
+        rectTransform.sizeDelta        = Vector2.zero;
+        rectTransform.anchoredPosition = Vector2.zero;
+
+        // GraphicRaycaster handles button clicks in screen-space
         if (GetComponent<GraphicRaycaster>() == null)
         {
-            GraphicRaycaster raycaster = gameObject.AddComponent<GraphicRaycaster>();
-            raycaster.blockingObjects = GraphicRaycaster.BlockingObjects.None;
+            var gr = gameObject.AddComponent<GraphicRaycaster>();
+            gr.blockingObjects = GraphicRaycaster.BlockingObjects.None;
         }
 
-        // Get RectTransform
-        if (rectTransform == null)
-            rectTransform = GetComponent<RectTransform>();
+        // CanvasScaler: scales every button/text relative to a 1920×1080 reference
+        // resolution, so the menu looks the same on any screen size.
+        // Without this, ScreenSpaceOverlay renders buttons at raw pixel size
+        // (e.g. 120 px wide on a 1920-wide screen looks tiny).
+        var scaler = GetComponent<CanvasScaler>();
+        if (scaler == null) scaler = gameObject.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode        = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        scaler.screenMatchMode    = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+        scaler.matchWidthOrHeight = 0.5f;   // balanced width+height scaling
 
-        // Set RectTransform size to ensure it covers the buttons
-        if (rectTransform != null)
-        {
-            rectTransform.sizeDelta = new Vector2(500, 500);
-        }
-
-        Debug.Log("RadialMenu Canvas setup complete - WorldSpace mode enabled");
+        // MenuPivot — the single child whose anchoredPosition tracks the tile
+        var pivotGO = new GameObject("MenuPivot");
+        pivotGO.transform.SetParent(transform, false);
+        menuPivot              = pivotGO.AddComponent<RectTransform>();
+        menuPivot.anchorMin    = new Vector2(0.5f, 0.5f);
+        menuPivot.anchorMax    = new Vector2(0.5f, 0.5f);
+        menuPivot.sizeDelta    = Vector2.zero;
+        menuPivot.pivot        = new Vector2(0.5f, 0.5f);
+        menuPivot.anchoredPosition = Vector2.zero;
     }
 
+    private void EnsureEventSystem()
+    {
+        if (FindAnyObjectByType<EventSystem>() == null)
+        {
+            var esGO = new GameObject("EventSystem");
+            esGO.AddComponent<EventSystem>();
+            esGO.AddComponent<StandaloneInputModule>();
+        }
+    }
+
+    // ── Public Initialisation ─────────────────────────────────────────────────
+
+    /// <summary>Opens the normal tile-based radial menu (Move / Attack / Info).</summary>
     public void Initialize(Tile tile, InputManager manager)
     {
-        targetTile = tile;
-        inputManager = manager;
-        mainCamera = Camera.main;
+        targetTile      = tile;
+        inputManager    = manager;
+        mainCamera      = Camera.main;
+        menuWorldCenter = tile.transform.position + Vector3.up * 2.0f;
 
         ClearButtons();
         CreateMenuButtons();
-        PositionMenu(); // CRITICAL: Position the menu in world space
+        UpdatePivotPosition();   // snap to correct screen pos on first frame
 
-        Debug.Log($"RadialMenu initialized for tile at {tile.GridPosition}");
+        Debug.Log($"[RadialMenu] Opened for tile {tile.GridPosition}");
     }
+
+    /// <summary>Opens an attack sub-menu listing the monster's learned attacks.</summary>
+    public void InitializeAsAttackMenu(Monster monster, InputManager manager)
+    {
+        targetTile      = null;
+        inputManager    = manager;
+        mainCamera      = Camera.main;
+        menuWorldCenter = monster.transform.position + Vector3.up * 2.0f;
+
+        ClearButtons();
+
+        var attacks = monster.GetAttacks();
+        if (attacks == null || attacks.Count == 0)
+        {
+            Debug.LogWarning($"[RadialMenu] {monster.name} has no attacks to show.");
+            return;
+        }
+
+        float angleStep = 360f / attacks.Count;
+
+        for (int i = 0; i < attacks.Count; i++)
+        {
+            RadialActionType actionType = (i == 0)
+                ? RadialActionType.UseAttack0
+                : RadialActionType.UseAttack1;
+
+            float   angle  = i * angleStep * Mathf.Deg2Rad;
+            Vector2 offset = new Vector2(Mathf.Cos(angle) * menuRadius,
+                                         Mathf.Sin(angle) * menuRadius);
+
+            GameObject      buttonObj = Instantiate(buttonPrefab, menuPivot);
+
+            // Same localScale reset as CreateMenuButtons() — see comment there.
+            buttonObj.transform.localScale = Vector3.one;
+
+            RadialMenuButton btn      = buttonObj.GetComponent<RadialMenuButton>();
+
+            var btnRect = buttonObj.GetComponent<RectTransform>();
+            btnRect.anchoredPosition = offset;
+            btnRect.sizeDelta        = new Vector2(260f, 100f);
+
+            btn.Setup(attacks[i].data.DisplayName, null, actionType, OnActionSelected);
+            buttons.Add(btn);
+
+            Debug.Log($"[RadialMenu] Attack btn {i}: '{attacks[i].data.DisplayName}' → {actionType}");
+        }
+
+        UpdatePivotPosition();
+        Debug.Log($"[RadialMenu] Attack sub-menu ready ({buttons.Count} button(s)).");
+    }
+
+    // ── Update: track tile's screen position ──────────────────────────────────
+
+    void Update()
+    {
+        UpdatePivotPosition();
+    }
+
+    private void UpdatePivotPosition()
+    {
+        if (mainCamera == null || menuPivot == null) return;
+
+        Vector3 screenPos = mainCamera.WorldToScreenPoint(menuWorldCenter);
+
+        // Hide the pivot (and all buttons) if the anchor is behind the camera
+        if (screenPos.z < 0f)
+        {
+            menuPivot.gameObject.SetActive(false);
+            return;
+        }
+        menuPivot.gameObject.SetActive(true);
+
+        // Convert the screen-space pixel coordinate into the canvas's LOCAL space.
+        // This MUST use RectTransformUtility — NOT the manual "screenPos - screenCenter"
+        // formula — because CanvasScaler (ScaleWithScreenSize) changes the canvas's
+        // internal unit scale, so raw screen pixels no longer map 1:1 to canvas units.
+        // Pass null as the camera parameter for ScreenSpaceOverlay canvases.
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            rectTransform, screenPos, null, out Vector2 localPoint);
+        menuPivot.anchoredPosition = localPoint;
+    }
+
+    // ── Button Creation ───────────────────────────────────────────────────────
 
     void CreateMenuButtons()
     {
-        List<MenuOptionData> optionsToShow = new List<MenuOptionData>();
+        List<MenuOptionData> optionsToShow;
 
-        // NULL CHECK: If menuConfig isn't assigned, create fallback options
         if (menuConfig == null)
         {
-            Debug.LogWarning("RadialMenuConfig is not assigned! Using fallback options.");
+            Debug.LogWarning("[RadialMenu] menuConfig not assigned — using fallback options.");
             optionsToShow = GetFallbackOptions();
         }
         else
         {
-            // Determine which options to show based on tile state
-            if (targetTile.Occupation == Tile.OccupationType.Empty)
-            {
-                optionsToShow = menuConfig.menuConfig.emptyTileOptions;
-            }
-            else if (targetTile.Occupation == Tile.OccupationType.Monster)
-            {
-                if (targetTile.Type == Tile.TileType.PlayerSide)
-                {
-                    optionsToShow = menuConfig.menuConfig.playerMonsterOptions;
-                }
-                else if (targetTile.Type == Tile.TileType.EnemySide)
-                {
-                    optionsToShow = menuConfig.menuConfig.enemyMonsterOptions;
-                }
-            }
+            Monster m = targetTile.GetMonster();
+            if      (m != null && m.IsEnemy) optionsToShow = menuConfig.menuConfig.enemyMonsterOptions;
+            else if (m != null)              optionsToShow = menuConfig.menuConfig.playerMonsterOptions;
+            else                             optionsToShow = menuConfig.menuConfig.emptyTileOptions;
         }
 
-        // Final null check
         if (optionsToShow == null || optionsToShow.Count == 0)
         {
-            Debug.LogWarning($"No menu options available for tile at {targetTile.GridPosition}. Using fallback.");
+            Debug.LogWarning($"[RadialMenu] No options for tile {targetTile?.GridPosition}. Using fallback.");
             optionsToShow = GetFallbackOptions();
         }
-
-        Debug.Log($"Available actions: {optionsToShow.Count}");
 
         float angleStep = 360f / optionsToShow.Count;
 
         for (int i = 0; i < optionsToShow.Count; i++)
         {
-            GameObject buttonObj = Instantiate(buttonPrefab, transform);
-            RadialMenuButton btn = buttonObj.GetComponent<RadialMenuButton>();
+            float   angle  = i * angleStep * Mathf.Deg2Rad;
+            Vector2 offset = new Vector2(Mathf.Cos(angle) * menuRadius,
+                                         Mathf.Sin(angle) * menuRadius);
 
-            // Position in circle
-            float angle = i * angleStep * Mathf.Deg2Rad;
-            RectTransform btnRect = buttonObj.GetComponent<RectTransform>();
-            btnRect.anchoredPosition = new Vector2(
-                Mathf.Cos(angle) * menuRadius,
-                Mathf.Sin(angle) * menuRadius
-            );
+            GameObject      buttonObj = Instantiate(buttonPrefab, menuPivot);
 
-            Debug.Log($"Button {i} positioned at {btnRect.anchoredPosition}");
+            // Reset localScale to (1,1,1) BEFORE Start() runs on the next frame.
+            // The prefab may have a tiny localScale left over from WorldSpace days.
+            // RadialMenuButton.Awake() captures localScale as originalScale (wrong),
+            // but RadialMenuButton.Start() also captures it (correct after this reset).
+            // Update() then lerps toward the Start()-captured scale, so the button
+            // stays at full size instead of shrinking back to the prefab's micro-scale.
+            buttonObj.transform.localScale = Vector3.one;
 
-            // Setup button with action type and callback
+            RadialMenuButton btn      = buttonObj.GetComponent<RadialMenuButton>();
+
+            // Position the button and force a readable screen-space size.
+            // The prefab's saved sizeDelta was designed for WorldSpace canvas
+            // (scale 0.05) and is far too small in ScreenSpaceOverlay pixels.
+            var btnRect = buttonObj.GetComponent<RectTransform>();
+            btnRect.anchoredPosition = offset;
+            btnRect.sizeDelta        = new Vector2(260f, 100f);
+
             btn.Setup(optionsToShow[i].label, optionsToShow[i].icon,
                       optionsToShow[i].actionType, OnActionSelected);
-
             buttons.Add(btn);
-
-            Debug.Log($"Button initialized: {optionsToShow[i].label}");
         }
 
-        Debug.Log($"Created {buttons.Count} menu buttons");
+        Debug.Log($"[RadialMenu] Created {buttons.Count} button(s).");
     }
 
-    // Fallback options if menuConfig is not assigned
-    private List<MenuOptionData> GetFallbackOptions()
+    private List<MenuOptionData> GetFallbackOptions() => new List<MenuOptionData>
     {
-        List<MenuOptionData> fallback = new List<MenuOptionData>
-        {
-            new MenuOptionData { label = "Movement", actionType = RadialActionType.Movement },
-            new MenuOptionData { label = "Attack", actionType = RadialActionType.Attack },
-            new MenuOptionData { label = "Info", actionType = RadialActionType.Info }
-        };
-        return fallback;
-    }
+        new MenuOptionData { label = "Move",   actionType = RadialActionType.Movement },
+        new MenuOptionData { label = "Attack", actionType = RadialActionType.Attack   },
+        new MenuOptionData { label = "Info",   actionType = RadialActionType.Info     }
+    };
+
+    // ── Action Callback ───────────────────────────────────────────────────────
 
     private void OnActionSelected(RadialActionType type)
     {
-        Debug.Log($"Action selected: {type}");
+        Debug.Log($"[RadialMenu] Action selected: {type}");
         inputManager.HandleRadialAction(type, targetTile);
         Close();
     }
+
+    // ── Close / Clear ─────────────────────────────────────────────────────────
 
     public void Close()
     {
@@ -183,62 +289,10 @@ public class RadialMenu : MonoBehaviour
         Destroy(gameObject);
     }
 
-    void ClearButtons()
+    private void ClearButtons()
     {
         foreach (var btn in buttons)
-        {
-            if (btn != null)
-                Destroy(btn.gameObject);
-        }
+            if (btn != null) Destroy(btn.gameObject);
         buttons.Clear();
-    }
-
-    void PositionMenu()
-    {
-        // ADD THIS LINE AT THE TOP:
-        Debug.LogWarning($"=== POSITIONING MENU - Canvas mode: {canvas.renderMode}, Scale: {canvas.transform.localScale} ===");
-
-        if (mainCamera == null)
-        {
-            mainCamera = Camera.main;
-            if (mainCamera == null)
-            {
-                Debug.LogError("Main camera not found!");
-                return;
-            }
-        }
-
-        if (targetTile != null)
-        {
-            // Position above the tile
-            Vector3 tilePosition = targetTile.transform.position;
-            transform.position = tilePosition + Vector3.up * 2.0f;
-        }
-
-        // Billboard: Make menu face camera
-        Vector3 directionToCamera = mainCamera.transform.position - transform.position;
-        directionToCamera.y = 0; // Keep menu upright
-
-        if (directionToCamera.sqrMagnitude > 0.001f)
-        {
-            transform.rotation = Quaternion.LookRotation(-directionToCamera);
-        }
-
-        Debug.Log($"Menu positioned at {transform.position}");
-    }
-
-    void Update()
-    {
-        // Billboard effect: make menu continuously face camera
-        if (Camera.main != null && targetTile != null)
-        {
-            Vector3 directionToCamera = Camera.main.transform.position - transform.position;
-            directionToCamera.y = 0;
-
-            if (directionToCamera.sqrMagnitude > 0.001f)
-            {
-                transform.rotation = Quaternion.LookRotation(-directionToCamera);
-            }
-        }
     }
 }

@@ -8,7 +8,7 @@ public class Tile : MonoBehaviour
         EnemySide,
         Neutral
     }
-    
+
     public enum OccupationType
     {
         Empty,
@@ -16,20 +16,20 @@ public class Tile : MonoBehaviour
         Obstruction,
         Trap
     }
-    
+
     // Core Properties
     public Vector2Int GridPosition { get; private set; }
     public TileType Type { get; private set; }
     public OccupationType Occupation { get; private set; }
     public GameObject OccupyingObject { get; private set; }
-    
+
     // Visual Components
     private Renderer tileRenderer;
     private MaterialPropertyBlock propertyBlock;
     private Color originalColor;
     private Vector3 originalPosition;
     private bool isHovered = false;
-    
+
     [Header("Visual Settings")]
     [SerializeField] private Color baseTileColor = new Color(0.7f, 0.7f, 0.7f, 1f);
     [SerializeField] private Color hoverColor = new Color(1f, 1f, 0.7f, 1f);
@@ -37,12 +37,31 @@ public class Tile : MonoBehaviour
     [SerializeField] private float checkerboardDarkenAmount = 0.85f;
     [SerializeField] private float hoverHeightOffset = 0.05f;
     [SerializeField] private float transitionSpeed = 10f;
-    
+
     private static readonly int BaseColorProperty = Shader.PropertyToID("_BaseColor");
     private Color currentTargetColor;
     private float currentTargetHeight;
     private bool isSelected = false;
-    
+
+    // ── Active Highlight (set by Highlight(), cleared by ResetVisuals()) ──────
+    // Tracks the colour/height applied by gridManager.HighlightTiles() so that
+    // SetHovered(false) can restore it instead of snapping to the raw originalColor.
+
+    /// <summary>The colour most recently applied by Highlight(). Restored when hover ends.</summary>
+    private Color activeHighlightColor;
+    /// <summary>The height offset applied by the last Highlight() call.</summary>
+    private float activeHighlightHeight;
+    /// <summary>True while an external Highlight() colour is active on this tile.</summary>
+    private bool  hasActiveHighlight;
+
+    // ── Pulse / Vibrate state (used for attack-target highlighting) ───────────
+
+    private bool  isPulsing;
+    private float pulseTimer;
+    private Color pulseColorA;
+    private Color pulseColorB;
+    private float pulseSpeed;
+
     void Awake()
     {
         tileRenderer = GetComponent<Renderer>();
@@ -56,14 +75,14 @@ public class Tile : MonoBehaviour
         if (propertyBlock == null)
             propertyBlock = new MaterialPropertyBlock();
     }
-    
+
     public void Initialize(int x, int y, int gridHeight)
     {
         GridPosition = new Vector2Int(x, y);
         Occupation = OccupationType.Empty;
         OccupyingObject = null;
         originalPosition = transform.position;
-        
+
         // Determine tile type based on position
         if (y < 2)
             Type = TileType.PlayerSide;
@@ -71,10 +90,10 @@ public class Tile : MonoBehaviour
             Type = TileType.EnemySide;
         else
             Type = TileType.Neutral;
-        
+
         // Set base color
         SetColor(baseTileColor);
-        
+
         // Add checkerboard pattern
         if ((x + y) % 2 == 0)
         {
@@ -84,29 +103,43 @@ public class Tile : MonoBehaviour
             darkened.a = 1f;
             SetColor(darkened);
         }
-        
+
         // Store original color
         tileRenderer.GetPropertyBlock(propertyBlock);
         originalColor = propertyBlock.GetColor(BaseColorProperty);
-        currentTargetColor = originalColor;
-        currentTargetHeight = 0f;
+        currentTargetColor    = originalColor;
+        currentTargetHeight   = 0f;
+        activeHighlightColor  = originalColor;
+        activeHighlightHeight = 0f;
+        hasActiveHighlight    = false;
     }
-    
+
     void Update()
     {
+        // ── Pulse animation ───────────────────────────────────────────────────
+        // While pulsing (e.g. attack-target highlight), oscillate between two
+        // colours using a smooth sine wave.
+        if (isPulsing)
+        {
+            pulseTimer += Time.deltaTime;
+            // t goes 0→1→0→1… at the given speed (full cycles per second)
+            float t = (Mathf.Sin(pulseTimer * pulseSpeed * Mathf.PI * 2f) + 1f) * 0.5f;
+            currentTargetColor = Color.Lerp(pulseColorA, pulseColorB, t);
+        }
+
         // Smooth color transition
         tileRenderer.GetPropertyBlock(propertyBlock);
         Color currentColor = propertyBlock.GetColor(BaseColorProperty);
         Color newColor = Color.Lerp(currentColor, currentTargetColor, Time.deltaTime * transitionSpeed);
         propertyBlock.SetColor(BaseColorProperty, newColor);
         tileRenderer.SetPropertyBlock(propertyBlock);
-        
+
         // Smooth height transition
         float currentHeight = transform.position.y - originalPosition.y;
         float newHeight = Mathf.Lerp(currentHeight, currentTargetHeight, Time.deltaTime * transitionSpeed);
         transform.position = originalPosition + Vector3.up * newHeight;
     }
-    
+
     private void SetColor(Color color)
     {
         if (tileRenderer != null)
@@ -115,56 +148,93 @@ public class Tile : MonoBehaviour
             tileRenderer.SetPropertyBlock(propertyBlock);
         }
     }
-    
+
+    // ── Pulse API ─────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Start a continuous colour pulse between <paramref name="colorA"/> and
+    /// <paramref name="colorB"/> at <paramref name="speed"/> full cycles per second.
+    /// Call StopPulse() or ResetVisuals() to stop.
+    /// </summary>
+    public void StartPulse(Color colorA, Color colorB, float speed = 2.5f)
+    {
+        isPulsing  = true;
+        pulseColorA = colorA;
+        pulseColorB = colorB;
+        pulseSpeed  = speed;
+        pulseTimer  = 0f;
+        currentTargetHeight = hoverHeightOffset * 0.8f; // slight lift for visibility
+    }
+
+    /// <summary>Stops the pulse; tile colour resumes its normal lerp target.</summary>
+    public void StopPulse()
+    {
+        isPulsing = false;
+    }
+
     public void SetHovered(bool hovered)
     {
         if (isSelected) return; // Don't change color if selected
-        
+
+        // While pulsing (e.g. attack-target highlight), the pulse animation owns
+        // the visual state. Hover must not override it — the tile still receives
+        // mouse events, but colour/height stays driven by the sine wave.
+        if (isPulsing) return;
+
         isHovered = hovered;
         if (hovered)
         {
-            currentTargetColor = hoverColor;
+            currentTargetColor  = hoverColor;
             currentTargetHeight = hoverHeightOffset;
         }
         else
         {
-            currentTargetColor = originalColor;
-            currentTargetHeight = 0f;
+            // Restore the active highlight colour (e.g. movement-range blue) if
+            // one was set by Highlight(), otherwise fall back to the tile's natural colour.
+            currentTargetColor  = hasActiveHighlight ? activeHighlightColor  : originalColor;
+            currentTargetHeight = hasActiveHighlight ? activeHighlightHeight : 0f;
         }
     }
-    
+
     public void SetSelected(bool selected)
     {
         isSelected = selected;
         if (selected)
         {
-            currentTargetColor = selectedColor;
+            currentTargetColor  = selectedColor;
             currentTargetHeight = hoverHeightOffset * 1.5f;
         }
         else
         {
-            currentTargetColor = originalColor;
-            currentTargetHeight = 0f;
+            // Same restore-to-highlight logic as SetHovered(false).
+            currentTargetColor  = hasActiveHighlight ? activeHighlightColor  : originalColor;
+            currentTargetHeight = hasActiveHighlight ? activeHighlightHeight : 0f;
             isHovered = false;
-            //currentTargetColor = isHovered ? hoverColor : originalColor;
-            //currentTargetHeight = isHovered ? hoverHeightOffset : 0f;
         }
     }
-    
+
     public void Highlight(Color color, float heightOffset = 0f)
     {
-        currentTargetColor = color;
-        currentTargetHeight = heightOffset;
+        // Remember this as the "active highlight" so SetHovered(false) can restore it.
+        activeHighlightColor  = color;
+        activeHighlightHeight = heightOffset;
+        hasActiveHighlight    = true;
+        currentTargetColor    = color;
+        currentTargetHeight   = heightOffset;
     }
-    
+
     public void ResetVisuals()
     {
-        currentTargetColor = originalColor;
-        currentTargetHeight = 0f;
-        isHovered = false;
-        isSelected = false;
+        StopPulse();           // also stop any active pulse
+        currentTargetColor    = originalColor;
+        currentTargetHeight   = 0f;
+        isHovered             = false;
+        isSelected            = false;
+        hasActiveHighlight    = false;
+        activeHighlightColor  = originalColor;
+        activeHighlightHeight = 0f;
     }
-    
+
     // Occupation Management
     public bool SetOccupation(OccupationType type, GameObject occupyingObject = null)
     {
@@ -173,18 +243,18 @@ public class Tile : MonoBehaviour
             Debug.LogWarning($"Tile {GridPosition} is already occupied by {Occupation}");
             return false;
         }
-        
+
         Occupation = type;
         OccupyingObject = occupyingObject;
         return true;
     }
-    
+
     public void ClearOccupation()
     {
         Occupation = OccupationType.Empty;
         OccupyingObject = null;
     }
-    
+
     public bool IsWalkable()
     {
         return Occupation == OccupationType.Empty || Occupation == OccupationType.Trap;

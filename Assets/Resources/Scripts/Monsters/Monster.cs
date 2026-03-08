@@ -12,6 +12,7 @@ public class Monster : MonoBehaviour
     private List<MonsterAttack> learnedAttacks = new List<MonsterAttack>();
 
     [SerializeField] private Animator anim;
+    [SerializeField] private GridManager gridManager; // used for tile lookup on death
     #endregion
 
     #region Constants
@@ -88,6 +89,20 @@ public class Monster : MonoBehaviour
     #endregion
     // ------------------------------------------------------------------------
 
+    #region HP Events & State
+    /// <summary>Current HP (read-only from outside Monster).</summary>
+    public int CurrentHP => currentHP;
+
+    /// <summary>True while the monster is alive.</summary>
+    public bool IsAlive => currentHP > 0;
+
+    /// <summary>Fired whenever HP changes. Parameters: (currentHP, maxHP).</summary>
+    public event System.Action<int, int> OnHPChanged;
+
+    /// <summary>Fired once when HP reaches 0 (before the death animation plays).</summary>
+    public event System.Action<Monster> OnDied;
+    #endregion
+
     #region Public Properties - Calculated Stats
     public int MaxHP => CalculateStat(data.baseHP, ivHP, true);
     public int Attack => CalculateStat(data.baseAttack, ivAttack);
@@ -100,6 +115,12 @@ public class Monster : MonoBehaviour
     #endregion
 
     #region Unity Lifecycle
+    private void Awake()
+    {
+        if (gridManager == null)
+            gridManager = FindFirstObjectByType<GridManager>();
+    }
+
     private void Start()
     {
         if (!enemyMonster)
@@ -114,33 +135,39 @@ public class Monster : MonoBehaviour
     #region Initialization
     private void LoadPlayerMonster()
     {
-        currentHP = MaxHP;
+        // Set level and IVs FIRST so MaxHP is calculated with the correct values.
         level = 40;
-        CalculateExp();
-        customeName = "custom name";
 
-        ivHP = 10;
-        ivAttack = 12;
-        ivDefense = 8;
-        ivSpeed = 14;
+        ivHP       = 10;
+        ivAttack   = 12;
+        ivDefense  = 8;
+        ivSpeed    = 14;
         ivCritRate = 5;
-        ivCritMod = 3;
-        ivDodge = 7;
+        ivCritMod  = 3;
+        ivDodge    = 7;
+
+        // MaxHP now reflects level 40 + IVs correctly.
+        currentHP   = MaxHP;
+        customeName = "custom name";
+        CalculateExp();
     }
 
     private void LoadEnemyMonster()
     {
-        currentHP = MaxHP;
+        // Set IVs FIRST so MaxHP is calculated with the correct values.
+        // (level is kept from the Inspector's serialized field.)
+        ivHP       = Random.Range(0, MaxIV);
+        ivAttack   = Random.Range(0, MaxIV);
+        ivDefense  = Random.Range(0, MaxIV);
+        ivSpeed    = Random.Range(0, MaxIV);
+        ivCritRate = Random.Range(0, MaxIV);
+        ivCritMod  = Random.Range(0, MaxIV);
+        ivDodge    = Random.Range(0, MaxIV);
+
+        // MaxHP now reflects the randomised IVs correctly.
+        currentHP   = MaxHP;
         customeName = data.displayName;
         CalculateExp();
-
-        ivHP = Random.Range(0, MaxIV);
-        ivAttack = Random.Range(0, MaxIV);
-        ivDefense = Random.Range(0, MaxIV);
-        ivSpeed = Random.Range(0, MaxIV);
-        ivCritRate = Random.Range(0, MaxIV);
-        ivCritMod = Random.Range(0, MaxIV);
-        ivDodge = Random.Range(0, MaxIV);
     }
     #endregion
 
@@ -179,19 +206,51 @@ public class Monster : MonoBehaviour
         if (attackIndex < 0 || attackIndex >= learnedAttacks.Count)
             throw new System.ArgumentException("Invalid attack index");
 
-        AttackCommandManager.Instance.SetupAttack(this, target, attackIndex, isDirect);
-
-        // Find the matching AttackEntry in the move pool to get the animation name
         AttackData attackData = learnedAttacks[attackIndex].data;
+
+        // Guard: AttackData not assigned in the Inspector
+        if (attackData == null)
+        {
+            Debug.LogError($"[{gameObject.name}] Attack slot {attackIndex} has no AttackData " +
+                           "assigned! Drag an AttackData asset onto the monster's learnedAttacks " +
+                           "list in the Inspector.");
+            BattleMessage.Show("Attack not configured!", 2.5f);
+            return;
+        }
+
         AttackEntry entry = System.Array.Find(data.movePool, e => e.attack == attackData);
 
+        // ── Always apply effects immediately ────────────────────────────────────
+        // Damage/heal/buff/status is ALWAYS applied right here, unconditionally.
+        // We do NOT rely on animation events calling TriggerAttackEffect() because:
+        //   1. Animations may not be configured yet.
+        //   2. Animation events may not be set up on the clip.
+        //   3. This keeps damage deterministic and independent of the animator.
+
+        if (attackData.Effects.Count == 0)
+        {
+            Debug.LogWarning($"[{gameObject.name}] '{attackData.DisplayName}' has no effects " +
+                             "configured! Add at least one Effect entry in the AttackData asset.");
+            BattleMessage.Show($"'{attackData.DisplayName}' has no effects!\nOpen the AttackData asset and add a Damage effect.", 3f);
+        }
+        else
+        {
+            for (int i = 0; i < attackData.Effects.Count; i++)
+                UseAttackEffect(this, target, attackIndex, i, isDirect);
+        }
+
+        // ── Trigger animation for visual feedback (purely cosmetic) ─────────────
+        // AttackCommandManager is NOT set up — damage is already done above.
+        // If an animation event fires TriggerAttackEffect(), AttackCommandManager
+        // will find null attacker and return harmlessly without double-applying.
         if (entry != null && !string.IsNullOrEmpty(entry.AnimationTrigger) && anim != null)
         {
+            Debug.Log($"[{gameObject.name}] Playing attack animation '{entry.AnimationTrigger}'.");
             anim.SetTrigger(entry.AnimationTrigger);
         }
         else
         {
-            Debug.LogWarning($"[{gameObject.name}] No animation name set for {attackData.DisplayName}");
+            Debug.Log($"[{gameObject.name}] No animation configured for '{attackData.DisplayName}'.");
         }
     }
 
@@ -242,14 +301,77 @@ public class Monster : MonoBehaviour
         AttackData attackData, bool isDirect, AttackEffect effect)
     {
         int damage = attacker.CalculateDamage(target, attackData, isDirect, effect);
-        effectTarget.currentHP -= damage;
+        effectTarget.currentHP = Mathf.Max(0, effectTarget.currentHP - damage);
+        effectTarget.OnHPChanged?.Invoke(effectTarget.currentHP, effectTarget.MaxHP);
+
+        // Show visible on-screen feedback so you don't need to check the console.
+        // damage == 0 means the attack missed (CalculateDamage returned 0 from the dodge check).
+        if (damage <= 0)
+        {
+            BattleMessage.Show($"{effectTarget.customeName} dodged the attack!", 1.5f);
+            Debug.Log($"[{effectTarget.gameObject.name}] dodged — HP unchanged: " +
+                      $"{effectTarget.currentHP}/{effectTarget.MaxHP}");
+        }
+        else
+        {
+            BattleMessage.Show($"{attacker.customeName} → {effectTarget.customeName}: -{damage} HP  " +
+                               $"({effectTarget.currentHP}/{effectTarget.MaxHP})", 2f);
+            Debug.Log($"[{effectTarget.gameObject.name}] took {damage} damage — " +
+                      $"HP: {effectTarget.currentHP}/{effectTarget.MaxHP}");
+        }
+
+        if (effectTarget.currentHP <= 0)
+            effectTarget.HandleDeath();
     }
 
     private void ApplyHeal(Monster attacker, Monster target, Monster effectTarget,
         AttackData attackData, bool isDirect, AttackEffect effect)
     {
+        // CalculateDamage returns a negative value for heals, so subtracting it adds HP.
         int healAmount = attacker.CalculateDamage(target, attackData, isDirect, effect);
-        effectTarget.currentHP -= healAmount;
+        effectTarget.currentHP = Mathf.Min(effectTarget.MaxHP, effectTarget.currentHP - healAmount);
+        effectTarget.OnHPChanged?.Invoke(effectTarget.currentHP, effectTarget.MaxHP);
+
+        Debug.Log($"[{effectTarget.gameObject.name}] healed — " +
+                  $"HP: {effectTarget.currentHP}/{effectTarget.MaxHP}");
+    }
+
+    private void HandleDeath()
+    {
+        currentHP = 0;
+        OnDied?.Invoke(this);
+        StartCoroutine(DieCoroutine());
+    }
+
+    private System.Collections.IEnumerator DieCoroutine()
+    {
+        Debug.Log($"[{gameObject.name}] died — playing shrink animation.");
+
+        // Capture tile before position changes
+        Tile myTile = gridManager?.GetTileAtWorldPosition(transform.position);
+
+        // Shrink over 0.6 seconds
+        Vector3 originalScale = transform.localScale;
+        float elapsed = 0f;
+        const float duration = 0.6f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            transform.localScale = Vector3.Lerp(originalScale, Vector3.zero, elapsed / duration);
+            yield return null;
+        }
+
+        // Clear tile occupation
+        myTile?.ClearOccupation();
+
+        // Remove from the owning TurnController's roster
+        if (IsEnemy)
+            FindFirstObjectByType<EnemyTurnController>()?.RemoveMonster(this);
+        else
+            FindFirstObjectByType<PlayerTurnController>()?.RemoveMonster(this);
+
+        Destroy(gameObject);
     }
     #endregion
 

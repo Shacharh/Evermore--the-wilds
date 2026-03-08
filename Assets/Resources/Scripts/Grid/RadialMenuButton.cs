@@ -143,11 +143,21 @@ public class RadialMenuButton : MonoBehaviour, IPointerEnterHandler, IPointerExi
 
     public void Setup(string label, Sprite icon, RadialActionType type, System.Action<RadialActionType> callback)
     {
-        labelText.text = label;
-        if (icon != null) iconImage.sprite = icon;
-        
-        actionType = type;
+        actionType       = type;
         onActionSelected = callback;
+
+        if (labelText != null)
+        {
+            labelText.text     = label;
+            // Force a readable font size for ScreenSpaceOverlay.
+            // The prefab value (36 pt) was correct for WorldSpace at scale 0.05,
+            // but is tiny in screen-space pixels.
+            labelText.fontSize = 30f;
+            labelText.ForceMeshUpdate();
+        }
+
+        if (icon != null && iconImage != null)
+            iconImage.sprite = icon;
     }
 
     void Update()

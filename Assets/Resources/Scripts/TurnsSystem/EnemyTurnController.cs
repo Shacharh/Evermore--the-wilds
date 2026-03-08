@@ -17,6 +17,13 @@ public class EnemyTurnController : TurnController
     [Header("References")]
     [SerializeField] private GridManager gridManager;
 
+    // -- Testing ---------------------------------------------------------------
+
+    [Header("Testing / Development")]
+    [Tooltip("When enabled the enemy skips its entire turn immediately " +
+             "and returns control to the player. Disable when the AI is ready.")]
+    [SerializeField] private bool skipTurnForTesting = true;
+
     // -- Timing ----------------------------------------------------------------
 
     [Header("AI Timing")]
@@ -36,7 +43,26 @@ public class EnemyTurnController : TurnController
 
     protected override void OnTurnStarted()
     {
+        if (skipTurnForTesting)
+        {
+            Debug.Log("[EnemyAI] Skip-turn is ON — ending enemy turn immediately.");
+            ForceEndTurn();
+            return;
+        }
+
         StartCoroutine(RunAITurn());
+    }
+
+    // -- Auto-Discovery --------------------------------------------------------
+
+    /// <summary>Scans the scene for all enemy monsters and adds them to this roster.</summary>
+    protected override void DiscoverMonsters()
+    {
+        var all = FindObjectsByType<Monster>(FindObjectsSortMode.None);
+        foreach (var m in all)
+            if (m.IsEnemy)
+                monsters.Add(m);
+        Debug.Log($"[EnemyTurnController] Auto-discovered {monsters.Count} enemy monster(s).");
     }
 
     // -- AI Loop ---------------------------------------------------------------
@@ -55,7 +81,7 @@ public class EnemyTurnController : TurnController
             yield return StartCoroutine(DecideAndAct(monster));
         }
 
-        Debug.Log("[EnemyAI] All actions complete -- ending turn.");
+        Debug.Log("[EnemyAI] All actions complete — ending turn.");
         ForceEndTurn();
     }
 
@@ -63,7 +89,7 @@ public class EnemyTurnController : TurnController
 
     /// <summary>
     /// Override to replace with BehaviourTree, GOAP, or any other AI.
-    /// Default: attack adjacent player monster -> move toward nearest -> pass.
+    /// Default: attack adjacent player monster → move toward nearest → pass.
     /// </summary>
     protected virtual IEnumerator DecideAndAct(Monster monster)
     {
@@ -75,9 +101,7 @@ public class EnemyTurnController : TurnController
             yield break;
         }
 
-
         // -- Try to attack an adjacent player monster ---------------------------
-        // AP cost comes from the attack's ConsumeActionPoints, not a fixed field.
         var attacks = monster.GetAttacks();
         if (attacks != null && attacks.Count > 0)
         {
@@ -113,10 +137,9 @@ public class EnemyTurnController : TurnController
         }
 
         // -- Nothing affordable ------------------------------------------------
-        Debug.Log($"[EnemyAI] {monster.name} has no valid action -- passing.");
+        Debug.Log($"[EnemyAI] {monster.name} has no valid action — passing.");
         monster.MarkActed();
     }
-
 
     // -- Movement Coroutine ----------------------------------------------------
 
@@ -126,9 +149,9 @@ public class EnemyTurnController : TurnController
         toTile.SetOccupation(Tile.OccupationType.Monster, monster.gameObject);
 
         Vector3 start = monster.transform.position;
-        Vector3 end = toTile.transform.position;
-        float dist = Vector3.Distance(start, end);
-        float t = 0f;
+        Vector3 end   = toTile.transform.position;
+        float dist    = Vector3.Distance(start, end);
+        float t       = 0f;
 
         while (t < 1f)
         {
@@ -161,24 +184,18 @@ public class EnemyTurnController : TurnController
     /// </summary>
     private Tile FindStepTowardNearestPlayer(Tile origin)
     {
-        // Find the closest player monster's tile
         Tile targetTile = FindNearestPlayerTile(origin);
         if (targetTile == null) return null;
 
-        // Pick the walkable neighbour that is closest to that target
-        Tile best = null;
-        int bestDist = int.MaxValue;
+        Tile best     = null;
+        int  bestDist = int.MaxValue;
 
         foreach (Tile neighbour in gridManager.GetNeighbors(origin, includeDiagonals: false))
         {
             if (!neighbour.IsWalkable()) continue;
 
             int d = gridManager.GetDistanceBetweenTiles(neighbour, targetTile);
-            if (d < bestDist)
-            {
-                bestDist = d;
-                best = neighbour;
-            }
+            if (d < bestDist) { bestDist = d; best = neighbour; }
         }
 
         return best;
@@ -186,10 +203,9 @@ public class EnemyTurnController : TurnController
 
     private Tile FindNearestPlayerTile(Tile origin)
     {
-        Tile nearest = null;
-        int bestDist = int.MaxValue;
+        Tile nearest  = null;
+        int  bestDist = int.MaxValue;
 
-        // Player monsters are tracked in PlayerTurnController
         PlayerTurnController playerCtrl =
             TurnManager.Instance?.ActiveController as PlayerTurnController
             ?? FindFirstObjectByType<PlayerTurnController>();
@@ -211,27 +227,17 @@ public class EnemyTurnController : TurnController
 
     // -- Attack Selection Helpers ----------------------------------------------
 
-    /// <summary>
-    /// Returns the highest-priority affordable attack.
-    /// Priority: highest ConsumeActionPoints the pool can still afford
-    /// (i.e. prefer spending more AP per attack when possible).
-    /// Override this in a subclass for smarter selection.
-    /// </summary>
     private AttackData PickBestAffordableAttack(
         System.Collections.Generic.IReadOnlyList<MonsterAttack> attacks)
     {
-        AttackData best = null;
-        int bestCost = -1;
+        AttackData best     = null;
+        int        bestCost = -1;
 
         foreach (MonsterAttack ma in attacks)
         {
             if (ma?.data == null) continue;
             int cost = ma.data.ConsumeActionPoints;
-            if (CanAfford(cost) && cost > bestCost)
-            {
-                bestCost = cost;
-                best = ma.data;
-            }
+            if (CanAfford(cost) && cost > bestCost) { bestCost = cost; best = ma.data; }
         }
 
         return best;

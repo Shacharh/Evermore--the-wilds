@@ -14,13 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RadialMenuConfig
   menuConfig:
     playerMonsterOptions:
-    - label: Movment
+    - actionType: 0
+      label: Movment
       icon: {fileID: 0}
-    - label: Attack
+    - actionType: 1
+      label: Attack
       icon: {fileID: 0}
-    - label: Info
+    - actionType: 2
+      label: Info
       icon: {fileID: 0}
     enemyMonsterOptions:
-    - label: Info
+    - actionType: 2
+      label: Info
       icon: {fileID: 0}
     emptyTileOptions: []

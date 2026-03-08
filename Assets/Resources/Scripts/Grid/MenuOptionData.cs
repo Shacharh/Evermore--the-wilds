@@ -7,7 +7,9 @@ public enum RadialActionType
 {
     Movement,
     Attack,
-    Info
+    Info,
+    UseAttack0,   // Player selected the first attack in the sub-menu
+    UseAttack1    // Player selected the second attack in the sub-menu
 }
 
 // This class defines the data structure for menu options in the radial menu.
