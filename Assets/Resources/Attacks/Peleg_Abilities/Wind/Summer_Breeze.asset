@@ -16,9 +16,17 @@ MonoBehaviour:
   displayName: Summer Breeze
   description: for X amount of turns, all abilities of affected monster require one
     less AP
-  category: 2
   element: 2
-  power: 0
+  effects:
+  - category: 0
+    value: 60
+    selfInflicted: 0
+    buffType: 0
+    chance: 0
+    isDebuff: 0
+    duration: 1
+    isInstantHeal: 0
+    statusEffect: {fileID: 0}
   maxPP: 0
   consumeActionPoints: 10
   guaranteedHit: 1

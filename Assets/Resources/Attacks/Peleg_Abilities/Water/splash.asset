@@ -15,9 +15,17 @@ MonoBehaviour:
   id: splash
   displayName: splash
   description: splash water on a target, making a small amount of damage
-  category: 0
   element: 1
-  power: 50
+  effects:
+  - category: 0
+    value: 60
+    selfInflicted: 0
+    buffType: 0
+    chance: 0
+    isDebuff: 0
+    duration: 1
+    isInstantHeal: 0
+    statusEffect: {fileID: 0}
   maxPP: 0
   consumeActionPoints: 3
   guaranteedHit: 0

@@ -15,9 +15,17 @@ MonoBehaviour:
   id: Molten_Lava
   displayName: Molten Lava
   description: rise armor to self
-  category: 2
   element: 0
-  power: 0
+  effects:
+  - category: 0
+    value: 60
+    selfInflicted: 0
+    buffType: 0
+    chance: 0
+    isDebuff: 0
+    duration: 1
+    isInstantHeal: 0
+    statusEffect: {fileID: 0}
   maxPP: 0
   consumeActionPoints: 10
   guaranteedHit: 1
