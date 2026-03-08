@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/Resources/Prefabs/MenuItems.meta
+guid: 90cb5a16f5333014c99f764c92e364ff
+========
 guid: 1d9c6c24747aa4e458f0a4e000a0dfef
+>>>>>>>> main:Assets/Resources/Animations/Dragon.meta
 folderAsset: yes
 DefaultImporter:
   externalObjects: {}

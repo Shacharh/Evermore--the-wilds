@@ -79,9 +79,22 @@ public class InputManager : MonoBehaviour
         }
     }
 
+    private Vector3 lastCameraPos;
+
     void Update()
     {
         HandleTileHovering();
+
+        // Track camera movement
+        if (Camera.main != null)
+        {
+            if (Camera.main.transform.position != lastCameraPos)
+            {
+                Debug.LogError($"!!! CAMERA MOVED in Update() from {lastCameraPos} to {Camera.main.transform.position}");
+                Debug.LogError($"Stack trace: {System.Environment.StackTrace}");
+            }
+            lastCameraPos = Camera.main.transform.position;
+        }
     }
 
     // -- Hovering (unchanged) --------------------------------------------------
@@ -153,15 +166,81 @@ public class InputManager : MonoBehaviour
     {
         if (UnityEngine.EventSystems.EventSystem.current == null) return false;
 
-        var pointerData = new UnityEngine.EventSystems.PointerEventData(
-            UnityEngine.EventSystems.EventSystem.current)
-        { position = mousePositionAction.ReadValue<Vector2>() };
+        // Create pointer event data
+        var pointerData = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current)
+        {
+            position = mousePositionAction.ReadValue<Vector2>()
+        };
 
-        var results = new System.Collections.Generic.List<
-            UnityEngine.EventSystems.RaycastResult>();
-
+        // Raycast against UI
+        var results = new System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult>();
         UnityEngine.EventSystems.EventSystem.current.RaycastAll(pointerData, results);
-        return results.Count > 0;
+
+        // FILTER: Only count objects that are ACTUAL UI (have a Canvas parent OR are on UI layer)
+        bool hasRealUI = false;
+        foreach (var result in results)
+        {
+            // Check if this object has a Canvas parent (real UI) OR is on the UI layer
+            UnityEngine.Canvas parentCanvas = result.gameObject.GetComponentInParent<UnityEngine.Canvas>();
+            bool isUILayer = result.gameObject.layer == LayerMask.NameToLayer("UI");
+
+            if (parentCanvas != null || isUILayer)
+            {
+                hasRealUI = true;
+                Debug.LogWarning($"Real UI detected: '{result.gameObject.name}' on Canvas: '{parentCanvas?.name}'");
+                break;
+            }
+        }
+
+        return hasRealUI;
+    }
+
+    //void OnLeftClick(InputAction.CallbackContext context)
+    //{
+    //    // Ignore UI during the showcase to prevent menu conflicts
+    //    if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) return;
+
+    //    if (currentHoveredTile == null) return;
+
+    //    HandleAlphaShowcaseLogic(currentHoveredTile);
+    //}
+
+    void HandleAlphaShowcaseLogic(Tile clickedTile)
+    {
+        // CASE 1: We click a monster (Initial Selection OR Changing Selection)
+        if (clickedTile.Occupation == Tile.OccupationType.Monster)
+        {
+            // Clear old selection visuals if they exist
+            if (selectedTile != null) selectedTile.SetSelected(false);
+
+            selectedTile = clickedTile;
+            movingMonster = clickedTile.GetMonster();
+            selectedTile.SetSelected(true);
+
+            Debug.Log($"Alpha: Selected Monster {movingMonster.name} at {clickedTile.GridPosition}");
+            return;
+        }
+
+        // CASE 2: We have a monster selected and click an EMPTY tile (Movement)
+        if (selectedTile != null && movingMonster != null && clickedTile.IsWalkable())
+        {
+            Debug.Log($"Alpha: Moving {movingMonster.name} to {clickedTile.GridPosition}");
+
+            // Start the movement coroutine you already have!
+            movementOriginTile = selectedTile;
+            StartCoroutine(MoveMonsterToTile(clickedTile));
+
+            // Note: MoveMonsterToTile already calls ExitMovementMode which clears variables
+            return;
+        }
+
+        // CASE 3: Clicked something else or empty ground without a selection
+        if (selectedTile != null)
+        {
+            selectedTile.SetSelected(false);
+            selectedTile = null;
+            movingMonster = null;
+        }
     }
 
     // -- Normal Click ----------------------------------------------------------
@@ -226,13 +305,39 @@ public class InputManager : MonoBehaviour
 
     void OpenRadialMenu(Tile tile)
     {
-        if (radialMenuPrefab == null) { Debug.LogWarning("RadialMenu prefab not assigned!"); return; }
+        Debug.LogWarning($"=== ATTEMPTING TO OPEN MENU ON TILE {tile.GridPosition.x},{tile.GridPosition.y} ===");
+        Debug.Log($">>> OPENING MENU - Frame {Time.frameCount}, Time {Time.time}");
 
-        if (activeMenu != null) Destroy(activeMenu.gameObject);
+        // DEBUG: Track EVERYTHING
+        Transform camTarget = GameObject.Find("Cam_Target")?.transform;
+        Transform mainCam = Camera.main?.transform;
 
-        Vector3 menuPos = tile.transform.position + Vector3.up * 2f;
-        activeMenu = Instantiate(radialMenuPrefab, menuPos, Quaternion.identity);
+        Debug.LogError($"[BEFORE ANYTHING] Main Camera pos: {mainCam?.position}, Cam_Target pos: {camTarget?.position}");
+
+        if (radialMenuPrefab == null)
+        {
+            Debug.LogWarning("RadialMenu prefab not assigned!");
+            return;
+        }
+
+        Debug.LogError($"[BEFORE DESTROY] Main Camera pos: {mainCam?.position}, Cam_Target pos: {camTarget?.position}");
+
+        if (activeMenu != null)
+        {
+            Debug.Log("Destroying old menu before opening new one");
+            Destroy(activeMenu.gameObject);
+        }
+
+        Debug.LogError($"[BEFORE INSTANTIATE] Main Camera pos: {mainCam?.position}, Cam_Target pos: {camTarget?.position}");
+
+        Vector3 menuPosition = tile.transform.position + Vector3.up * 2.0f;
+        activeMenu = Instantiate(radialMenuPrefab, menuPosition, Quaternion.identity);
+
+        Debug.LogError($"[AFTER INSTANTIATE] Main Camera pos: {mainCam?.position}, Cam_Target pos: {camTarget?.position}");
+
         activeMenu.Initialize(tile, this);
+
+        Debug.LogError($"[AFTER INITIALIZE] Main Camera pos: {mainCam?.position}, Cam_Target pos: {camTarget?.position}");
 
         menuOpenTime = Time.time;
     }
@@ -244,27 +349,26 @@ public class InputManager : MonoBehaviour
         menuOpenTime = -1f;
     }
 
-    public void OnMenuActionSelected(string action, Tile tile)
+    public void HandleRadialAction(RadialActionType type, Tile tile)
     {
-        Debug.Log($"[InputManager] Action '{action}' for tile {tile.GridPosition}");
+        Debug.Log($"Radial action selected: {type} for tile {tile.GridPosition}");
 
-        switch (action)
+        switch (type)
         {
-            case "Deselect":
-                CloseRadialMenu();
-                break;
-
-            case "Movement":
+            case RadialActionType.Movement:
                 HandleMovementAction(tile);
                 break;
 
-            case "Abilities":
+            case RadialActionType.Attack:
                 HandleAbilitiesAction(tile);
-                if (activeMenu != null) activeMenu.ShowAbilitiesSubMenu();
+                break;
+
+            case RadialActionType.Info:
+                HandleInfoAction(tile);
                 break;
 
             default:
-                Debug.LogWarning($"Unknown action: {action}");
+                Debug.LogWarning($"Unknown action type: {type}");
                 break;
         }
     }
@@ -395,7 +499,18 @@ public class InputManager : MonoBehaviour
         Debug.Log($"[InputManager] Abilities requested for {tile.GridPosition}.");
     }
 
-    // -- Cleanup ---------------------------------------------------------------
+    void HandleInfoAction(Tile tile)
+    {
+        Monster monster = tile.GetMonster();
+        if (monster == null)
+        {
+            Debug.LogWarning("No monster on this tile!");
+            return;
+        }
+
+        Debug.Log($"=== MONSTER INFO ===\nName: {monster.name}\nPosition: {tile.GridPosition}\nSpeed: {monster.Speed}");
+        // TODO: Show UI panel with monster stats here
+    }
 
     void OnDestroy()
     {

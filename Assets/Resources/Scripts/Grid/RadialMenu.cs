@@ -1,146 +1,203 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using System.Collections.Generic;
 
 public class RadialMenu : MonoBehaviour
 {
     [Header("Menu Settings")]
-    [SerializeField] private float menuRadius = 150f; // UI units, not world units
+    [SerializeField] private float menuRadius = 150f;
     [SerializeField] private GameObject buttonPrefab;
+
+    [Header("Configuration")]
+    [SerializeField] private RadialMenuConfig menuConfig;
 
     private Tile targetTile;
     private InputManager inputManager;
     private List<RadialMenuButton> buttons = new List<RadialMenuButton>();
     private Camera mainCamera;
     private Canvas canvas;
+    private RectTransform rectTransform;
 
     void Awake()
     {
-        mainCamera = Camera.main;
         SetupCanvas();
+        SetupEventSystem();
+    }
+
+    private void SetupEventSystem()
+    {
+        // Ensure EventSystem exists in the scene
+        if (Object.FindAnyObjectByType<EventSystem>() == null)
+        {
+            GameObject eventSystemGO = new GameObject("EventSystem");
+            eventSystemGO.AddComponent<EventSystem>();
+            eventSystemGO.AddComponent<StandaloneInputModule>();
+            Debug.Log("Created new EventSystem");
+        }
+        else
+        {
+            Debug.Log("EventSystem already exists");
+        }
     }
 
     void SetupCanvas()
     {
-        // Add Canvas if it doesn't exist
-        canvas = GetComponent<Canvas>();
+        // Get or add Canvas component
         if (canvas == null)
-        {
-            canvas = gameObject.AddComponent<Canvas>();
-        }
+            canvas = GetComponent<Canvas>();
 
-        // CRITICAL: Set to World Space
+        // CRITICAL: Set Canvas to WorldSpace for 3D visibility
         canvas.renderMode = RenderMode.WorldSpace;
+        canvas.worldCamera = Camera.main;
 
-        // Add GraphicRaycaster for button clicks
+        // Scale the canvas for world space (smaller value = bigger in world)
+        canvas.transform.localScale = Vector3.one * 0.05f;
+
+        // Set sorting order to appear above everything
+        canvas.sortingOrder = 1000;
+
+        // Add GraphicRaycaster for UI interaction
         if (GetComponent<GraphicRaycaster>() == null)
         {
-            gameObject.AddComponent<GraphicRaycaster>();
+            GraphicRaycaster raycaster = gameObject.AddComponent<GraphicRaycaster>();
+            raycaster.blockingObjects = GraphicRaycaster.BlockingObjects.None;
         }
 
-        // Setup RectTransform for the canvas
-        RectTransform rectTransform = GetComponent<RectTransform>();
+        // Get RectTransform
         if (rectTransform == null)
+            rectTransform = GetComponent<RectTransform>();
+
+        // Set RectTransform size to ensure it covers the buttons
+        if (rectTransform != null)
         {
-            rectTransform = gameObject.AddComponent<RectTransform>();
+            rectTransform.sizeDelta = new Vector2(500, 500);
         }
 
-        // Set canvas size (this will be the menu's boundary)
-        rectTransform.sizeDelta = new Vector2(500, 500);
-
-        // Scale the entire canvas for world space (adjust this value to make menu bigger/smaller)
-        transform.localScale = Vector3.one * 0.005f;
-
-        Debug.Log("RadialMenu Canvas setup complete");
+        Debug.Log("RadialMenu Canvas setup complete - WorldSpace mode enabled");
     }
 
     public void Initialize(Tile tile, InputManager manager)
     {
         targetTile = tile;
         inputManager = manager;
+        mainCamera = Camera.main;
 
+        ClearButtons();
         CreateMenuButtons();
-        PositionMenu();
+        PositionMenu(); // CRITICAL: Position the menu in world space
 
         Debug.Log($"RadialMenu initialized for tile at {tile.GridPosition}");
     }
 
     void CreateMenuButtons()
     {
-        List<MenuAction> actions = GetAvailableActions();
+        List<MenuOptionData> optionsToShow = new List<MenuOptionData>();
 
-        if (actions.Count == 0)
+        // NULL CHECK: If menuConfig isn't assigned, create fallback options
+        if (menuConfig == null)
         {
-            Debug.LogWarning("No actions available for RadialMenu!");
-            return;
+            Debug.LogWarning("RadialMenuConfig is not assigned! Using fallback options.");
+            optionsToShow = GetFallbackOptions();
+        }
+        else
+        {
+            // Determine which options to show based on tile state
+            if (targetTile.Occupation == Tile.OccupationType.Empty)
+            {
+                optionsToShow = menuConfig.menuConfig.emptyTileOptions;
+            }
+            else if (targetTile.Occupation == Tile.OccupationType.Monster)
+            {
+                if (targetTile.Type == Tile.TileType.PlayerSide)
+                {
+                    optionsToShow = menuConfig.menuConfig.playerMonsterOptions;
+                }
+                else if (targetTile.Type == Tile.TileType.EnemySide)
+                {
+                    optionsToShow = menuConfig.menuConfig.enemyMonsterOptions;
+                }
+            }
         }
 
-        float angleStep = 360f / actions.Count;
-
-        for (int i = 0; i < actions.Count; i++)
+        // Final null check
+        if (optionsToShow == null || optionsToShow.Count == 0)
         {
-            MenuAction action = actions[i];
-            // Start from top (90 degrees) and go clockwise
-            float angle = (90f - i * angleStep) * Mathf.Deg2Rad;
+            Debug.LogWarning($"No menu options available for tile at {targetTile.GridPosition}. Using fallback.");
+            optionsToShow = GetFallbackOptions();
+        }
 
-            // Calculate position on a circle (in UI space, not world space)
-            float xPos = Mathf.Cos(angle) * menuRadius;
-            float yPos = Mathf.Sin(angle) * menuRadius;
+        Debug.Log($"Available actions: {optionsToShow.Count}");
 
-            // Instantiate the button
+        float angleStep = 360f / optionsToShow.Count;
+
+        for (int i = 0; i < optionsToShow.Count; i++)
+        {
             GameObject buttonObj = Instantiate(buttonPrefab, transform);
+            RadialMenuButton btn = buttonObj.GetComponent<RadialMenuButton>();
 
-            // Reset the button's scale since we're scaling the entire canvas
-            buttonObj.transform.localScale = Vector3.one;
+            // Position in circle
+            float angle = i * angleStep * Mathf.Deg2Rad;
+            RectTransform btnRect = buttonObj.GetComponent<RectTransform>();
+            btnRect.anchoredPosition = new Vector2(
+                Mathf.Cos(angle) * menuRadius,
+                Mathf.Sin(angle) * menuRadius
+            );
 
-            // Position the button using RectTransform
-            RectTransform buttonRect = buttonObj.GetComponent<RectTransform>();
-            if (buttonRect != null)
-            {
-                // Center the button at the calculated position
-                buttonRect.anchoredPosition = new Vector2(xPos, yPos);
-                Debug.Log($"Button {i} positioned at {xPos}, {yPos}");
-            }
+            Debug.Log($"Button {i} positioned at {btnRect.anchoredPosition}");
 
-            // Initialize the button with the action
-            RadialMenuButton button = buttonObj.GetComponent<RadialMenuButton>();
-            if (button != null)
-            {
-                button.Initialize(action.label, action.iconSprite, this);
-                buttons.Add(button);
-                Debug.Log($"Button initialized: {action.label}");
-            }
-            else
-            {
-                Debug.LogError("RadialMenuButton component not found on button prefab!");
-            }
+            // Setup button with action type and callback
+            btn.Setup(optionsToShow[i].label, optionsToShow[i].icon,
+                      optionsToShow[i].actionType, OnActionSelected);
+
+            buttons.Add(btn);
+
+            Debug.Log($"Button initialized: {optionsToShow[i].label}");
         }
 
         Debug.Log($"Created {buttons.Count} menu buttons");
     }
 
-    List<MenuAction> GetAvailableActions()
+    // Fallback options if menuConfig is not assigned
+    private List<MenuOptionData> GetFallbackOptions()
     {
-        List<MenuAction> actions = new List<MenuAction>();
-        actions.Add(new MenuAction("Deselect", null));
-
-        if (targetTile != null && targetTile.Occupation == Tile.OccupationType.Monster)
+        List<MenuOptionData> fallback = new List<MenuOptionData>
         {
-            actions.Add(new MenuAction("Movement", null));
+            new MenuOptionData { label = "Movement", actionType = RadialActionType.Movement },
+            new MenuOptionData { label = "Attack", actionType = RadialActionType.Attack },
+            new MenuOptionData { label = "Info", actionType = RadialActionType.Info }
+        };
+        return fallback;
+    }
 
-            Monster monster = targetTile.GetMonster();
-            if (monster != null && monster.GetAttacks() != null && monster.GetAttacks().Count > 0)
-            {
-                actions.Add(new MenuAction("Abilities", null));
-            }
+    private void OnActionSelected(RadialActionType type)
+    {
+        Debug.Log($"Action selected: {type}");
+        inputManager.HandleRadialAction(type, targetTile);
+        Close();
+    }
+
+    public void Close()
+    {
+        ClearButtons();
+        Destroy(gameObject);
+    }
+
+    void ClearButtons()
+    {
+        foreach (var btn in buttons)
+        {
+            if (btn != null)
+                Destroy(btn.gameObject);
         }
-
-        Debug.Log($"Available actions: {actions.Count}");
-        return actions;
+        buttons.Clear();
     }
 
     void PositionMenu()
     {
+        // ADD THIS LINE AT THE TOP:
+        Debug.LogWarning($"=== POSITIONING MENU - Canvas mode: {canvas.renderMode}, Scale: {canvas.transform.localScale} ===");
+
         if (mainCamera == null)
         {
             mainCamera = Camera.main;
@@ -153,115 +210,35 @@ public class RadialMenu : MonoBehaviour
 
         if (targetTile != null)
         {
-            // Position above the tile (adjust height as needed)
+            // Position above the tile
             Vector3 tilePosition = targetTile.transform.position;
             transform.position = tilePosition + Vector3.up * 2.0f;
-
-            // Debug.Log($"Menu positioned at {transform.position}"); // Removed: was logging every frame
         }
 
-        // BILLBOARD: Make the menu always face the camera
+        // Billboard: Make menu face camera
         Vector3 directionToCamera = mainCamera.transform.position - transform.position;
-
-        // Option 1: Full billboard (menu tilts with camera)
-        // transform.rotation = Quaternion.LookRotation(-directionToCamera);
-
-        // Option 2: Y-axis billboard only (menu stays upright but rotates to face camera)
         directionToCamera.y = 0; // Keep menu upright
+
         if (directionToCamera.sqrMagnitude > 0.001f)
         {
             transform.rotation = Quaternion.LookRotation(-directionToCamera);
         }
+
+        Debug.Log($"Menu positioned at {transform.position}");
     }
 
     void Update()
     {
-        // Billboard effect: make menu face camera (position set once in Initialize)
-        if (Camera.main != null)
+        // Billboard effect: make menu continuously face camera
+        if (Camera.main != null && targetTile != null)
         {
-            transform.rotation = Quaternion.LookRotation(transform.position - Camera.main.transform.position);
-        }
-    }
-
-    void LateUpdate()
-    {
-        // Additional billboard update in LateUpdate for smoother following
-        if (mainCamera != null)
-        {
-            Vector3 directionToCamera = mainCamera.transform.position - transform.position;
+            Vector3 directionToCamera = Camera.main.transform.position - transform.position;
             directionToCamera.y = 0;
+
             if (directionToCamera.sqrMagnitude > 0.001f)
             {
                 transform.rotation = Quaternion.LookRotation(-directionToCamera);
             }
         }
     }
-
-    public void OnButtonClicked(string actionLabel)
-    {
-        Debug.Log($"RadialMenu: Button clicked - {actionLabel}");
-
-        if (inputManager != null)
-        {
-            inputManager.OnMenuActionSelected(actionLabel, targetTile);
-        }
-        else
-        {
-            Debug.LogError("InputManager is null!");
-        }
-    }
-
-    void OnDestroy()
-    {
-        // Clean up buttons
-        foreach (var button in buttons)
-        {
-            if (button != null && button.gameObject != null)
-            {
-                Destroy(button.gameObject);
-            }
-        }
-        buttons.Clear();
-    }
-
-    private struct MenuAction
-    {
-        public string label;
-        public Sprite iconSprite;
-
-        public MenuAction(string label, Sprite icon)
-        {
-            this.label = label;
-            this.iconSprite = icon;
-        }
-    }
-
-    public void ShowAbilitiesSubMenu()
-    {
-        // 1. Clear existing buttons (Movement, Abilities, etc.)
-        foreach (var btn in buttons) Destroy(btn.gameObject);
-        buttons.Clear();
-
-        // 2. Get the actual learned attacks from the monster
-        Monster monster = targetTile.GetMonster();
-        if (monster == null) return;
-
-        var attacks = monster.GetAttacks(); // This returns IReadOnlyList<MonsterAttack>
-
-        // 3. Create new buttons for each attack
-        float angleStep = 360f / attacks.Count;
-        for (int i = 0; i < attacks.Count; i++)
-        {
-            float angle = i * angleStep * Mathf.Deg2Rad;
-            Vector3 pos = new Vector3(Mathf.Cos(angle) * menuRadius, Mathf.Sin(angle) * menuRadius, 0);
-
-            GameObject btnObj = Instantiate(buttonPrefab, transform);
-            btnObj.transform.localPosition = pos;
-
-            RadialMenuButton btn = btnObj.GetComponent<RadialMenuButton>();
-            // Initialize with the Attack Display Name from AttackData
-            btn.Initialize(attacks[i].data.DisplayName, null, this);
-            buttons.Add(btn);
-        }
-    }
-}//old vertion
+}
