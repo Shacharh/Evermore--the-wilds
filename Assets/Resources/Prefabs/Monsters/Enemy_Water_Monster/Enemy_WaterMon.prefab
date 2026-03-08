@@ -48,10 +48,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Monster
   data: {fileID: 11400000, guid: 0883bdb8fe4abfc47b115186142dc692, type: 2}
-  enemyMonster: 0
-  level: 0
+  enemyMonster: 1
+  level: 1
   learnedAttacks:
   - data: {fileID: 0}
+  anim: {fileID: 0}
 --- !u!114 &5384209399759910201
 MonoBehaviour:
   m_ObjectHideFlags: 0
