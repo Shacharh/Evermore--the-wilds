@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
+using System;
 
 public class RadialMenuButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
@@ -29,6 +30,14 @@ public class RadialMenuButton : MonoBehaviour, IPointerEnterHandler, IPointerExi
     private Color targetColor;
     private Vector3 targetScale;
     private bool isHovered = false;
+    private RadialActionType actionType;
+    private System.Action<RadialActionType> onActionSelected;
+
+    /// <summary>
+    /// Optional attack data shown in AttackInfoPanel while this button is hovered.
+    /// Null for non-attack buttons (Move / Info etc.).
+    /// </summary>
+    private AttackData hoverAttackData;
 
     void Start()
     {
@@ -138,6 +147,32 @@ public class RadialMenuButton : MonoBehaviour, IPointerEnterHandler, IPointerExi
         Debug.Log($"=== Button '{label}' initialization complete ===\n");
     }
 
+    /// <summary>
+    /// Configures the button. Pass <paramref name="attackData"/> for attack buttons so that
+    /// hovering shows the <see cref="AttackInfoPanel"/>. Leave null for non-attack buttons.
+    /// </summary>
+    public void Setup(string label, Sprite icon, RadialActionType type,
+                      System.Action<RadialActionType> callback,
+                      AttackData attackData = null)
+    {
+        actionType       = type;
+        onActionSelected = callback;
+        hoverAttackData  = attackData;
+
+        if (labelText != null)
+        {
+            labelText.text     = label;
+            // Force a readable font size for ScreenSpaceOverlay.
+            // The prefab value (36 pt) was correct for WorldSpace at scale 0.05,
+            // but is tiny in screen-space pixels.
+            labelText.fontSize = 30f;
+            labelText.ForceMeshUpdate();
+        }
+
+        if (icon != null && iconImage != null)
+            iconImage.sprite = icon;
+    }
+
     void Update()
     {
         // Smooth animations
@@ -156,9 +191,11 @@ public class RadialMenuButton : MonoBehaviour, IPointerEnterHandler, IPointerExi
         targetScale = originalScale * scaleOnHover;
 
         if (labelText != null)
-        {
             labelText.color = textHoverColor;
-        }
+
+        // Show attack info popup if this is an attack button
+        if (hoverAttackData != null)
+            AttackInfoPanel.Show(hoverAttackData);
 
         Debug.Log($">>> HOVER: {actionLabel}");
     }
@@ -170,9 +207,11 @@ public class RadialMenuButton : MonoBehaviour, IPointerEnterHandler, IPointerExi
         targetScale = originalScale;
 
         if (labelText != null)
-        {
             labelText.color = textNormalColor;
-        }
+
+        // Hide attack info popup when leaving any button
+        // (safe to call even on non-attack buttons — Hide() is a no-op when hidden)
+        AttackInfoPanel.Hide();
 
         Debug.Log($"<<< EXIT HOVER: {actionLabel}");
     }
@@ -181,18 +220,13 @@ public class RadialMenuButton : MonoBehaviour, IPointerEnterHandler, IPointerExi
     {
         Debug.Log($"*** BUTTON CLICKED: {actionLabel} ***");
 
+        // Invoke the callback with the action type
+        onActionSelected?.Invoke(actionType);
+
         // Visual feedback
         StartCoroutine(ClickAnimation());
 
-        // Notify parent menu
-        if (parentMenu != null)
-        {
-            parentMenu.OnButtonClicked(actionLabel);
-        }
-        else
-        {
-            Debug.LogError("Parent menu is NULL!");
-        }
+        // parentMenu notification removed — radial menu receives the selection via the callback above
     }
 
     private System.Collections.IEnumerator ClickAnimation()
@@ -210,4 +244,4 @@ public class RadialMenuButton : MonoBehaviour, IPointerEnterHandler, IPointerExi
             targetColor = hoverColor;
         }
     }
-}//old vertion
+}

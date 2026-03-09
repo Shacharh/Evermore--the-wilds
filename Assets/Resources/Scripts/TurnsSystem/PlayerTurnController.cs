@@ -4,7 +4,7 @@ using UnityEngine;
 /// Player-side TurnController.
 /// Exposes TrySpendAPForMove / TrySpendAPForAttack so that InputManager
 /// can validate and charge AP without needing to know the full turn system.
-/// This script does NOT handle input itself -- InputManager already does that.
+/// This script does NOT handle input itself — InputManager already does that.
 /// </summary>
 public class PlayerTurnController : TurnController
 {
@@ -18,7 +18,7 @@ public class PlayerTurnController : TurnController
     protected override void OnTurnStarted()
     {
         IsActive = true;
-        Debug.Log("[PlayerTurnController] Player turn -- awaiting input.");
+        Debug.Log("[PlayerTurnController] Player turn — awaiting input.");
     }
 
     protected override void OnTurnEnded()
@@ -54,6 +54,13 @@ public class PlayerTurnController : TurnController
                           $"'{attack.DisplayName}' (cost {attack.ConsumeActionPoints} AP)");
     }
 
+    /// <summary>
+    /// Validates and charges a variable AP cost for a multi-tile move.
+    /// The cost is pre-calculated by InputManager as ceil(distance / tilesPerAP).
+    /// </summary>
+    public bool TrySpendAPForDistanceMove(Monster monster, int apCost)
+        => TrySpendAP(monster, apCost, $"move ({apCost} AP)");
+
     // -- Helpers ---------------------------------------------------------------
 
     private bool TrySpendAP(Monster monster, int cost, string actionName)
@@ -70,11 +77,8 @@ public class PlayerTurnController : TurnController
             return false;
         }
 
-        if (monster.HasActed)
-        {
-            Debug.Log($"[PlayerTurnController] {monster.name} has already acted this turn.");
-            return false;
-        }
+        // NOTE: HasActed is intentionally NOT checked here.
+        // Monsters may act multiple times per turn as long as there is enough AP.
 
         if (!CanAfford(cost))
         {
@@ -85,8 +89,20 @@ public class PlayerTurnController : TurnController
 
         if (!SpendAP(cost)) return false; // SpendAP also calls CheckAutoEndTurn
 
-        monster.MarkActed();
+        monster.MarkActed(); // kept for logging / enemy-AI bookkeeping; no longer blocks re-use
         return true;
+    }
+
+    // -- Auto-Discovery --------------------------------------------------------
+
+    /// <summary>Scans the scene for all non-enemy monsters and adds them to this roster.</summary>
+    protected override void DiscoverMonsters()
+    {
+        var all = FindObjectsByType<Monster>(FindObjectsSortMode.None);
+        foreach (var m in all)
+            if (!m.IsEnemy)
+                monsters.Add(m);
+        Debug.Log($"[PlayerTurnController] Auto-discovered {monsters.Count} player monster(s).");
     }
 
     // -- UI Button Hook --------------------------------------------------------

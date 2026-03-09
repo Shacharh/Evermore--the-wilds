@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: fc6bdaba536ec1842840d925f7c23d3f
+timeCreated: 1517667871
+licenseType: Store
+DefaultImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 111219
+  packageName: GearFactory
+  packageVersion: 1.1
+  assetPath: Assets/GearFactory/DemoScenes/GearSliding.unity
+  uploadId: 366727

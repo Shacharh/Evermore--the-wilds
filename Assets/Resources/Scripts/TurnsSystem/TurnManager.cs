@@ -3,8 +3,18 @@ using UnityEngine;
 using UnityEngine.Events;
 
 /// <summary>
-/// Singleton that drives the Player <-> Enemy turn loop.
-/// Attach to a persistent GameManager GameObject in the scene.
+/// Singleton that drives the Player ↔ Enemy turn loop.
+///
+/// AUTO-SETUP — No manual scene work needed:
+///   • If TurnManager is not in the scene, it creates itself automatically.
+///   • If PlayerTurnController / EnemyTurnController are missing, they are
+///     created automatically and will discover their monsters from the scene.
+///
+/// OPTIONAL manual setup (gives Inspector control over AP, monster rosters, etc.):
+///   1. Create an empty GameObject → add TurnManager.
+///   2. Create two more GameObjects → add PlayerTurnController and EnemyTurnController.
+///   3. Drag those controllers into TurnManager's inspector fields.
+///   4. Assign monsters to each controller's Monsters list.
 /// </summary>
 public class TurnManager : MonoBehaviour
 {
@@ -12,9 +22,9 @@ public class TurnManager : MonoBehaviour
 
     // -- Controllers -----------------------------------------------------------
 
-    [Header("Controllers")]
+    [Header("Controllers  (auto-created if left empty)")]
     [SerializeField] private PlayerTurnController playerController;
-    [SerializeField] private EnemyTurnController enemyController;
+    [SerializeField] private EnemyTurnController  enemyController;
 
     // -- State -----------------------------------------------------------------
 
@@ -22,7 +32,7 @@ public class TurnManager : MonoBehaviour
     public TurnOwner CurrentTurn { get; private set; }
 
     public bool IsPlayerTurn => CurrentTurn == TurnOwner.Player;
-    public bool IsEnemyTurn => CurrentTurn == TurnOwner.Enemy;
+    public bool IsEnemyTurn  => CurrentTurn == TurnOwner.Enemy;
 
     // -- Turn Counter ----------------------------------------------------------
 
@@ -31,8 +41,8 @@ public class TurnManager : MonoBehaviour
     // -- Events ----------------------------------------------------------------
 
     [Header("Events")]
-    public UnityEvent onPlayerTurnStart;
-    public UnityEvent onEnemyTurnStart;
+    public UnityEvent    onPlayerTurnStart;
+    public UnityEvent    onEnemyTurnStart;
     public UnityEvent<int> onNewRound;   // fires every full Player+Enemy cycle
 
     // -- Timing ----------------------------------------------------------------
@@ -43,12 +53,30 @@ public class TurnManager : MonoBehaviour
 
     private bool transitionInProgress = false;
 
+    // -- Auto-Create -----------------------------------------------------------
+
+    /// <summary>
+    /// Ensures TurnManager exists even if it was not placed in the scene manually.
+    /// Fires after the scene loads — safe to have it in the scene too (duplicate
+    /// Awake check will destroy the extra instance).
+    /// </summary>
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void AutoCreate()
+    {
+        if (Instance != null) return;
+        if (FindFirstObjectByType<TurnManager>() != null) return; // already in scene
+        new GameObject("TurnManager").AddComponent<TurnManager>();
+        Debug.Log("[TurnManager] Auto-created (was not in scene).");
+    }
+
     // -- Lifecycle -------------------------------------------------------------
 
     private void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+
+        EnsureControllers();
     }
 
     private void Start()
@@ -56,9 +84,18 @@ public class TurnManager : MonoBehaviour
         StartCoroutine(BeginGame());
     }
 
+    // -- Game Start Sequence ---------------------------------------------------
+
     private IEnumerator BeginGame()
     {
-        yield return new WaitForEndOfFrame(); // let all Start()s finish
+        // MonsterSpawner uses Invoke(0.2 s) to spawn — wait long enough so all
+        // monsters exist and their Start() methods have run before we discover them.
+        yield return new WaitForSeconds(0.5f);
+
+        // Auto-discover monsters (only fills rosters that were left empty in Inspector)
+        playerController?.AutoDiscoverMonsters();
+        enemyController?.AutoDiscoverMonsters();
+
         BeginTurn(TurnOwner.Player);
     }
 
@@ -86,13 +123,13 @@ public class TurnManager : MonoBehaviour
         if (owner == TurnOwner.Player)
         {
             Debug.Log($"[TurnManager] == PLAYER TURN {TurnNumber} ==");
-            playerController.StartTurn();
+            playerController?.StartTurn();
             onPlayerTurnStart?.Invoke();
         }
         else
         {
             Debug.Log($"[TurnManager] == ENEMY TURN {TurnNumber} ==");
-            enemyController.StartTurn();
+            enemyController?.StartTurn();
             onEnemyTurnStart?.Invoke();
         }
     }
@@ -101,10 +138,8 @@ public class TurnManager : MonoBehaviour
     {
         transitionInProgress = true;
 
-        // End active controller
-        ActiveController.EndTurn();
+        ActiveController?.EndTurn();
 
-        // Increment round counter when the enemy's turn ends (full cycle complete)
         if (IsEnemyTurn)
         {
             TurnNumber++;
@@ -113,8 +148,33 @@ public class TurnManager : MonoBehaviour
 
         yield return new WaitForSeconds(transitionDelay);
 
-        TurnOwner next = IsPlayerTurn ? TurnOwner.Enemy : TurnOwner.Player;
+        TurnOwner next       = IsPlayerTurn ? TurnOwner.Enemy : TurnOwner.Player;
         transitionInProgress = false;
         BeginTurn(next);
+    }
+
+    // -- Controller Setup Helpers ----------------------------------------------
+
+    private void EnsureControllers()
+    {
+        // Auto-find in scene if not assigned in Inspector
+        if (playerController == null)
+            playerController = FindFirstObjectByType<PlayerTurnController>();
+        if (enemyController == null)
+            enemyController  = FindFirstObjectByType<EnemyTurnController>();
+
+        // Auto-create if still missing
+        if (playerController == null)
+        {
+            playerController = new GameObject("PlayerTurnController")
+                .AddComponent<PlayerTurnController>();
+            Debug.Log("[TurnManager] Auto-created PlayerTurnController.");
+        }
+        if (enemyController == null)
+        {
+            enemyController = new GameObject("EnemyTurnController")
+                .AddComponent<EnemyTurnController>();
+            Debug.Log("[TurnManager] Auto-created EnemyTurnController.");
+        }
     }
 }

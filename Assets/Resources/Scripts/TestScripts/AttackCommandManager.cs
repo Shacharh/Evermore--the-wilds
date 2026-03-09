@@ -43,13 +43,17 @@ public class AttackCommandManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Called from animation events - only needs the effect index
+    /// Called from animation events - only needs the effect index.
+    /// NOTE: Monster.ExecuteAttack now applies effects directly and does NOT
+    /// call SetupAttack, so currentAttacker/currentTarget will typically be null
+    /// here. This method returns silently in that case to avoid double-damage.
     /// </summary>
     public void TriggerAttackEffect(int effectIndex)
     {
         if (currentAttacker == null || currentTarget == null)
         {
-            Debug.LogError("Attack not properly setup! Call SetupAttack first.");
+            // Effects were already applied directly by Monster.ExecuteAttack.
+            // Nothing to do — return quietly so animations can play without side-effects.
             return;
         }
 

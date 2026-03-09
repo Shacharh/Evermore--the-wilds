@@ -12,9 +12,16 @@ public abstract class TurnController : MonoBehaviour
     // -- AP --------------------------------------------------------------------
 
     [Header("Action Points")]
+    [Tooltip("Maximum AP this side can ever hold.")]
     [SerializeField] protected int maxAP = 6;
 
-    public int MaxAP => maxAP;
+    [Tooltip("AP restored at the start of every turn. " +
+             "Set equal to maxAP for full replenishment (default). " +
+             "Set lower for partial replenishment.")]
+    [SerializeField] protected int apPerTurn = 6;
+
+    public int MaxAP    => maxAP;
+    public int APPerTurn => apPerTurn;
     public int CurrentAP { get; private set; }
 
     // -- Monster Roster --------------------------------------------------------
@@ -27,21 +34,25 @@ public abstract class TurnController : MonoBehaviour
 
     // -- Events ----------------------------------------------------------------
 
+    // Events are explicitly initialised so they are never null on runtime-created
+    // objects (AddComponent path). Without the initialisers, AddListener() would
+    // throw a NullReferenceException and the AP display would silently stay blank.
     /// <summary>Fires every time AP changes. Int param = new AP value.</summary>
-    public UnityEvent<int> onAPChanged;
-    public UnityEvent onTurnStart;
-    public UnityEvent onTurnEnd;
+    public UnityEvent<int> onAPChanged = new UnityEvent<int>();
+    public UnityEvent      onTurnStart = new UnityEvent();
+    public UnityEvent      onTurnEnd   = new UnityEvent();
 
     // -- Turn Lifecycle (called by TurnManager) --------------------------------
 
     public virtual void StartTurn()
     {
-        SetAP(maxAP);
+        // Give apPerTurn AP each turn, capped by maxAP
+        SetAP(Mathf.Min(apPerTurn, maxAP));
         foreach (Monster m in monsters)
             m.ResetForNewTurn();
 
         onTurnStart?.Invoke();
-        Debug.Log($"[{GetType().Name}] Turn started -- {maxAP} AP, {monsters.Count} monsters.");
+        Debug.Log($"[{GetType().Name}] Turn started -- {CurrentAP} AP granted ({apPerTurn} per turn, max {maxAP}), {monsters.Count} monsters.");
         OnTurnStarted();
     }
 
@@ -85,20 +96,26 @@ public abstract class TurnController : MonoBehaviour
     // -- Auto-end Conditions ---------------------------------------------------
 
     /// <summary>
-    /// Call this after any action that might deplete AP or exhaust all monsters.
-    /// Ends the turn if AP = 0 OR every monster has acted.
+    /// Call this after any action that might deplete AP.
+    /// Ends the turn only when AP reaches 0 — monsters may act multiple times
+    /// per turn as long as there is AP remaining.
     /// </summary>
     public void CheckAutoEndTurn()
     {
-        bool apEmpty = CurrentAP <= 0;
-        bool allActed = monsters.Count > 0 && monsters.All(m => m.HasActed);
-
-        if (apEmpty || allActed)
+        if (CurrentAP <= 0)
         {
-            string reason = apEmpty ? "AP depleted" : "all monsters acted";
-            Debug.Log($"[{GetType().Name}] Auto-ending turn ({reason}).");
+            Debug.Log($"[{GetType().Name}] Auto-ending turn (AP depleted).");
             TurnManager.Instance?.ForceEndTurn();
         }
+    }
+
+    /// <summary>
+    /// Removes a monster from this side's roster (called on monster death).
+    /// </summary>
+    public void RemoveMonster(Monster m)
+    {
+        if (monsters.Remove(m))
+            Debug.Log($"[{GetType().Name}] {m?.name} removed from roster ({monsters.Count} remaining).");
     }
 
     // -- Monster Queries -------------------------------------------------------
@@ -113,6 +130,25 @@ public abstract class TurnController : MonoBehaviour
 
     public void ForceEndTurn()
         => TurnManager.Instance?.ForceEndTurn();
+
+    // -- Auto-Discovery --------------------------------------------------------
+
+    /// <summary>
+    /// Called by TurnManager after all monsters have been spawned.
+    /// Only auto-fills the roster when no monsters were manually assigned
+    /// in the Inspector — manual rosters are always respected.
+    /// </summary>
+    public void AutoDiscoverMonsters()
+    {
+        if (monsters.Count > 0) return; // inspector-assigned — keep them
+        DiscoverMonsters();
+    }
+
+    /// <summary>
+    /// Override in PlayerTurnController / EnemyTurnController to populate
+    /// the monsters list by scanning the scene for the correct side.
+    /// </summary>
+    protected virtual void DiscoverMonsters() { }
 
     // -- Internals -------------------------------------------------------------
 

@@ -4,24 +4,38 @@ using UnityEngine.InputSystem;
 /// <summary>
 /// Handles all player input on the grid.
 /// AP integration: before any action, asks PlayerTurnController whether
-/// the AP can be afforded and whether the monster has already acted.
+/// the AP can be afforded; HasActed is NOT checked — AP is the only gate.
 /// </summary>
 public class InputManager : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] private GridManager gridManager;
-    [SerializeField] private RadialMenu radialMenuPrefab;
-    [SerializeField] private Camera mainCamera;
-    [SerializeField] private PlayerTurnController playerTurnController; // <- NEW
+    [SerializeField] private GridManager          gridManager;
+    [SerializeField] private RadialMenu           radialMenuPrefab;
+    [SerializeField] private Camera               mainCamera;
+    [SerializeField] private PlayerTurnController playerTurnController;
 
     [Header("Input Settings")]
     [SerializeField] private InputActionAsset inputActions;
-    [SerializeField] private LayerMask tileLayerMask;
+    [SerializeField] private LayerMask        tileLayerMask;
 
     [Header("Movement Settings")]
     [SerializeField] private Color movementRangeColor = new Color(0.3f, 0.6f, 1f, 0.5f);
-    [SerializeField] private Color selectedMoveColor = new Color(0.2f, 1f, 0.3f, 0.7f);
+    [SerializeField] private Color selectedMoveColor  = new Color(0.2f, 1f, 0.3f, 0.7f);
     [SerializeField] private float movementSpeed = 5f;
+
+    [Header("Attack Settings")]
+    [Tooltip("Dim highlight shown on ALL tiles in the attack's range/shape.")]
+    [SerializeField] private Color attackRangeColor   = new Color(0.55f, 0.05f, 0.05f, 0.35f);
+    [Tooltip("Bright pulse colour A for enemy tiles in attack range.")]
+    [SerializeField] private Color attackPulseColorA  = new Color(1f, 0.10f, 0.10f, 0.95f);
+    [Tooltip("Dim pulse colour B for enemy tiles in attack range.")]
+    [SerializeField] private Color attackPulseColorB  = new Color(0.55f, 0.02f, 0.02f, 0.50f);
+    [Tooltip("Pulse oscillations per second for attack-target tiles.")]
+    [SerializeField] private float attackPulseSpeed   = 2.5f;
+    [Tooltip("Horizontal jitter amplitude (world units) for enemy target tiles.")]
+    [SerializeField] private float attackJitterAmplitude  = 0.05f;
+    [Tooltip("Jitter frequency (cycles per second) for enemy target tiles.")]
+    [SerializeField] private float attackJitterFrequency  = 10f;
 
     // -- Input Actions ---------------------------------------------------------
 
@@ -31,22 +45,31 @@ public class InputManager : MonoBehaviour
 
     // -- Hover / Selection State -----------------------------------------------
 
-    private Tile currentHoveredTile;
-    private Tile selectedTile;
+    private Tile       currentHoveredTile;
+    private Tile       selectedTile;
     private RadialMenu activeMenu;
 
-    // Time-based click prevention (unchanged from original)
-    private float menuOpenTime = -1f;
+    private float       menuOpenTime   = -1f;
     private const float MenuClickDelay = 0.2f;
 
     // -- Input State -----------------------------------------------------------
 
-    private enum InputState { Normal, MovementMode, Moving }
+    private enum InputState { Normal, MovementMode, Moving, AttackSelection, TargetSelection }
     private InputState currentState = InputState.Normal;
 
-    private Monster movingMonster;
-    private Tile movementOriginTile;
+    // Movement state
+    private Monster                              movingMonster;
+    private Tile                                 movementOriginTile;
     private System.Collections.Generic.List<Tile> validMovementTiles;
+    /// <summary>Tiles covered per 1 AP for the currently-moving monster.</summary>
+    private int                                  movingMonsterTilesPerAP;
+
+    // Attack state
+    private Monster                              attackingMonster;
+    private AttackData                           selectedAttackData;
+    private int                                  selectedAttackIndex;
+    private System.Collections.Generic.List<Tile> validTargetTiles;
+    private RadialMenu                           activeAttackMenu;
 
     // -- Lifecycle -------------------------------------------------------------
 
@@ -58,7 +81,6 @@ public class InputManager : MonoBehaviour
         if (gridManager == null)
             gridManager = FindFirstObjectByType<GridManager>();
 
-        // Auto-find PlayerTurnController if not assigned in Inspector
         if (playerTurnController == null)
             playerTurnController = FindFirstObjectByType<PlayerTurnController>();
 
@@ -68,10 +90,10 @@ public class InputManager : MonoBehaviour
             if (playerMap != null)
             {
                 mousePositionAction = playerMap.FindAction("MousePosition");
-                leftClickAction = playerMap.FindAction("LeftClick");
-                rightClickAction = playerMap.FindAction("RightClick");
+                leftClickAction     = playerMap.FindAction("LeftClick");
+                rightClickAction    = playerMap.FindAction("RightClick");
 
-                if (leftClickAction != null) leftClickAction.performed += OnLeftClick;
+                if (leftClickAction  != null) leftClickAction.performed  += OnLeftClick;
                 if (rightClickAction != null) rightClickAction.performed += OnRightClick;
 
                 inputActions.Enable();
@@ -82,9 +104,13 @@ public class InputManager : MonoBehaviour
     void Update()
     {
         HandleTileHovering();
+
+        // Auto-find PlayerTurnController if TurnManager created it after Awake
+        if (playerTurnController == null)
+            playerTurnController = FindFirstObjectByType<PlayerTurnController>();
     }
 
-    // -- Hovering (unchanged) --------------------------------------------------
+    // -- Hovering --------------------------------------------------------------
 
     void HandleTileHovering()
     {
@@ -105,9 +131,23 @@ public class InputManager : MonoBehaviour
                 currentHoveredTile = hitTile;
 
                 if (currentState == InputState.Normal ||
-                    (currentState == InputState.MovementMode && IsValidMovementDestination(hitTile)))
+                    (currentState == InputState.MovementMode   && IsValidMovementDestination(hitTile)) ||
+                    (currentState == InputState.TargetSelection && IsValidTarget(hitTile)))
                 {
                     currentHoveredTile.SetHovered(true);
+                }
+
+                // Show AP cost hint while in movement mode
+                if (currentState == InputState.MovementMode && IsValidMovementDestination(hitTile)
+                    && movementOriginTile != null)
+                {
+                    int dist   = gridManager.GetDistanceBetweenTiles(movementOriginTile, hitTile);
+                    int apCost = Mathf.CeilToInt((float)dist / movingMonsterTilesPerAP);
+                    MoveCostHint.Show($"Move cost: {apCost} AP");
+                }
+                else if (currentState == InputState.MovementMode)
+                {
+                    MoveCostHint.Hide();
                 }
             }
         }
@@ -118,6 +158,8 @@ public class InputManager : MonoBehaviour
                 currentHoveredTile.SetHovered(false);
                 currentHoveredTile = null;
             }
+            if (currentState == InputState.MovementMode)
+                MoveCostHint.Hide();
         }
     }
 
@@ -125,12 +167,8 @@ public class InputManager : MonoBehaviour
 
     void OnLeftClick(InputAction.CallbackContext context)
     {
-        // Guard: menu just opened
         if (Time.time - menuOpenTime < MenuClickDelay) return;
-
-        // Guard: clicked on UI
         if (IsPointerOverUIElement()) return;
-
         if (currentHoveredTile == null) return;
 
         switch (currentState)
@@ -144,7 +182,15 @@ public class InputManager : MonoBehaviour
                 break;
 
             case InputState.Moving:
-                Debug.Log("Monster is moving, please wait...");
+                Debug.Log("[InputManager] Monster is moving — please wait.");
+                break;
+
+            case InputState.AttackSelection:
+                // Attack sub-menu handles its own clicks via RadialMenuButton.
+                break;
+
+            case InputState.TargetSelection:
+                HandleTargetClick(currentHoveredTile);
                 break;
         }
     }
@@ -155,13 +201,22 @@ public class InputManager : MonoBehaviour
 
         var pointerData = new UnityEngine.EventSystems.PointerEventData(
             UnityEngine.EventSystems.EventSystem.current)
-        { position = mousePositionAction.ReadValue<Vector2>() };
+        {
+            position = mousePositionAction.ReadValue<Vector2>()
+        };
 
-        var results = new System.Collections.Generic.List<
-            UnityEngine.EventSystems.RaycastResult>();
-
+        var results = new System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult>();
         UnityEngine.EventSystems.EventSystem.current.RaycastAll(pointerData, results);
-        return results.Count > 0;
+
+        foreach (var result in results)
+        {
+            var  parentCanvas = result.gameObject.GetComponentInParent<UnityEngine.Canvas>();
+            bool isUILayer    = result.gameObject.layer == LayerMask.NameToLayer("UI");
+            if (parentCanvas != null || isUILayer)
+                return true;
+        }
+
+        return false;
     }
 
     // -- Normal Click ----------------------------------------------------------
@@ -170,14 +225,27 @@ public class InputManager : MonoBehaviour
     {
         if (clickedTile == null) return;
 
-        // -- NEW: block all selection if it's not the player's turn -------------
+        // Block selection during enemy turn
         if (TurnManager.Instance != null && !TurnManager.Instance.IsPlayerTurn)
         {
             Debug.Log("[InputManager] Not the player's turn.");
             return;
         }
 
-        // Clicked the already-selected tile -- do nothing
+        // Empty tiles have no actions — clear selection and stop
+        if (clickedTile.Occupation == Tile.OccupationType.Empty)
+        {
+            if (activeMenu != null) CloseRadialMenu();
+            if (selectedTile != null)
+            {
+                selectedTile.SetSelected(false);
+                selectedTile.ResetVisuals();
+                selectedTile = null;
+            }
+            return;
+        }
+
+        // Clicked the already-selected tile — do nothing
         if (selectedTile == clickedTile) return;
 
         // Close any open menu and clear old selection
@@ -217,7 +285,18 @@ public class InputManager : MonoBehaviour
                 break;
 
             case InputState.Moving:
-                Debug.Log("Cannot cancel while monster is moving.");
+                Debug.Log("[InputManager] Cannot cancel while monster is moving.");
+                break;
+
+            case InputState.AttackSelection:
+                CloseAttackSubMenu();
+                currentState     = InputState.Normal;
+                attackingMonster = null;
+                if (selectedTile != null) { selectedTile.SetSelected(false); selectedTile = null; }
+                break;
+
+            case InputState.TargetSelection:
+                ExitTargetSelection();
                 break;
         }
     }
@@ -226,15 +305,21 @@ public class InputManager : MonoBehaviour
 
     void OpenRadialMenu(Tile tile)
     {
-        if (radialMenuPrefab == null) { Debug.LogWarning("RadialMenu prefab not assigned!"); return; }
+        if (radialMenuPrefab == null)
+        {
+            Debug.LogWarning("[InputManager] RadialMenu prefab not assigned!");
+            return;
+        }
 
-        if (activeMenu != null) Destroy(activeMenu.gameObject);
+        if (activeMenu != null)
+            Destroy(activeMenu.gameObject);
 
-        Vector3 menuPos = tile.transform.position + Vector3.up * 2f;
-        activeMenu = Instantiate(radialMenuPrefab, menuPos, Quaternion.identity);
+        Vector3 menuPosition = tile.transform.position + Vector3.up * 2.0f;
+        activeMenu = Instantiate(radialMenuPrefab, menuPosition, Quaternion.identity);
         activeMenu.Initialize(tile, this);
-
         menuOpenTime = Time.time;
+
+        Debug.Log($"[InputManager] Opened radial menu on tile {tile.GridPosition}");
     }
 
     public void CloseRadialMenu()
@@ -244,27 +329,19 @@ public class InputManager : MonoBehaviour
         menuOpenTime = -1f;
     }
 
-    public void OnMenuActionSelected(string action, Tile tile)
+    public void HandleRadialAction(RadialActionType type, Tile tile)
     {
-        Debug.Log($"[InputManager] Action '{action}' for tile {tile.GridPosition}");
+        Debug.Log($"[InputManager] Radial action: {type} on tile {tile?.GridPosition}");
 
-        switch (action)
+        switch (type)
         {
-            case "Deselect":
-                CloseRadialMenu();
-                break;
-
-            case "Movement":
-                HandleMovementAction(tile);
-                break;
-
-            case "Abilities":
-                HandleAbilitiesAction(tile);
-                if (activeMenu != null) activeMenu.ShowAbilitiesSubMenu();
-                break;
-
+            case RadialActionType.Movement:   HandleMovementAction(tile);  break;
+            case RadialActionType.Attack:     HandleAbilitiesAction(tile); break;
+            case RadialActionType.Info:       HandleInfoAction(tile);      break;
+            case RadialActionType.UseAttack0: HandleAttackSelected(0);     break;
+            case RadialActionType.UseAttack1: HandleAttackSelected(1);     break;
             default:
-                Debug.LogWarning($"Unknown action: {action}");
+                Debug.LogWarning($"[InputManager] Unknown action type: {type}");
                 break;
         }
     }
@@ -274,25 +351,20 @@ public class InputManager : MonoBehaviour
     void HandleMovementAction(Tile tile)
     {
         Monster monster = tile.GetMonster();
-        if (monster == null) { Debug.LogError("No monster on tile!"); return; }
+        if (monster == null) { Debug.LogError("[InputManager] No monster on tile!"); return; }
 
-        // -- NEW: AP & acted checks before entering movement mode ---------------
-        if (playerTurnController != null)
+        if (monster.IsEnemy)
         {
-            if (monster.HasActed)
-            {
-                Debug.Log($"[InputManager] {monster.name} has already acted this turn.");
-                CloseRadialMenu();
-                return;
-            }
+            Debug.Log("[InputManager] Cannot move an enemy monster.");
+            CloseRadialMenu();
+            return;
+        }
 
-            if (!playerTurnController.CanAfford(monster.MoveCost))
-            {
-                Debug.Log($"[InputManager] Not enough AP to move {monster.name}. " +
-                          $"Needs {monster.MoveCost}, has {playerTurnController.CurrentAP}.");
-                CloseRadialMenu();
-                return;
-            }
+        if (playerTurnController != null && !playerTurnController.CanAfford(monster.MoveCost))
+        {
+            BattleMessage.Show($"Not enough AP to move! (need {monster.MoveCost})", 2f);
+            CloseRadialMenu();
+            return;
         }
 
         CloseRadialMenu();
@@ -301,25 +373,34 @@ public class InputManager : MonoBehaviour
 
     void EnterMovementMode(Tile originTile, Monster monster)
     {
-        currentState = InputState.MovementMode;
-        movingMonster = monster;
+        currentState       = InputState.MovementMode;
+        movingMonster      = monster;
         movementOriginTile = originTile;
 
-        int range = Mathf.Max(1, Mathf.CeilToInt(monster.Speed / 20f));
+        // Speed / 10 tiles per AP (min 1 so a Speed of 0 never gets stuck).
+        movingMonsterTilesPerAP = Mathf.Max(1, monster.Speed / 10);
+
+        // Total reachable range = tiles-per-AP × remaining AP
+        int currentAP = playerTurnController != null ? playerTurnController.CurrentAP : 1;
+        int range     = movingMonsterTilesPerAP * currentAP;
+
         validMovementTiles = gridManager.GetTilesInRange(originTile, range, walkableOnly: true);
         gridManager.HighlightTiles(validMovementTiles, movementRangeColor, 0.15f);
 
-        Debug.Log($"[InputManager] Movement mode. Speed {monster.Speed}, " +
-                  $"range {range}, {validMovementTiles.Count} valid tiles.");
+        Debug.Log($"[InputManager] Movement mode — Speed {monster.Speed}, " +
+                  $"{movingMonsterTilesPerAP} tile(s)/AP, range {range}, " +
+                  $"{validMovementTiles.Count} valid tile(s).");
     }
 
     void ExitMovementMode()
     {
+        MoveCostHint.Hide();
         gridManager.ClearAllHighlights();
-        currentState = InputState.Normal;
-        movingMonster = null;
-        movementOriginTile = null;
-        validMovementTiles = null;
+        currentState            = InputState.Normal;
+        movingMonster           = null;
+        movementOriginTile      = null;
+        validMovementTiles      = null;
+        movingMonsterTilesPerAP = 1;
     }
 
     bool IsValidMovementDestination(Tile tile)
@@ -331,32 +412,35 @@ public class InputManager : MonoBehaviour
     {
         if (movingMonster == null || movementOriginTile == null)
         {
-            Debug.LogError("Invalid movement state!");
+            Debug.LogError("[InputManager] Invalid movement state!");
             yield break;
         }
 
-        // -- NEW: Spend AP before moving ----------------------------------------
         if (playerTurnController != null)
         {
-            if (!playerTurnController.TrySpendAPForMove(movingMonster))
+            // Compute the actual AP cost based on distance and tiles-per-AP for this monster.
+            int dist   = gridManager.GetDistanceBetweenTiles(movementOriginTile, destinationTile);
+            int apCost = Mathf.CeilToInt((float)dist / movingMonsterTilesPerAP);
+
+            if (!playerTurnController.TrySpendAPForDistanceMove(movingMonster, apCost))
             {
-                // AP refused -- cancel movement
                 ExitMovementMode();
                 yield break;
             }
         }
 
+        MoveCostHint.Hide();   // hide hint as soon as movement commits
+
         currentState = InputState.Moving;
         gridManager.ClearAllHighlights();
         destinationTile.Highlight(selectedMoveColor, 0.2f);
 
-        // Slide monster to destination
         GameObject monsterObj = movingMonster.gameObject;
         Vector3 startPos = monsterObj.transform.position;
-        Vector3 endPos = destinationTile.transform.position;
-        float distance = Vector3.Distance(startPos, endPos);
-        float duration = distance / movementSpeed;
-        float elapsed = 0f;
+        Vector3 endPos   = destinationTile.transform.position;
+        float distance   = Vector3.Distance(startPos, endPos);
+        float duration   = distance / movementSpeed;
+        float elapsed    = 0f;
 
         while (elapsed < duration)
         {
@@ -368,7 +452,6 @@ public class InputManager : MonoBehaviour
 
         monsterObj.transform.position = endPos;
 
-        // Update tile occupancy
         movementOriginTile.ClearOccupation();
         destinationTile.SetOccupation(Tile.OccupationType.Monster, monsterObj);
 
@@ -377,10 +460,8 @@ public class InputManager : MonoBehaviour
 
         yield return new UnityEngine.WaitForSeconds(0.3f);
         destinationTile.ResetVisuals();
-
         ExitMovementMode();
 
-        // -- NEW: after move, check if the turn should auto-end -----------------
         playerTurnController?.CheckAutoEndTurn();
     }
 
@@ -388,19 +469,203 @@ public class InputManager : MonoBehaviour
 
     void HandleAbilitiesAction(Tile tile)
     {
-        // TODO: Implement attack target selection.
-        // When an attack is chosen, call:
-        //   playerTurnController.TrySpendAPForAttack(monster)
-        // before executing monster.ExecuteAttack(target, attackIndex, isDirect).
-        Debug.Log($"[InputManager] Abilities requested for {tile.GridPosition}.");
+        Monster monster = tile.GetMonster();
+        if (monster == null) { Debug.LogError("[InputManager] No monster on tile!"); return; }
+
+        if (monster.IsEnemy)
+        {
+            Debug.Log("[InputManager] Cannot command an enemy monster.");
+            CloseRadialMenu();
+            return;
+        }
+
+        var attacks = monster.GetAttacks();
+        if (attacks == null || attacks.Count == 0)
+        {
+            BattleMessage.Show($"{monster.name} has no attacks!", 2f);
+            CloseRadialMenu();
+            return;
+        }
+
+        if (playerTurnController != null)
+        {
+            int cheapest = int.MaxValue;
+            foreach (var a in attacks)
+                if (a?.data != null) cheapest = Mathf.Min(cheapest, a.data.ConsumeActionPoints);
+
+            if (!playerTurnController.CanAfford(cheapest))
+            {
+                BattleMessage.Show($"Not enough AP to attack! (need {cheapest})", 2f);
+                CloseRadialMenu();
+                return;
+            }
+        }
+
+        CloseRadialMenu();
+        OpenAttackSubMenu(tile, monster);
     }
 
-    // -- Cleanup ---------------------------------------------------------------
+    void OpenAttackSubMenu(Tile tile, Monster monster)
+    {
+        attackingMonster = monster;
+
+        Vector3 menuPos = tile.transform.position + Vector3.up * 2.0f;
+        activeAttackMenu = Instantiate(radialMenuPrefab, menuPos, Quaternion.identity);
+        activeAttackMenu.InitializeAsAttackMenu(monster, this);
+
+        currentState = InputState.AttackSelection;
+        menuOpenTime = Time.time;
+        Debug.Log($"[InputManager] Attack sub-menu opened for {monster.name}.");
+    }
+
+    void CloseAttackSubMenu()
+    {
+        if (activeAttackMenu != null)
+        {
+            Destroy(activeAttackMenu.gameObject);
+            activeAttackMenu = null;
+        }
+    }
+
+    void HandleAttackSelected(int attackIndex)
+    {
+        CloseAttackSubMenu();
+
+        if (attackingMonster == null) { currentState = InputState.Normal; return; }
+
+        var attacks = attackingMonster.GetAttacks();
+        if (attackIndex >= attacks.Count)
+        {
+            Debug.LogWarning($"[InputManager] Attack index {attackIndex} out of range.");
+            currentState    = InputState.Normal;
+            attackingMonster = null;
+            return;
+        }
+
+        selectedAttackIndex = attackIndex;
+        selectedAttackData  = attacks[attackIndex].data;
+
+        Tile originTile = gridManager.GetTileAtWorldPosition(attackingMonster.transform.position);
+        if (originTile == null)
+        {
+            Debug.LogError("[InputManager] Cannot find attacker's tile.");
+            currentState    = InputState.Normal;
+            attackingMonster = null;
+            return;
+        }
+
+        // ── 1. Get ALL tiles in the attack's shape/range ────────────────────
+        var allShapeTiles = gridManager.GetTilesInAttackShape(
+            originTile, selectedAttackData.Range, selectedAttackData.TargetShape);
+
+        // ── 2. Dim-highlight every tile in range so the shape is visible ────
+        gridManager.HighlightTiles(allShapeTiles, attackRangeColor, 0.05f);
+
+        // ── 3. Find tiles with valid opposing-monster targets ────────────────
+        validTargetTiles = allShapeTiles.FindAll(t =>
+            t.Occupation == Tile.OccupationType.Monster &&
+            t.GetMonster() != null &&
+            t.GetMonster().IsEnemy != attackingMonster.IsEnemy);
+
+        // ── 4. Pulse + jitter enemy tiles so they stand out ─────────────────
+        foreach (var t in validTargetTiles)
+        {
+            t.StartPulse(attackPulseColorA, attackPulseColorB, attackPulseSpeed);
+            t.StartJitter(attackJitterAmplitude, attackJitterFrequency);
+        }
+
+        // ── 5. Notify player if there are no targets ─────────────────────────
+        if (validTargetTiles.Count == 0)
+        {
+            Debug.Log($"[InputManager] No targets for '{selectedAttackData.DisplayName}'.");
+            BattleMessage.Show($"No targets in range for {selectedAttackData.DisplayName}!", 2.5f);
+            // Stay in TargetSelection — the shape is still highlighted.
+            // Player can press right-click to cancel.
+        }
+
+        currentState = InputState.TargetSelection;
+        Debug.Log($"[InputManager] Targeting '{selectedAttackData.DisplayName}' — " +
+                  $"{validTargetTiles.Count} target(s), {allShapeTiles.Count} tile(s) highlighted.");
+    }
+
+    void HandleTargetClick(Tile clickedTile)
+    {
+        if (!IsValidTarget(clickedTile))
+        {
+            Debug.Log("[InputManager] Clicked tile is not a valid target.");
+            return;
+        }
+        ExecutePlayerAttack(clickedTile);
+    }
+
+    bool IsValidTarget(Tile tile) => validTargetTiles != null && validTargetTiles.Contains(tile);
+
+    void ExecutePlayerAttack(Tile targetTile)
+    {
+        Monster target = targetTile.GetMonster();
+        if (target == null || attackingMonster == null || selectedAttackData == null)
+        {
+            Debug.LogError("[InputManager] Invalid attack state!");
+            ExitTargetSelection();
+            return;
+        }
+
+        if (playerTurnController != null &&
+            !playerTurnController.TrySpendAPForAttack(attackingMonster, selectedAttackData))
+        {
+            Debug.Log("[InputManager] Attack cancelled — not enough AP.");
+            ExitTargetSelection();
+            return;
+        }
+
+        attackingMonster.ExecuteAttack(target, selectedAttackIndex, selectedAttackData.IsDirect);
+
+        Debug.Log($"[InputManager] {attackingMonster.name} used '{selectedAttackData.DisplayName}' " +
+                  $"on {target.name}.");
+
+        ExitTargetSelection();
+        playerTurnController?.CheckAutoEndTurn();
+    }
+
+    void ExitTargetSelection()
+    {
+        // Stop pulse + jitter on enemy target tiles before clearing all highlights
+        if (validTargetTiles != null)
+            foreach (var t in validTargetTiles)
+            {
+                t.StopPulse();
+                t.StopJitter();
+            }
+
+        gridManager.ClearAllHighlights();   // resets dim colour on all range tiles too
+        currentState       = InputState.Normal;
+        attackingMonster   = null;
+        selectedAttackData = null;
+        validTargetTiles   = null;
+        if (selectedTile != null) { selectedTile.SetSelected(false); selectedTile = null; }
+    }
+
+    // -- Info Action -----------------------------------------------------------
+
+    void HandleInfoAction(Tile tile)
+    {
+        Monster monster = tile.GetMonster();
+        if (monster == null)
+        {
+            Debug.LogWarning("[InputManager] No monster on this tile!");
+            return;
+        }
+
+        MonsterInfoPanel.Instance?.Show(monster);
+
+        Debug.Log($"[InputManager] Info for {monster.name} — " +
+                  $"HP {monster.CurrentHP}/{monster.MaxHP}");
+    }
 
     void OnDestroy()
     {
-        if (leftClickAction != null) leftClickAction.performed -= OnLeftClick;
+        if (leftClickAction  != null) leftClickAction.performed  -= OnLeftClick;
         if (rightClickAction != null) rightClickAction.performed -= OnRightClick;
-        if (inputActions != null) inputActions.Disable();
+        if (inputActions     != null) inputActions.Disable();
     }
 }
