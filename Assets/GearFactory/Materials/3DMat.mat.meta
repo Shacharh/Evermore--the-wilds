@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 986764f6aeac0a848bb2f70c7a4d3b00
+timeCreated: 1518200562
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 111219
+  packageName: GearFactory
+  packageVersion: 1.1
+  assetPath: Assets/GearFactory/Materials/3DMat.mat
+  uploadId: 366727

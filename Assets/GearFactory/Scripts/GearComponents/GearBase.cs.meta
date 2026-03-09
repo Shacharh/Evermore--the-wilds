@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: d3c6c64aea9d6ae46860625679fa726b
+timeCreated: 1517660029
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 111219
+  packageName: GearFactory
+  packageVersion: 1.1
+  assetPath: Assets/GearFactory/Scripts/GearComponents/GearBase.cs
+  uploadId: 366727
