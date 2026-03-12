@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
   id: Heal
   displayName: Heal
-  description: 'heal a monster an  amount of HP '
+  description: Channels soothing waters to instantly restore a moderate amount of
+    health.
   element: 1
   effects:
-  - category: 0
+  - category: 1
     value: 60
     selfInflicted: 0
     buffType: 0
     chance: 0
     isDebuff: 0
     duration: 1
-    isInstantHeal: 0
+    isInstantHeal: 1
     statusEffect: {fileID: 0}
-  maxPP: 0
-  consumeActionPoints: 5
+  maxPP: 5
+  consumeActionPoints: 3
   guaranteedHit: 1
   accuracy: 100
-  range: 2
+  range: 1
   target: 1
-  targetShape: 0
-  rangeTargetShapeSize: 1
+  targetShape: 1
+  rangeTargetShapeSize: 4
   isDirect: 1
   inDirectHitPrecent: 0

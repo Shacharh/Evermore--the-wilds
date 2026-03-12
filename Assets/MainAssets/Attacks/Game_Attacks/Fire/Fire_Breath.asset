@@ -18,7 +18,7 @@ MonoBehaviour:
   element: 0
   effects:
   - category: 0
-    value: 60
+    value: 80
     selfInflicted: 0
     buffType: 0
     chance: 0
@@ -26,8 +26,8 @@ MonoBehaviour:
     duration: 1
     isInstantHeal: 0
     statusEffect: {fileID: 0}
-  maxPP: 0
-  consumeActionPoints: 8
+  maxPP: 10
+  consumeActionPoints: 4
   guaranteedHit: 0
   accuracy: 85
   range: 1

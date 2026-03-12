@@ -14,26 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
   id: Regenerate
   displayName: Regenerate
-  description: give a monster a small amount of HP at the start of each turn, for
-    X amount of turns
+  description: The user utilises the hidden power of water to mend it's wounds over
+    4 turns
   element: 1
   effects:
-  - category: 0
-    value: 60
-    selfInflicted: 0
+  - category: 1
+    value: 35
+    selfInflicted: 1
     buffType: 0
     chance: 0
     isDebuff: 0
-    duration: 1
+    duration: 4
     isInstantHeal: 0
     statusEffect: {fileID: 0}
-  maxPP: 0
-  consumeActionPoints: 10
+  maxPP: 5
+  consumeActionPoints: 5
   guaranteedHit: 1
   accuracy: 100
-  range: 3
+  range: 1
   target: 1
   targetShape: 0
-  rangeTargetShapeSize: 1
+  rangeTargetShapeSize: 0
   isDirect: 1
   inDirectHitPrecent: 0

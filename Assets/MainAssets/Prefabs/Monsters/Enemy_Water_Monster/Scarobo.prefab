@@ -99,7 +99,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MonsterSetup
   startingAttackIds:
-  - Splash
+  - Echoing_Tide
   - Heal
   monster: {fileID: 8900255455746139478}
 --- !u!1 &8782099375881524005
