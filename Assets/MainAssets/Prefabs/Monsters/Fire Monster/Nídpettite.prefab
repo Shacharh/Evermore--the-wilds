@@ -81,7 +81,9 @@ MonoBehaviour:
   data: {fileID: 11400000, guid: ab838ec2f746d454d83e56daec915847, type: 2}
   enemyMonster: 0
   level: 41
-  learnedAttacks: []
+  learnedAttacks:
+  - data: {fileID: 0}
+  - data: {fileID: 11400000, guid: 040c176173f4dbf48b4029baffe63c98, type: 2}
   anim: {fileID: 0}
   gridManager: {fileID: 0}
 --- !u!114 &735031748614082259
