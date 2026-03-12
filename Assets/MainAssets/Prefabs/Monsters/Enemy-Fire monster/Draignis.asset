@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fb0f046aa1a0e54409f94af7cead9638, type: 3}
-  m_Name: Fire_Monster
+  m_Name: Draignis
   m_EditorClassIdentifier: Assembly-CSharp::MonsterData
-  monsterId: Fire_monster
-  displayName: Fire- place holder
+  monsterId: Draignis
+  displayName: Draignis
   elementType: Fire
   baseHP: 400
   baseAttack: 100
@@ -22,10 +22,14 @@ MonoBehaviour:
   baseCritRate: 25
   baseCritMod: 1
   baseDodge: 10
+  moveCost: 1
   movePool:
   - attack: {fileID: 11400000, guid: 386512f95e2c81a4eb4fd94042044f9e, type: 2}
     levelLearned: 0
+    AnimationTrigger: 
   - attack: {fileID: 11400000, guid: 335b640922cc5a1448b34633163b05a2, type: 2}
     levelLearned: 1
+    AnimationTrigger: 
   - attack: {fileID: 11400000, guid: 040c176173f4dbf48b4029baffe63c98, type: 2}
     levelLearned: 1
+    AnimationTrigger: 

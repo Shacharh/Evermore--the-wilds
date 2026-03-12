@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fb0f046aa1a0e54409f94af7cead9638, type: 3}
-  m_Name: Enemy_Water_Monster
+  m_Name: Maiwolf
   m_EditorClassIdentifier: Assembly-CSharp::MonsterData
-  monsterId: Enemy_Water_monster
-  displayName: Enemy water- place holder
+  monsterId: Maiwolf
+  displayName: Maiwolf
   elementType: Water
   baseHP: 200
   baseAttack: 25
@@ -22,10 +22,14 @@ MonoBehaviour:
   baseCritRate: 10
   baseCritMod: 1
   baseDodge: 45
+  moveCost: 1
   movePool:
   - attack: {fileID: 11400000, guid: 66e8c84f663a384408e15064164eef2c, type: 2}
     levelLearned: 0
+    AnimationTrigger: 
   - attack: {fileID: 11400000, guid: 40ca0b2993a77c94a9b684a8d3972535, type: 2}
     levelLearned: 1
+    AnimationTrigger: 
   - attack: {fileID: 11400000, guid: 8052ce5010b5d714b9765a887a2c4032, type: 2}
     levelLearned: 1
+    AnimationTrigger: 
