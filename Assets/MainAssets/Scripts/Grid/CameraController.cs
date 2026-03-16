@@ -23,6 +23,14 @@ public class CameraController : MonoBehaviour
     [Range(20f, 80f)]
     [SerializeField] private float cameraAngle = 45f;
 
+    [Header("Map Bounds (optional)")]
+    [Tooltip("Two empty GameObjects that mark the bottom-left and top-right corners " +
+             "of the playable area. The camera target is clamped between them so the " +
+             "player cannot pan off the map.\n" +
+             "Leave both unassigned for unlimited panning.")]
+    [SerializeField] private Transform boundsMinCorner;   // bottom-left corner
+    [SerializeField] private Transform boundsMaxCorner;   // top-right  corner
+
     private InputAction moveAction;
     private InputAction zoomAction;
     private Vector3 currentVelocity;
@@ -63,7 +71,29 @@ public class CameraController : MonoBehaviour
             Vector3 direction = new Vector3(input.x, 0, input.y);
             // Move the target relative to world space
             cameraTarget.Translate(direction * moveSpeed * Time.deltaTime, Space.World);
+            ApplyBoundsClamping();
         }
+    }
+
+    /// <summary>
+    /// Clamps the camera target's XZ position to stay within the rectangle
+    /// defined by <see cref="boundsMinCorner"/> and <see cref="boundsMaxCorner"/>.
+    /// Y is never clamped — the pivot stays at ground level.
+    /// Does nothing if either corner Transform is unassigned.
+    /// </summary>
+    private void ApplyBoundsClamping()
+    {
+        if (boundsMinCorner == null || boundsMaxCorner == null) return;
+
+        Vector3 pos  = cameraTarget.position;
+        float   minX = Mathf.Min(boundsMinCorner.position.x, boundsMaxCorner.position.x);
+        float   maxX = Mathf.Max(boundsMinCorner.position.x, boundsMaxCorner.position.x);
+        float   minZ = Mathf.Min(boundsMinCorner.position.z, boundsMaxCorner.position.z);
+        float   maxZ = Mathf.Max(boundsMinCorner.position.z, boundsMaxCorner.position.z);
+
+        pos.x = Mathf.Clamp(pos.x, minX, maxX);
+        pos.z = Mathf.Clamp(pos.z, minZ, maxZ);
+        cameraTarget.position = pos;
     }
 
     private void HandleZoom()

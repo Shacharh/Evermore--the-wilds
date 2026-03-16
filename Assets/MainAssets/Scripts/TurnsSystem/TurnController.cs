@@ -13,16 +13,22 @@ public abstract class TurnController : MonoBehaviour
 
     [Header("Action Points")]
     [Tooltip("Maximum AP this side can ever hold.")]
-    [SerializeField] protected int maxAP = 6;
+    [SerializeField] protected int maxAP = 12;
 
-    [Tooltip("AP restored at the start of every turn. " +
-             "Set equal to maxAP for full replenishment (default). " +
-             "Set lower for partial replenishment.")]
-    [SerializeField] protected int apPerTurn = 6;
+    [Tooltip("AP granted on the very first turn of the battle.")]
+    [SerializeField] protected int startingAP = 4;
 
-    public int MaxAP    => maxAP;
-    public int APPerTurn => apPerTurn;
-    public int CurrentAP { get; private set; }
+    [Tooltip("AP ADDED to the current pool at the start of every subsequent turn. " +
+             "Unused AP carries over — e.g. end turn with 3 AP + 4 per-turn = 7 AP next turn.")]
+    [SerializeField] protected int apPerTurn = 4;
+
+    public int MaxAP     => maxAP;
+    public int StartingAP => startingAP;
+    public int APPerTurn  => apPerTurn;
+    public int CurrentAP  { get; private set; }
+
+    /// <summary>True until the first StartTurn() call; used to apply startingAP instead of additive recharge.</summary>
+    private bool _isFirstTurn = true;
 
     // -- Monster Roster --------------------------------------------------------
 
@@ -46,13 +52,24 @@ public abstract class TurnController : MonoBehaviour
 
     public virtual void StartTurn()
     {
-        // Give apPerTurn AP each turn, capped by maxAP
-        SetAP(Mathf.Min(apPerTurn, maxAP));
+        if (_isFirstTurn)
+        {
+            // First turn: grant the configured starting AP (independent of apPerTurn)
+            SetAP(Mathf.Min(startingAP, maxAP));
+            _isFirstTurn = false;
+            Debug.Log($"[{GetType().Name}] First turn — {CurrentAP} starting AP (startingAP={startingAP}, max={maxAP}).");
+        }
+        else
+        {
+            // Subsequent turns: ADD apPerTurn to whatever AP remains (carry-over design)
+            SetAP(Mathf.Min(CurrentAP + apPerTurn, maxAP));
+            Debug.Log($"[{GetType().Name}] Turn started — +{apPerTurn} AP added → {CurrentAP} AP (max {maxAP}).");
+        }
+
         foreach (Monster m in monsters)
             m.ResetForNewTurn();
 
         onTurnStart?.Invoke();
-        Debug.Log($"[{GetType().Name}] Turn started -- {CurrentAP} AP granted ({apPerTurn} per turn, max {maxAP}), {monsters.Count} monsters.");
         OnTurnStarted();
     }
 

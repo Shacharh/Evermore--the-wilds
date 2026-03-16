@@ -13,6 +13,30 @@ public class Monster : MonoBehaviour
 
     [SerializeField] private Animator anim;
     [SerializeField] private GridManager gridManager; // used for tile lookup on death
+
+    [Header("Stat Stage System")]
+    [Tooltip("Defines the multiplier table for stat stages -6 to +6.\n" +
+             "Create one via: Assets → Create → Evermore → StatStageConfig\n" +
+             "If left empty the system falls back to 1.0 (no stage effect).")]
+    [SerializeField] private StatStageConfig stageConfig;
+
+    [Header("Unit Type")]
+    [Tooltip("Flying monsters ignore ground obstructions and can pass over them.\n" +
+             "They still cannot LAND on an obstructed tile.")]
+    [SerializeField] private bool isFlying = false;
+
+    [Header("Evasion Tuning")]
+    [Tooltip("Scales how much the Dodge stat reduces incoming hit chance.\n" +
+             "1.0 = full effect (Dodge subtracts directly from Accuracy).\n" +
+             "0.5 = half effect (recommended default — Dodge is less dominant).\n" +
+             "0.0 = Dodge has no effect at all.")]
+    [SerializeField] [Range(0f, 1f)] private float dodgeEffectiveness = 0.5f;
+
+    [Header("Obstruction System")]
+    [Tooltip("Tuning values for ranged-attack obstruction penalties.\n" +
+             "Create one via: Assets → Create → Evermore → ObstructionConfig\n" +
+             "If left empty the system falls back to hardcoded defaults (50 % damage, −10 % acc).")]
+    [SerializeField] private ObstructionConfig obstructionConfig;
     #endregion
 
     #region Constants
@@ -104,16 +128,18 @@ public class Monster : MonoBehaviour
     #endregion
 
     #region Public Properties - Calculated Stats
-    public int MaxHP => CalculateStat(data.baseHP, ivHP, true);
-    public int Attack => CalculateStat(data.baseAttack, ivAttack);
-    public int Defense => CalculateStat(data.baseDefense, ivDefense);
-    public int Speed => CalculateStat(data.baseSpeed, ivSpeed);
-    public int CritRate => CalculateStat(data.baseCritRate, ivCritRate);
-    public int CritMod => CalculateStat(data.baseCritMod, ivCritMod);
-    public int Dodge => CalculateStat(data.baseDodge, ivDodge);
+    public int MaxHP   => CalculateStat(data.baseHP,       ivHP,       AttackEnum.AttackBuffType.HP,       isHP: true);
+    public int Attack  => CalculateStat(data.baseAttack,   ivAttack,   AttackEnum.AttackBuffType.Attack);
+    public int Defense => CalculateStat(data.baseDefense,  ivDefense,  AttackEnum.AttackBuffType.Defense);
+    public int Speed   => CalculateStat(data.baseSpeed,    ivSpeed,    AttackEnum.AttackBuffType.Speed);
+    public int CritRate=> CalculateStat(data.baseCritRate, ivCritRate, AttackEnum.AttackBuffType.CritRate);
+    public int CritMod => CalculateStat(data.baseCritMod,  ivCritMod,  AttackEnum.AttackBuffType.CritMod);
+    public int Dodge   => CalculateStat(data.baseDodge,    ivDodge,    AttackEnum.AttackBuffType.Dodge);
     public MonsterData Data  => data;
     /// <summary>Monster's current level — shown in the info panel.</summary>
     public int         Level => level;
+    /// <summary>True for flying monsters — they ignore ground obstructions.</summary>
+    public bool        IsFlying => isFlying;
     #endregion
 
     #region Unity Lifecycle
@@ -150,7 +176,9 @@ public class Monster : MonoBehaviour
 
         // MaxHP now reflects level 40 + IVs correctly.
         currentHP   = MaxHP;
-        customeName = "custom name";
+        // Use the MonsterData display name so battle messages say the real name.
+        customeName = data != null ? data.displayName
+                                   : gameObject.name.Replace("(Clone)", "").Trim();
         CalculateExp();
     }
 
@@ -168,7 +196,8 @@ public class Monster : MonoBehaviour
 
         // MaxHP now reflects the randomised IVs correctly.
         currentHP   = MaxHP;
-        customeName = data.displayName;
+        customeName = data != null ? data.displayName
+                                   : gameObject.name.Replace("(Clone)", "").Trim();
         CalculateExp();
     }
     #endregion
@@ -310,14 +339,14 @@ public class Monster : MonoBehaviour
         // damage == 0 means the attack missed (CalculateDamage returned 0 from the dodge check).
         if (damage <= 0)
         {
-            BattleMessage.Show($"{effectTarget.customeName} dodged the attack!", 1.5f);
+            BattleMessage.Show($"{effectTarget.customeName} dodged the attack!", 2.5f);
             Debug.Log($"[{effectTarget.gameObject.name}] dodged — HP unchanged: " +
                       $"{effectTarget.currentHP}/{effectTarget.MaxHP}");
         }
         else
         {
             BattleMessage.Show($"{attacker.customeName} → {effectTarget.customeName}: -{damage} HP  " +
-                               $"({effectTarget.currentHP}/{effectTarget.MaxHP})", 2f);
+                               $"({effectTarget.currentHP}/{effectTarget.MaxHP})", 3.5f);
             Debug.Log($"[{effectTarget.gameObject.name}] took {damage} damage — " +
                       $"HP: {effectTarget.currentHP}/{effectTarget.MaxHP}");
         }
@@ -398,31 +427,49 @@ public class Monster : MonoBehaviour
         expByLevel = multiplier * (temp * temp - 1) / 4;
     }
 
-    private int CalculateStat(int baseStat, int iv, bool isHP = false)
+    /// <summary>
+    /// Calculates a final stat value by:
+    ///   1. Computing the base value from baseStat, iv, and level.
+    ///   2. Summing all active stage changes for <paramref name="buffType"/>.
+    ///   3. Clamping total stages to [-6, +6].
+    ///   4. Multiplying the base value by the stage multiplier from <see cref="stageConfig"/>.
+    ///
+    /// Stage changes are stored as integers in <see cref="ActiveEffect.value"/>.
+    /// E.g. value=+2 means "raise two stages", value=-1 means "lower one stage".
+    /// </summary>
+    private int CalculateStat(int baseStat, int iv,
+                               AttackEnum.AttackBuffType buffType, bool isHP = false)
     {
-        int stat = Mathf.FloorToInt(((baseStat + iv) * level) / 50f) + (isHP ? 10 : 5);
+        // ── 1. Base flat value (level + IV formula) ───────────────────────────
+        int baseValue = Mathf.FloorToInt(((baseStat + iv) * level) / 50f) + (isHP ? 10 : 5);
 
+        // ── 2. Sum active stage changes for this stat ─────────────────────────
+        int totalStages = 0;
         foreach (var effect in activeEffects)
-        {
-            if (effect.stat == AttackEnum.AttackBuffType.HP && isHP)
-            {
-                stat += effect.value;
-            }
-            else if (!isHP)
-            {
-                switch (effect.stat)
-                {
-                    case AttackEnum.AttackBuffType.Attack: stat += effect.value; break;
-                    case AttackEnum.AttackBuffType.Defense: stat += effect.value; break;
-                    case AttackEnum.AttackBuffType.Speed: stat += effect.value; break;
-                    case AttackEnum.AttackBuffType.CritRate: stat += effect.value; break;
-                    case AttackEnum.AttackBuffType.CritMod: stat += effect.value; break;
-                    case AttackEnum.AttackBuffType.Dodge: stat += effect.value; break;
-                }
-            }
-        }
+            if (effect.stat == buffType)
+                totalStages += effect.value;
 
-        return Mathf.Max(0, stat);
+        // ── 3. Clamp to valid stage range [-6, +6] ────────────────────────────
+        totalStages = Mathf.Clamp(totalStages, -6, 6);
+
+        // ── 4. Apply multiplier from StatStageConfig (falls back to 1.0) ──────
+        float multiplier = stageConfig != null ? stageConfig.GetMultiplier(totalStages) : 1f;
+        int finalValue   = Mathf.RoundToInt(baseValue * multiplier);
+
+        return Mathf.Max(0, finalValue);
+    }
+
+    /// <summary>
+    /// Returns the effective stage (-6 to +6) currently applied to <paramref name="buffType"/>.
+    /// Useful for displaying stage info in the UI.
+    /// </summary>
+    public int GetCurrentStage(AttackEnum.AttackBuffType buffType)
+    {
+        int total = 0;
+        foreach (var effect in activeEffects)
+            if (effect.stat == buffType)
+                total += effect.value;
+        return Mathf.Clamp(total, -6, 6);
     }
 
     private int CalculateDamage(Monster target, AttackData attack, bool isDirect, AttackEffect attackEffect)
@@ -433,20 +480,72 @@ public class Monster : MonoBehaviour
         if (attackEffect.category == AttackEnum.AttackCategory.heal)
             return -Mathf.FloorToInt(((level * attackEffect.value) / 50f) + 2f);
 
-        float hitChance = Mathf.Clamp(attack.Accuracy - target.Dodge, 5f, 100f);
+        // ── Hit chance ────────────────────────────────────────────────────────
+        // Dodge is scaled by the TARGET's dodgeEffectiveness so the level designer
+        // can tune how dominant evasion is per monster type without rewriting code.
+        float scaledDodge = target.Dodge * target.dodgeEffectiveness;
+        float hitChance   = Mathf.Clamp(attack.Accuracy - scaledDodge, 5f, 100f);
 
+        // ── Obstruction penalty (ranged attacks only) ─────────────────────────
+        // Direct/melee attacks bypass obstructions entirely.
+        // Ranged attacks lose accuracy and deal reduced damage when the straight
+        // line between attacker and target crosses one or more obstruction tiles.
+        bool  isRanged             = !attack.IsDirect && !isDirect;
+        float obstructionDamageMult = 1f;
+
+        if (isRanged && gridManager != null)
+        {
+            Tile attackerTile = gridManager.GetTileAtWorldPosition(transform.position);
+            Tile targetTile   = gridManager.GetTileAtWorldPosition(target.transform.position);
+
+            if (attackerTile != null && targetTile != null)
+            {
+                int obstructions = gridManager.ObstructionsBetween(attackerTile, targetTile);
+                if (obstructions > 0)
+                {
+                    // Use configured values; fall back to safe defaults if config is null
+                    float accPenalty  = obstructionConfig != null
+                        ? obstructionConfig.accuracyPenaltyPerObstruction * obstructions
+                        : 10f * obstructions;
+                    float damageMult  = obstructionConfig != null
+                        ? obstructionConfig.obstructedDamageMultiplier
+                        : 0.50f;
+
+                    hitChance = Mathf.Clamp(hitChance - accPenalty, 5f, 100f);
+
+                    // Extra near-obstruction penalty when the attacker is close
+                    if (obstructionConfig != null)
+                    {
+                        int nearDist = gridManager.DistanceToNearestObstruction(
+                            attackerTile, targetTile, attackerTile);
+                        if (nearDist <= obstructionConfig.nearDistanceThreshold)
+                            damageMult *= (1f - obstructionConfig.nearObstructionExtraPenalty);
+                    }
+
+                    obstructionDamageMult = damageMult;
+                    Debug.Log($"[{gameObject.name}] Ranged attack obstructed " +
+                              $"({obstructions} tile(s)) — " +
+                              $"accPenalty={accPenalty:F0}%, " +
+                              $"damageMult={obstructionDamageMult:F2}");
+                }
+            }
+        }
+
+        // ── Dodge roll ────────────────────────────────────────────────────────
         if (!attack.GuaranteedHit && Random.value * 100f > hitChance)
         {
             Debug.Log($"{target.customeName} avoided the attack!");
             return 0;
         }
 
-        float levelFactor = (2f * level) / 5f + 2f;
+        // ── Damage calculation ────────────────────────────────────────────────
+        float levelFactor        = (2f * level) / 5f + 2f;
         float attackDefenseRatio = (float)Attack / Mathf.Max(1, target.Defense);
-        float baseDamage = ((levelFactor * attackEffect.value * attackDefenseRatio) / 50f) + 2f;
+        float baseDamage         = ((levelFactor * attackEffect.value * attackDefenseRatio) / 50f) + 2f;
 
         if (Random.value < (CritRate / 100f)) baseDamage *= CritMod;
-        if (!attack.IsDirect && !isDirect) baseDamage *= attack.InDirectHitPercent;
+        if (isRanged)               baseDamage *= attack.InDirectHitPercent;
+        baseDamage                             *= obstructionDamageMult;   // 1.0 if unobstructed
 
         return Mathf.Max(1, Mathf.FloorToInt(baseDamage * Random.Range(0.85f, 1f)));
     }
@@ -457,14 +556,23 @@ public class Monster : MonoBehaviour
     {
         if (Random.Range(0f, 100f) > effect.chance)
         {
-            Debug.Log($"{target.customeName} avoided the effect!");
+            Debug.Log($"{target.customeName} avoided the buff/debuff!");
             return;
         }
 
-        int appliedValue = effect.isDebuff ? -effect.value : effect.value;
-        target.activeEffects.Add(new ActiveEffect(effect.buffType, appliedValue, effect.duration));
-        Debug.Log($"{target.customeName} received {(appliedValue >= 0 ? "buff" : "debuff")} " +
-                  $"{effect.buffType} for {effect.duration} turns!");
+        // effect.value is now a STAGE change (e.g. +2 = raise two stages, -1 = lower one).
+        int stageChange = effect.isDebuff ? -effect.stageCount : effect.stageCount;
+        target.activeEffects.Add(new ActiveEffect(effect.buffType, stageChange, effect.duration));
+
+        int currentStage = target.GetCurrentStage(effect.buffType);
+        string direction = stageChange >= 0 ? "rose" : "fell";
+        Debug.Log($"{target.customeName}'s {effect.buffType} {direction} " +
+                  $"(stage {stageChange:+0;-0}, now at stage {currentStage}) " +
+                  $"for {effect.duration} turn(s)!");
+
+        BattleMessage.Show(
+            $"{target.customeName}'s {effect.buffType} {direction}! " +
+            $"(stage {stageChange:+0;-0})", 1.5f);
     }
 
     private void CalculateStatus(Monster target, AttackEffect effect)

@@ -86,6 +86,14 @@ public class RadialMenu : MonoBehaviour
         scaler.screenMatchMode    = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
         scaler.matchWidthOrHeight = 0.5f;   // balanced width+height scaling
 
+        // ── Destroy any stray children saved in the prefab ───────────────────────
+        // If the prefab was saved in the editor with a leftover 'MenuPivot' or test
+        // button children, they appear with default "Button" text and are never cleaned
+        // up (they are not tracked in the buttons list).  Destroy them all before
+        // creating the fresh pivot so the screen starts clean.
+        for (int i = transform.childCount - 1; i >= 0; i--)
+            Destroy(transform.GetChild(i).gameObject);
+
         // MenuPivot — the single child whose anchoredPosition tracks the tile
         var pivotGO = new GameObject("MenuPivot");
         pivotGO.transform.SetParent(transform, false);
@@ -188,11 +196,14 @@ public class RadialMenu : MonoBehaviour
 
         Vector3 screenPos = mainCamera.WorldToScreenPoint(menuWorldCenter);
 
-        // Hide the pivot (and all buttons) if the anchor is behind the camera
+        // When the anchor is behind the camera, WorldToScreenPoint returns X/Y values
+        // that are mirrored through the screen centre (a Unity artefact).
+        // Instead of hiding the menu, we flip the coordinates back so the clamping
+        // below can push it to the nearest screen edge — keeping it always visible.
         if (screenPos.z < 0f)
         {
-            menuPivot.gameObject.SetActive(false);
-            return;
+            screenPos.x = Screen.width  - screenPos.x;
+            screenPos.y = Screen.height - screenPos.y;
         }
         menuPivot.gameObject.SetActive(true);
 
@@ -203,6 +214,16 @@ public class RadialMenu : MonoBehaviour
         // Pass null as the camera parameter for ScreenSpaceOverlay canvases.
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
             rectTransform, screenPos, null, out Vector2 localPoint);
+
+        // Clamp the pivot so the full button circle always stays inside the screen.
+        // Buttons extend menuRadius beyond the pivot; add ~150 units of padding for
+        // half the button width (260 px / 2) at 1920×1080 reference scale.
+        float halfW  = rectTransform.rect.width  * 0.5f;
+        float halfH  = rectTransform.rect.height * 0.5f;
+        float margin = menuRadius + 150f;
+        localPoint.x = Mathf.Clamp(localPoint.x, -halfW + margin, halfW - margin);
+        localPoint.y = Mathf.Clamp(localPoint.y, -halfH + margin, halfH - margin);
+
         menuPivot.anchoredPosition = localPoint;
     }
 
@@ -231,9 +252,18 @@ public class RadialMenu : MonoBehaviour
             optionsToShow = GetFallbackOptions();
         }
 
-        float angleStep = 360f / optionsToShow.Count;
+        // Filter out null or blank entries — guards against stray prefab artifacts
+        // or misconfigured RadialMenuConfig ScriptableObject entries (e.g. label = "Button" or "").
+        var validOptions = optionsToShow.FindAll(o => o != null && !string.IsNullOrWhiteSpace(o.label));
+        if (validOptions.Count == 0)
+        {
+            Debug.LogWarning($"[RadialMenu] All options filtered out for tile {targetTile?.GridPosition}. Using fallback.");
+            validOptions = GetFallbackOptions();
+        }
 
-        for (int i = 0; i < optionsToShow.Count; i++)
+        float angleStep = 360f / validOptions.Count;
+
+        for (int i = 0; i < validOptions.Count; i++)
         {
             float   angle  = i * angleStep * Mathf.Deg2Rad;
             Vector2 offset = new Vector2(Mathf.Cos(angle) * menuRadius,
@@ -258,8 +288,8 @@ public class RadialMenu : MonoBehaviour
             btnRect.anchoredPosition = offset;
             btnRect.sizeDelta        = new Vector2(260f, 100f);
 
-            btn.Setup(optionsToShow[i].label, optionsToShow[i].icon,
-                      optionsToShow[i].actionType, OnActionSelected);
+            btn.Setup(validOptions[i].label, validOptions[i].icon,
+                      validOptions[i].actionType, OnActionSelected);
             buttons.Add(btn);
         }
 

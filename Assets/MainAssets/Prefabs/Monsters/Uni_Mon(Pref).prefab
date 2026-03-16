@@ -84,6 +84,7 @@ MonoBehaviour:
   learnedAttacks: []
   anim: {fileID: 0}
   gridManager: {fileID: 0}
+  stageConfig: {fileID: 11400000, guid: 8ad1c409ab618f049986d2c0c7c1bda1, type: 2}
 --- !u!114 &735031748614082259
 MonoBehaviour:
   m_ObjectHideFlags: 0

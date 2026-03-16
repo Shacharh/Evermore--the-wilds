@@ -213,4 +213,93 @@ public class GridManager : MonoBehaviour
             }
         }
     }
+
+    // ── Obstruction Registry ───────────────────────────────────────────────────
+    //
+    // Obstruction components call RegisterObstructionTile/UnregisterObstructionTile
+    // when they start/destroy.  All queries (IsObstructed, ObstructionsBetween, etc.)
+    // look up this set in O(1) rather than scanning the tile grid every frame.
+
+    private HashSet<Vector2Int> _obstructionTiles = new HashSet<Vector2Int>();
+
+    /// <summary>Marks a grid position as containing an obstruction.</summary>
+    public void RegisterObstructionTile(Vector2Int pos)   => _obstructionTiles.Add(pos);
+
+    /// <summary>Removes the obstruction flag from a grid position.</summary>
+    public void UnregisterObstructionTile(Vector2Int pos) => _obstructionTiles.Remove(pos);
+
+    /// <summary>Returns true if the given grid coordinate holds an obstruction.</summary>
+    public bool IsObstructedPosition(Vector2Int pos) => _obstructionTiles.Contains(pos);
+
+    /// <summary>Returns true if <paramref name="t"/> is an obstruction tile.</summary>
+    public bool IsObstructed(Tile t) => t != null && _obstructionTiles.Contains(t.GridPosition);
+
+    // ── Line-of-fire queries ───────────────────────────────────────────────────
+
+    /// <summary>
+    /// Counts the number of obstruction tiles on the straight (Bresenham) line
+    /// between <paramref name="from"/> and <paramref name="to"/>, excluding the
+    /// endpoints themselves (attacker and target tiles are not counted).
+    /// Returns 0 when there are no obstructions or the inputs are null/equal.
+    /// </summary>
+    public int ObstructionsBetween(Tile from, Tile to)
+    {
+        if (from == null || to == null) return 0;
+        int count = 0;
+        foreach (Vector2Int pos in BresenhamInterior(from.GridPosition, to.GridPosition))
+            if (_obstructionTiles.Contains(pos))
+                count++;
+        return count;
+    }
+
+    /// <summary>
+    /// Returns the Manhattan distance from <paramref name="referencePoint"/> to the
+    /// nearest obstruction tile on the straight line between <paramref name="from"/>
+    /// and <paramref name="to"/>.
+    /// Returns <see cref="int.MaxValue"/> when there are no obstructions on the line.
+    /// </summary>
+    public int DistanceToNearestObstruction(Tile from, Tile to, Tile referencePoint)
+    {
+        if (from == null || to == null || referencePoint == null) return int.MaxValue;
+        int nearest = int.MaxValue;
+        foreach (Vector2Int pos in BresenhamInterior(from.GridPosition, to.GridPosition))
+        {
+            if (!_obstructionTiles.Contains(pos)) continue;
+            int dist = Mathf.Abs(pos.x - referencePoint.GridPosition.x)
+                     + Mathf.Abs(pos.y - referencePoint.GridPosition.y);
+            if (dist < nearest) nearest = dist;
+        }
+        return nearest;
+    }
+
+    /// <summary>
+    /// Iterates the interior grid positions on the Bresenham line from
+    /// <paramref name="a"/> to <paramref name="b"/>, EXCLUDING the endpoints.
+    /// Uses integer arithmetic only (no floating-point rounding artifacts).
+    /// </summary>
+    private IEnumerable<Vector2Int> BresenhamInterior(Vector2Int a, Vector2Int b)
+    {
+        int x0 = a.x, y0 = a.y;
+        int x1 = b.x, y1 = b.y;
+
+        int dx  = Mathf.Abs(x1 - x0), dy = Mathf.Abs(y1 - y0);
+        int sx  = x0 < x1 ? 1 : -1,   sy = y0 < y1 ? 1 : -1;
+        int err = dx - dy;
+
+        while (true)
+        {
+            bool isStart = (x0 == a.x && y0 == a.y);
+            bool isEnd   = (x0 == b.x && y0 == b.y);
+
+            // Only yield interior points
+            if (!isStart && !isEnd)
+                yield return new Vector2Int(x0, y0);
+
+            if (isEnd) yield break;
+
+            int e2 = 2 * err;
+            if (e2 > -dy) { err -= dy; x0 += sx; }
+            if (e2 <  dx) { err += dx; y0 += sy; }
+        }
+    }
 }

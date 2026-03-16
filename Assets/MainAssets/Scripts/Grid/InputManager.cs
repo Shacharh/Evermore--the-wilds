@@ -57,6 +57,9 @@ public class InputManager : MonoBehaviour
     private enum InputState { Normal, MovementMode, Moving, AttackSelection, TargetSelection }
     private InputState currentState = InputState.Normal;
 
+    /// <summary>True once we have subscribed to playerTurnController.onTurnEnd.</summary>
+    private bool _subscribedToTurnEnd = false;
+
     // Movement state
     private Monster                              movingMonster;
     private Tile                                 movementOriginTile;
@@ -84,6 +87,13 @@ public class InputManager : MonoBehaviour
         if (playerTurnController == null)
             playerTurnController = FindFirstObjectByType<PlayerTurnController>();
 
+        // Subscribe now if the controller is already available.
+        if (playerTurnController != null)
+        {
+            playerTurnController.onTurnEnd.AddListener(OnPlayerTurnEnded);
+            _subscribedToTurnEnd = true;
+        }
+
         if (inputActions != null)
         {
             var playerMap = inputActions.FindActionMap("Player");
@@ -108,6 +118,13 @@ public class InputManager : MonoBehaviour
         // Auto-find PlayerTurnController if TurnManager created it after Awake
         if (playerTurnController == null)
             playerTurnController = FindFirstObjectByType<PlayerTurnController>();
+
+        // Subscribe to turn-end as soon as the controller becomes available
+        if (playerTurnController != null && !_subscribedToTurnEnd)
+        {
+            playerTurnController.onTurnEnd.AddListener(OnPlayerTurnEnded);
+            _subscribedToTurnEnd = true;
+        }
     }
 
     // -- Hovering --------------------------------------------------------------
@@ -545,6 +562,23 @@ public class InputManager : MonoBehaviour
         selectedAttackIndex = attackIndex;
         selectedAttackData  = attacks[attackIndex].data;
 
+        // ── AP affordability check ─────────────────────────────────────────────
+        // Fail fast here (before highlighting any tiles) if the selected attack
+        // costs more AP than the player currently has.
+        if (playerTurnController != null &&
+            !playerTurnController.CanAfford(selectedAttackData.ConsumeActionPoints))
+        {
+            BattleMessage.Show(
+                $"Not enough AP for {selectedAttackData.DisplayName}! " +
+                $"(need {selectedAttackData.ConsumeActionPoints}, " +
+                $"have {playerTurnController.CurrentAP})",
+                2.5f);
+            currentState     = InputState.Normal;
+            attackingMonster = null;
+            if (selectedTile != null) { selectedTile.SetSelected(false); selectedTile = null; }
+            return;
+        }
+
         Tile originTile = gridManager.GetTileAtWorldPosition(attackingMonster.transform.position);
         if (originTile == null)
         {
@@ -620,6 +654,10 @@ public class InputManager : MonoBehaviour
 
         attackingMonster.ExecuteAttack(target, selectedAttackIndex, selectedAttackData.IsDirect);
 
+        // Hide the attack info panel — once the attack fires there is no reason
+        // for it to keep showing the move details on screen.
+        AttackInfoPanel.Hide();
+
         Debug.Log($"[InputManager] {attackingMonster.name} used '{selectedAttackData.DisplayName}' " +
                   $"on {target.name}.");
 
@@ -656,7 +694,20 @@ public class InputManager : MonoBehaviour
             return;
         }
 
+        // Close any already-open info panel so there's never more than one.
+        MonsterInfoPanel.Instance?.Hide();
         MonsterInfoPanel.Instance?.Show(monster);
+
+        // Deselect the tile so the player can click the same monster again immediately.
+        // (Without this, HandleNormalClick's "already-selected" guard blocks re-selection.)
+        if (selectedTile != null)
+        {
+            selectedTile.SetSelected(false);
+            selectedTile = null;
+        }
+        // The RadialMenu will Destroy itself after this method returns (via RadialMenu.Close()).
+        // Null the reference now so HandleNormalClick doesn't try to destroy it a second time.
+        activeMenu = null;
 
         Debug.Log($"[InputManager] Info for {monster.name} — " +
                   $"HP {monster.CurrentHP}/{monster.MaxHP}");
@@ -667,5 +718,37 @@ public class InputManager : MonoBehaviour
         if (leftClickAction  != null) leftClickAction.performed  -= OnLeftClick;
         if (rightClickAction != null) rightClickAction.performed -= OnRightClick;
         if (inputActions     != null) inputActions.Disable();
+        if (playerTurnController != null && _subscribedToTurnEnd)
+            playerTurnController.onTurnEnd.RemoveListener(OnPlayerTurnEnded);
+    }
+
+    // -- Turn End Handler ------------------------------------------------------
+
+    /// <summary>
+    /// Called when the player ends their turn.
+    /// Closes any open menu or active input mode so nothing bleeds into the
+    /// enemy's turn (e.g. a stale radial menu or highlighted attack range).
+    /// </summary>
+    void OnPlayerTurnEnded()
+    {
+        switch (currentState)
+        {
+            case InputState.MovementMode:
+                ExitMovementMode();
+                break;
+
+            case InputState.AttackSelection:
+                CloseAttackSubMenu();
+                currentState     = InputState.Normal;
+                attackingMonster = null;
+                break;
+
+            case InputState.TargetSelection:
+                ExitTargetSelection();
+                break;
+        }
+
+        CloseRadialMenu();   // safe even when activeMenu is null
+        Debug.Log("[InputManager] Player turn ended — all menus closed.");
     }
 }

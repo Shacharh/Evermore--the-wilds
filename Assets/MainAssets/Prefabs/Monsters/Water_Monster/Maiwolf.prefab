@@ -86,6 +86,10 @@ MonoBehaviour:
   - data: {fileID: 11400000, guid: 66e8c84f663a384408e15064164eef2c, type: 2}
   anim: {fileID: 0}
   gridManager: {fileID: 0}
+  stageConfig: {fileID: 11400000, guid: 8ad1c409ab618f049986d2c0c7c1bda1, type: 2}
+  isFlying: 0
+  dodgeEffectiveness: 0.4
+  obstructionConfig: {fileID: 11400000, guid: f31d9c0d1c582fd4aa15ae27a1196141, type: 2}
 --- !u!114 &735031748614082259
 MonoBehaviour:
   m_ObjectHideFlags: 0

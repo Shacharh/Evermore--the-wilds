@@ -39,6 +39,10 @@ public class RadialMenuButton : MonoBehaviour, IPointerEnterHandler, IPointerExi
     /// </summary>
     private AttackData hoverAttackData;
 
+    /// <summary>Realtime seconds when this button was created. Used to ignore
+    /// the same click that opened the parent menu (spawn-frame click guard).</summary>
+    private float createdAt;
+
     void Start()
     {
         // Set original scale after the object is fully initialized
@@ -48,11 +52,19 @@ public class RadialMenuButton : MonoBehaviour, IPointerEnterHandler, IPointerExi
 
     void Awake()
     {
+        createdAt = Time.realtimeSinceStartup;
+
         Debug.Log($"RadialMenuButton Awake: {gameObject.name}");
 
         // Auto-assign components if not assigned
         if (button == null) button = GetComponent<Button>();
         if (backgroundImage == null) backgroundImage = GetComponent<Image>();
+
+        // Hide any legacy Unity UI Text child (the default "Button" label that ships
+        // with Unity's built-in Button prefab).  It is never used by this script —
+        // we use TextMeshProUGUI — but it can show "Button" on screen if not hidden.
+        foreach (var legacyText in GetComponentsInChildren<UnityEngine.UI.Text>())
+            legacyText.gameObject.SetActive(false);
 
         // Get TextMeshPro from children if not assigned
         if (labelText == null)
@@ -218,6 +230,11 @@ public class RadialMenuButton : MonoBehaviour, IPointerEnterHandler, IPointerExi
 
     public void OnPointerClick(PointerEventData eventData)
     {
+        // Guard: ignore clicks that arrive in the same frame this button was created.
+        // This prevents the click that opened the parent menu (e.g. "Attack") from
+        // immediately triggering a button in the newly-spawned sub-menu.
+        if (Time.realtimeSinceStartup - createdAt < 0.15f) return;
+
         Debug.Log($"*** BUTTON CLICKED: {actionLabel} ***");
 
         // Invoke the callback with the action type

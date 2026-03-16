@@ -81,27 +81,59 @@ public class AttackInfoPanel : MonoBehaviour
             ? "<i>No description.</i>"
             : attack.Description;
 
-        // ── Stat block ────────────────────────────────────────────────────────
-        // Damage: read from the first "damage" category effect; show — if none.
-        string dmgStr = "—";
-        foreach (var fx in attack.Effects)
+        // ── Stat block — content depends on the primary effect's category ─────
+        string accStr   = attack.GuaranteedHit ? "Always hits" : $"{attack.Accuracy}%";
+        string shapeStr = attack.TargetShape.ToString();
+
+        var sb = new System.Text.StringBuilder();
+
+        AttackEffect primary = attack.Effects != null && attack.Effects.Count > 0
+            ? attack.Effects[0] : null;
+
+        if (primary != null)
         {
-            if (fx.category == AttackEnum.AttackCategory.damage)
+            switch (primary.category)
             {
-                dmgStr = fx.value.ToString();
-                break;
+                case AttackEnum.AttackCategory.damage:
+                    sb.AppendLine($"DMG    {primary.value}");
+                    sb.AppendLine($"ACC    {accStr}");
+                    break;
+
+                case AttackEnum.AttackCategory.heal:
+                    sb.AppendLine($"HEAL   {primary.value}");
+                    // Heals usually target self/allies, so accuracy isn't relevant
+                    break;
+
+                case AttackEnum.AttackCategory.buff:
+                    string buffSign = primary.isDebuff ? "−" : "+";
+                    sb.AppendLine($"STAT   {primary.buffType}");
+                    sb.AppendLine($"STAGES {buffSign}{primary.stageCount}");
+                    if (primary.chance < 100)
+                        sb.AppendLine($"CHANCE {primary.chance}%");
+                    sb.AppendLine($"DURTN  {primary.duration} turns");
+                    break;
+
+                case AttackEnum.AttackCategory.status:
+                    string statusName = primary.statusEffect != null
+                        ? primary.statusEffect.name : "Unknown";
+                    sb.AppendLine($"STATUS {statusName}");
+                    if (primary.chance < 100)
+                        sb.AppendLine($"CHANCE {primary.chance}%");
+                    sb.AppendLine($"DURTN  {primary.duration} turns");
+                    break;
             }
         }
+        else
+        {
+            sb.AppendLine("No effects set.");
+        }
 
-        string accStr  = attack.GuaranteedHit ? "Always hits" : $"{attack.Accuracy}%";
-        string shapeStr = attack.TargetShape.ToString();   // enum name as readable label
+        // Always show AP cost, range, and shape regardless of effect type
+        sb.AppendLine($"AP     {attack.ConsumeActionPoints}");
+        sb.AppendLine($"RNG    {attack.Range}");
+        sb.Append    ($"SHAPE  {shapeStr}");
 
-        statsText.text =
-            $"DMG    {dmgStr}\n"   +
-            $"ACC    {accStr}\n"   +
-            $"AP     {attack.ConsumeActionPoints}\n" +
-            $"RNG    {attack.Range}\n" +
-            $"SHAPE  {shapeStr}";
+        statsText.text = sb.ToString();
     }
 
     // ── UI Construction ───────────────────────────────────────────────────────

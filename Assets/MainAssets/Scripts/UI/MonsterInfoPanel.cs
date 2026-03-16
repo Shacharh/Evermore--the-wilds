@@ -3,11 +3,22 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// Screen-space overlay panel that shows a monster's stats when the player
-/// clicks the "Info" option in the radial menu.
+/// Screen-space overlay panel showing a monster's stats + active stat stages.
 ///
-/// Builds its own Canvas entirely in code — no prefab needed.
-/// Scales with screen size (reference 1280×720) so it looks the same at any resolution.
+/// Layout (bottom-right corner):
+///   ┌─────────────────── Name  Lv.X  [Side] ───────────────────┐
+///   │  HP:  NNN / MMM                                           │
+///   │─────────────────────────────────────── STAGE ─────────────│  (divider)
+///   │  ATK       123                              +2 (green)    │
+///   │  DEF        80                               — (grey)     │
+///   │  SPD        95                               — (grey)     │
+///   │  DGE        15                              -1 (red)      │
+///   │  CRT Chance  29%                             —            │
+///   │  CRT Damage  ×8                              —            │
+///   │                    [ Close ]                              │
+///   └───────────────────────────────────────────────────────────┘
+///
+/// The stage column updates every frame so buff/debuff changes appear instantly.
 ///
 /// Usage:
 ///   MonsterInfoPanel.Instance.Show(monster);
@@ -19,7 +30,7 @@ public class MonsterInfoPanel : MonoBehaviour
 
     public static MonsterInfoPanel Instance { get; private set; }
 
-    /// <summary>Auto-spawned on scene load — no need to add it to the scene manually.</summary>
+    /// <summary>Auto-spawned on scene load — no scene setup required.</summary>
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
     {
@@ -33,6 +44,7 @@ public class MonsterInfoPanel : MonoBehaviour
     private TextMeshProUGUI titleText;
     private TextMeshProUGUI hpText;
     private TextMeshProUGUI statsText;
+    private TextMeshProUGUI stagesText;   // right column — live buff/debuff stages
 
     // ── State ─────────────────────────────────────────────────────────────────
 
@@ -47,6 +59,15 @@ public class MonsterInfoPanel : MonoBehaviour
         DontDestroyOnLoad(gameObject);
         BuildUI();
         Hide();
+    }
+
+    private void Update()
+    {
+        // Refresh the stage column every frame while the panel is visible.
+        // Stages can change mid-battle (enemy applies a debuff, etc.) so polling
+        // is simpler than wiring up a dedicated stage-change event.
+        if (panelRoot.activeSelf && currentMonster != null)
+            RefreshStages();
     }
 
     private void OnDestroy()
@@ -90,7 +111,6 @@ public class MonsterInfoPanel : MonoBehaviour
     {
         if (currentMonster == null) return;
 
-        // Prefer the MonsterData display name; fall back to GO name
         string displayName = currentMonster.Data != null
             ? currentMonster.Data.displayName
             : currentMonster.name.Replace("(Clone)", "").Trim();
@@ -103,18 +123,58 @@ public class MonsterInfoPanel : MonoBehaviour
         hpText.text = $"HP   <color=#66FF88>{currentMonster.CurrentHP}</color> / {currentMonster.MaxHP}";
 
         statsText.text =
-            $"ATK  {currentMonster.Attack}\n" +
-            $"DEF  {currentMonster.Defense}\n" +
-            $"SPD  {currentMonster.Speed}\n" +
-            $"DGE  {currentMonster.Dodge}\n" +
-            $"CRT  {currentMonster.CritRate}%  ×{currentMonster.CritMod}";
+            $"ATK       {currentMonster.Attack}\n" +
+            $"DEF       {currentMonster.Defense}\n" +
+            $"SPD       {currentMonster.Speed}\n" +
+            $"DGE       {currentMonster.Dodge}\n" +
+            $"CRT Chance  {currentMonster.CritRate}%\n" +
+            $"CRT Damage  ×{currentMonster.CritMod}";
+
+        RefreshStages();
+    }
+
+    /// <summary>
+    /// Rebuilds the stage column.  Called every frame (from Update) while the
+    /// panel is visible, so players see stage changes the moment they happen.
+    /// </summary>
+    private void RefreshStages()
+    {
+        if (currentMonster == null || stagesText == null) return;
+
+        int atkS  = currentMonster.GetCurrentStage(AttackEnum.AttackBuffType.Attack);
+        int defS  = currentMonster.GetCurrentStage(AttackEnum.AttackBuffType.Defense);
+        int spdS  = currentMonster.GetCurrentStage(AttackEnum.AttackBuffType.Speed);
+        int dgeS  = currentMonster.GetCurrentStage(AttackEnum.AttackBuffType.Dodge);
+        int crtRS = currentMonster.GetCurrentStage(AttackEnum.AttackBuffType.CritRate);
+        int crtMS = currentMonster.GetCurrentStage(AttackEnum.AttackBuffType.CritMod);
+
+        stagesText.text =
+            $"{StageTag(atkS)}\n"  +
+            $"{StageTag(defS)}\n"  +
+            $"{StageTag(spdS)}\n"  +
+            $"{StageTag(dgeS)}\n"  +
+            $"{StageTag(crtRS)}\n" +
+            $"{StageTag(crtMS)}";
+    }
+
+    /// <summary>
+    /// Returns a coloured rich-text string representing a stage value.
+    ///   positive  → green  "+N"
+    ///   negative  → red    "−N"
+    ///   zero      → grey   " —"
+    /// </summary>
+    private static string StageTag(int stage)
+    {
+        if (stage > 0) return $"<color=#66FF44>+{stage}</color>";
+        if (stage < 0) return $"<color=#FF6666>{stage}</color>";
+        return "<color=#444455> —</color>";
     }
 
     // ── UI Construction ───────────────────────────────────────────────────────
 
     private void BuildUI()
     {
-        // Root canvas
+        // Root canvas — ScreenSpaceOverlay, sort 500 (same as AttackInfoPanel)
         var canvasGO = new GameObject("InfoCanvas");
         canvasGO.transform.SetParent(transform);
 
@@ -122,7 +182,6 @@ public class MonsterInfoPanel : MonoBehaviour
         canvas.renderMode   = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 500;
 
-        // ScaleWithScreenSize so the panel looks consistent at any resolution
         var scaler = canvasGO.AddComponent<CanvasScaler>();
         scaler.uiScaleMode         = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920f, 1080f);
@@ -130,24 +189,22 @@ public class MonsterInfoPanel : MonoBehaviour
 
         canvasGO.AddComponent<GraphicRaycaster>();
 
-        // ── Panel root (bottom-right, 420 × 310 in 1280×720 reference space) ──
+        // ── Panel root — bottom-right, 420 × 370 px ──────────────────────────
         panelRoot = MakeChild(canvasGO, "Panel");
         var panelRT = panelRoot.GetComponent<RectTransform>();
-        panelRT.anchorMin         = new Vector2(1f, 0f);
-        panelRT.anchorMax         = new Vector2(1f, 0f);
-        panelRT.pivot             = new Vector2(1f, 0f);
-        panelRT.anchoredPosition  = new Vector2(-24f, 24f);
-        panelRT.sizeDelta         = new Vector2(420f, 310f);
+        panelRT.anchorMin        = new Vector2(1f, 0f);
+        panelRT.anchorMax        = new Vector2(1f, 0f);
+        panelRT.pivot            = new Vector2(1f, 0f);
+        panelRT.anchoredPosition = new Vector2(-24f, 24f);
+        panelRT.sizeDelta        = new Vector2(420f, 370f);
 
-        var bg = panelRoot.AddComponent<Image>();
-        bg.color = new Color(0.07f, 0.07f, 0.11f, 0.95f);
+        panelRoot.AddComponent<Image>().color = new Color(0.07f, 0.07f, 0.11f, 0.95f);
 
-        // ── Coloured top bar ──────────────────────────────────────────────────
+        // ── Top bar ───────────────────────────────────────────────────────────
         var barGO = MakeChild(panelRoot, "TopBar");
         var barRT = barGO.GetComponent<RectTransform>();
-        barRT.anchorMin        = new Vector2(0f, 1f);
-        barRT.anchorMax        = new Vector2(1f, 1f);
-        barRT.pivot            = new Vector2(0.5f, 1f);
+        barRT.anchorMin = new Vector2(0f, 1f); barRT.anchorMax = new Vector2(1f, 1f);
+        barRT.pivot     = new Vector2(0.5f, 1f);
         barRT.anchoredPosition = Vector2.zero;
         barRT.sizeDelta        = new Vector2(0f, 50f);
         barGO.AddComponent<Image>().color = new Color(0.15f, 0.15f, 0.25f, 1f);
@@ -158,47 +215,81 @@ public class MonsterInfoPanel : MonoBehaviour
         titleRT.anchorMin = Vector2.zero; titleRT.anchorMax = Vector2.one;
         titleRT.offsetMin = new Vector2(14f, 4f); titleRT.offsetMax = new Vector2(-14f, -4f);
         titleText = titleGO.AddComponent<TextMeshProUGUI>();
-        titleText.fontSize        = 22f;
-        titleText.color           = Color.white;
-        titleText.alignment       = TextAlignmentOptions.Center;
+        titleText.fontSize           = 22f;
+        titleText.color              = Color.white;
+        titleText.alignment          = TextAlignmentOptions.Center;
         titleText.enableWordWrapping = false;
 
         // ── HP row ────────────────────────────────────────────────────────────
         var hpGO = MakeChild(panelRoot, "HPRow");
         var hpRT = hpGO.GetComponent<RectTransform>();
-        hpRT.anchorMin         = new Vector2(0f, 1f);
-        hpRT.anchorMax         = new Vector2(1f, 1f);
-        hpRT.pivot             = new Vector2(0.5f, 1f);
-        hpRT.anchoredPosition  = new Vector2(0f, -54f);
-        hpRT.sizeDelta         = new Vector2(-28f, 34f);
+        hpRT.anchorMin        = new Vector2(0f, 1f);
+        hpRT.anchorMax        = new Vector2(1f, 1f);
+        hpRT.pivot            = new Vector2(0.5f, 1f);
+        hpRT.anchoredPosition = new Vector2(0f, -54f);
+        hpRT.sizeDelta        = new Vector2(-28f, 30f);   // 30 px tall
         hpText = hpGO.AddComponent<TextMeshProUGUI>();
-        hpText.fontSize        = 20f;
-        hpText.color           = Color.white;
-        hpText.alignment       = TextAlignmentOptions.Center;
+        hpText.fontSize   = 20f;
+        hpText.color      = Color.white;
+        hpText.alignment  = TextAlignmentOptions.Center;
 
-        // ── Divider ───────────────────────────────────────────────────────────
+        // ── "STAGE" column header (right portion, above divider) ──────────────
+        // Occupies the gap between HP row bottom (−84) and the divider (−90).
+        var stageHdrGO = MakeChild(panelRoot, "StageHeader");
+        var stageHdrRT = stageHdrGO.GetComponent<RectTransform>();
+        stageHdrRT.anchorMin        = new Vector2(1f, 1f);
+        stageHdrRT.anchorMax        = new Vector2(1f, 1f);
+        stageHdrRT.pivot            = new Vector2(1f, 1f);
+        stageHdrRT.anchoredPosition = new Vector2(-14f, -84f);
+        stageHdrRT.sizeDelta        = new Vector2(120f, 14f);
+        var stageHdrTmp = stageHdrGO.AddComponent<TextMeshProUGUI>();
+        stageHdrTmp.text              = "STAGE";
+        stageHdrTmp.fontSize          = 13f;
+        stageHdrTmp.color             = new Color(0.55f, 0.55f, 0.65f, 1f);
+        stageHdrTmp.alignment         = TextAlignmentOptions.Right;
+        stageHdrTmp.fontStyle         = FontStyles.Italic;
+        stageHdrTmp.enableWordWrapping = false;
+
+        // ── Divider (full width) ──────────────────────────────────────────────
         var divGO = MakeChild(panelRoot, "Divider");
         var divRT = divGO.GetComponent<RectTransform>();
         divRT.anchorMin        = new Vector2(0f, 1f);
         divRT.anchorMax        = new Vector2(1f, 1f);
         divRT.pivot            = new Vector2(0.5f, 1f);
-        divRT.anchoredPosition = new Vector2(0f, -92f);
+        divRT.anchoredPosition = new Vector2(0f, -100f);
         divRT.sizeDelta        = new Vector2(-28f, 2f);
         divGO.AddComponent<Image>().color = new Color(0.35f, 0.35f, 0.5f, 1f);
 
-        // ── Stats text ────────────────────────────────────────────────────────
+        // ── Stats text — left column (stat name + value) ──────────────────────
         var statsGO = MakeChild(panelRoot, "Stats");
         var statsRT = statsGO.GetComponent<RectTransform>();
         statsRT.anchorMin        = new Vector2(0f, 1f);
-        statsRT.anchorMax        = new Vector2(1f, 1f);
-        statsRT.pivot            = new Vector2(0.5f, 1f);
-        statsRT.anchoredPosition = new Vector2(0f, -100f);
-        statsRT.sizeDelta        = new Vector2(-28f, 150f);
+        statsRT.anchorMax        = new Vector2(0f, 1f);
+        statsRT.pivot            = new Vector2(0f, 1f);
+        statsRT.anchoredPosition = new Vector2(14f, -106f);
+        statsRT.sizeDelta        = new Vector2(270f, 200f);
         statsText = statsGO.AddComponent<TextMeshProUGUI>();
-        statsText.fontSize        = 18f;
-        statsText.color           = new Color(0.88f, 0.88f, 0.88f, 1f);
-        statsText.alignment       = TextAlignmentOptions.Left;
-        statsText.lineSpacing     = 8f;
+        statsText.fontSize           = 18f;
+        statsText.color              = new Color(0.88f, 0.88f, 0.88f, 1f);
+        statsText.alignment          = TextAlignmentOptions.Left;
+        statsText.lineSpacing        = 8f;
+        statsText.enableWordWrapping = false;
+
+        // ── Stages text — right column (live buff/debuff stage values) ─────────
+        var stagesGO = MakeChild(panelRoot, "Stages");
+        var stagesRT = stagesGO.GetComponent<RectTransform>();
+        stagesRT.anchorMin        = new Vector2(1f, 1f);
+        stagesRT.anchorMax        = new Vector2(1f, 1f);
+        stagesRT.pivot            = new Vector2(1f, 1f);
+        stagesRT.anchoredPosition = new Vector2(-14f, -106f);  // same Y as statsText
+        stagesRT.sizeDelta        = new Vector2(120f, 200f);
+        stagesText = stagesGO.AddComponent<TextMeshProUGUI>();
+        stagesText.fontSize           = 18f;
+        stagesText.color              = new Color(0.88f, 0.88f, 0.88f, 1f);
+        stagesText.alignment          = TextAlignmentOptions.Right;
+        stagesText.lineSpacing        = 8f;
+        stagesText.enableWordWrapping = false;
+        stagesText.richText           = true;
 
         // ── Close button ──────────────────────────────────────────────────────
         var closeGO = MakeChild(panelRoot, "Close");
@@ -216,7 +307,6 @@ public class MonsterInfoPanel : MonoBehaviour
         closeBtn.targetGraphic = closeBg;
         closeBtn.onClick.AddListener(Hide);
 
-        // colour tint on hover
         var colors = closeBtn.colors;
         colors.highlightedColor = new Color(0.85f, 0.25f, 0.25f, 1f);
         colors.pressedColor     = new Color(0.5f, 0.1f, 0.1f, 1f);
@@ -234,7 +324,6 @@ public class MonsterInfoPanel : MonoBehaviour
         closeTmp.alignment = TextAlignmentOptions.Center;
     }
 
-    /// <summary>Creates a child GameObject with a RectTransform already added.</summary>
     private static GameObject MakeChild(GameObject parent, string name)
     {
         var go = new GameObject(name);

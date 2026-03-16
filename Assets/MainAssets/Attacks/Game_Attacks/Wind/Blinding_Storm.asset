@@ -22,10 +22,21 @@ MonoBehaviour:
   effects:
   - category: 0
     value: 60
+    stageCount: 1
     selfInflicted: 0
     buffType: 0
     chance: 0
     isDebuff: 0
+    duration: 1
+    isInstantHeal: 0
+    statusEffect: {fileID: 0}
+  - category: 2
+    value: 60
+    stageCount: 1
+    selfInflicted: 0
+    buffType: 1
+    chance: 100
+    isDebuff: 1
     duration: 1
     isInstantHeal: 0
     statusEffect: {fileID: 0}
