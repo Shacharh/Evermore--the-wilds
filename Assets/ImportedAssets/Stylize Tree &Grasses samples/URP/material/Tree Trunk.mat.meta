@@ -9,7 +9,8 @@ NativeFormatImporter:
 AssetOrigin:
   serializedVersion: 1
   productId: 304714
-  packageName: Stylize Tree &Grassess samples
-  packageVersion: 1.1
-  assetPath: Assets/Stylize Tree &Grasses samples/URP/material/Tree Trunk.mat
-  uploadId: 719853
+  packageName: Stylized Tree & Grass Samples
+  packageVersion: 1.2
+  assetPath: Assets/ImportedAssets/Stylize Tree &Grasses samples/URP/material/Tree
+    Trunk.mat
+  uploadId: 877316
