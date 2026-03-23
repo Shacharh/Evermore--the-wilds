@@ -15,12 +15,12 @@ MonoBehaviour:
   monsterId: "N\xEDdpettite"
   displayName: "N\xEDdpettite"
   elementType: Fire
-  baseHP: 400
-  baseAttack: 100
-  baseDefense: 300
-  baseSpeed: 3
+  baseHP: 105
+  baseAttack: 70
+  baseDefense: 45
+  baseSpeed: 12
   baseCritRate: 25
-  baseCritMod: 1
+  baseCritMod: 3
   baseDodge: 10
   moveCost: 1
   movePool:
@@ -28,8 +28,8 @@ MonoBehaviour:
     levelLearned: 0
     AnimationTrigger: 
   - attack: {fileID: 11400000, guid: 335b640922cc5a1448b34633163b05a2, type: 2}
-    levelLearned: 1
+    levelLearned: 19
     AnimationTrigger: 
   - attack: {fileID: 11400000, guid: 040c176173f4dbf48b4029baffe63c98, type: 2}
-    levelLearned: 1
+    levelLearned: 32
     AnimationTrigger: 
