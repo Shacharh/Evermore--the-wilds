@@ -23,6 +23,10 @@ MonoBehaviour:
   baseCritMod: 1
   baseDodge: 10
   moveCost: 1
+  MovementAnimationBoolean: Movment
+  DoamageAnimationTrigger: Hit
+  DogeAnimationTrigger: 
+  DeathAnimationTrigger: Death
   movePool:
   - attack: {fileID: 11400000, guid: 386512f95e2c81a4eb4fd94042044f9e, type: 2}
     levelLearned: 0
