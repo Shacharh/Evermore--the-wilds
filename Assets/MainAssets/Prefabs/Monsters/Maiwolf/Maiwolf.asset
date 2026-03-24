@@ -15,25 +15,22 @@ MonoBehaviour:
   monsterId: Maiwolf
   displayName: Maiwolf
   elementType: Water
-  baseHP: 200
-  baseAttack: 25
-  baseDefense: 50
+  baseHP: 450
+  baseAttack: 175
+  baseDefense: 250
   baseSpeed: 4
-  baseCritRate: 10
+  baseCritRate: 30
   baseCritMod: 1
-  baseDodge: 45
+  baseDodge: 38
   moveCost: 1
   MovementAnimationBoolean: Movment
   DoamageAnimationTrigger: Hit
   DogeAnimationTrigger: 
   DeathAnimationTrigger: Death
   movePool:
-  - attack: {fileID: 11400000, guid: 66e8c84f663a384408e15064164eef2c, type: 2}
+  - attack: {fileID: 11400000, guid: dae42acfe3d61ef4894549f3a0cbad5a, type: 2}
     levelLearned: 0
     AnimationTrigger: 
-  - attack: {fileID: 11400000, guid: 40ca0b2993a77c94a9b684a8d3972535, type: 2}
-    levelLearned: 1
-    AnimationTrigger: 
-  - attack: {fileID: 11400000, guid: 8052ce5010b5d714b9765a887a2c4032, type: 2}
+  - attack: {fileID: 11400000, guid: c55195be02be0e046931d8afc71d8627, type: 2}
     levelLearned: 1
     AnimationTrigger: 
