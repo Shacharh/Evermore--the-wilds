@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5bec574241e95d64f874367ce5a4cc34, type: 3}
+  m_Name: Regenerate
+  m_EditorClassIdentifier: Assembly-CSharp::AttackData
+  id: Regenerate
+  displayName: Regenerate
+  description: The user utilises the hidden power of water to mend it's wounds over
+    4 turns
+  element: 1
+  effects:
+  - category: 1
+    value: 35
+    selfInflicted: 1
+    buffType: 0
+    chance: 0
+    isDebuff: 0
+    duration: 4
+    isInstantHeal: 0
+    statusEffect: {fileID: 0}
+  maxPP: 5
+  consumeActionPoints: 5
+  guaranteedHit: 1
+  accuracy: 100
+  range: 1
+  target: 1
+  targetShape: 0
+  rangeTargetShapeSize: 0
+  isDirect: 1
+  inDirectHitPrecent: 0

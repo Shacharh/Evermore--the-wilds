@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb0f046aa1a0e54409f94af7cead9638, type: 3}
+  m_Name: "N\xEDdpettite"
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterData
+  monsterId: "N\xEDdpettite"
+  displayName: "N\xEDdpettite"
+  elementType: Fire
+  baseHP: 105
+  baseAttack: 70
+  baseDefense: 45
+  baseSpeed: 12
+  baseCritRate: 25
+  baseCritMod: 3
+  baseDodge: 10
+  moveCost: 1
+  movePool:
+  - attack: {fileID: 11400000, guid: 386512f95e2c81a4eb4fd94042044f9e, type: 2}
+    levelLearned: 0
+    AnimationTrigger: 
+  - attack: {fileID: 11400000, guid: 335b640922cc5a1448b34633163b05a2, type: 2}
+    levelLearned: 19
+    AnimationTrigger: 
+  - attack: {fileID: 11400000, guid: 040c176173f4dbf48b4029baffe63c98, type: 2}
+    levelLearned: 32
+    AnimationTrigger: 
