@@ -85,7 +85,7 @@ MonoBehaviour:
   learnedAttacks:
   - data: {fileID: 11400000, guid: 8052ce5010b5d714b9765a887a2c4032, type: 2}
   - data: {fileID: 11400000, guid: 66e8c84f663a384408e15064164eef2c, type: 2}
-  anim: {fileID: 0}
+  anim: {fileID: 1390947698293549321}
   gridManager: {fileID: 0}
   stageConfig: {fileID: 11400000, guid: 8ad1c409ab618f049986d2c0c7c1bda1, type: 2}
   isFlying: 0
@@ -199,6 +199,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 52cea457e1f0fa04dac8e295aaf0bdb6, type: 3}
+--- !u!95 &1390947698293549321 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: 52cea457e1f0fa04dac8e295aaf0bdb6, type: 3}
+  m_PrefabInstance: {fileID: 4766838267870942360}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &5020826782280119155 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 52cea457e1f0fa04dac8e295aaf0bdb6, type: 3}
