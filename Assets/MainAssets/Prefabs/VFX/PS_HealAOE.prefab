@@ -14520,7 +14520,7 @@ GameObject:
   - component: {fileID: 4922310778375618941}
   - component: {fileID: 5065579842609815731}
   m_Layer: 0
-  m_Name: PS_Heal
+  m_Name: PS_HealAOE
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
