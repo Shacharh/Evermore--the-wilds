@@ -83,7 +83,7 @@ MonoBehaviour:
   level: 40
   learnedAttacks:
   - data: {fileID: 0}
-  - data: {fileID: 11400000, guid: 040c176173f4dbf48b4029baffe63c98, type: 2}
+  - data: {fileID: 11400000, guid: e94caacb4bdb35d4bbada81abc6aea80, type: 2}
   anim: {fileID: 6387917828086440346}
   gridManager: {fileID: 0}
   stageConfig: {fileID: 11400000, guid: 8ad1c409ab618f049986d2c0c7c1bda1, type: 2}

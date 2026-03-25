@@ -83,8 +83,8 @@ MonoBehaviour:
   enemyMonster: 1
   level: 38
   learnedAttacks:
-  - data: {fileID: 11400000, guid: 8052ce5010b5d714b9765a887a2c4032, type: 2}
-  - data: {fileID: 11400000, guid: 66e8c84f663a384408e15064164eef2c, type: 2}
+  - data: {fileID: 11400000, guid: 252e20731444d2541a5b85575d6bd6e4, type: 2}
+  - data: {fileID: 11400000, guid: 819202d1ced208e42b62f68416a8aef2, type: 2}
   anim: {fileID: 1390947698293549321}
   gridManager: {fileID: 0}
   stageConfig: {fileID: 11400000, guid: 8ad1c409ab618f049986d2c0c7c1bda1, type: 2}
@@ -104,8 +104,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MonsterSetup
   startingAttackIds:
-  - Echoing_Tide
-  - Heal
+  - Slam
+  - Armor_Up
   monster: {fileID: 8900255455746139478}
 --- !u!1 &8782099375881524005
 GameObject:
