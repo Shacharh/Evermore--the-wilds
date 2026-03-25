@@ -83,8 +83,8 @@ MonoBehaviour:
   enemyMonster: 0
   level: 37
   learnedAttacks:
-  - data: {fileID: 11400000, guid: 8052ce5010b5d714b9765a887a2c4032, type: 2}
-  - data: {fileID: 11400000, guid: 66e8c84f663a384408e15064164eef2c, type: 2}
+  - data: {fileID: 11400000, guid: dae42acfe3d61ef4894549f3a0cbad5a, type: 2}
+  - data: {fileID: 11400000, guid: c55195be02be0e046931d8afc71d8627, type: 2}
   anim: {fileID: 2648511698983056934}
   gridManager: {fileID: 0}
   stageConfig: {fileID: 11400000, guid: 8ad1c409ab618f049986d2c0c7c1bda1, type: 2}
@@ -104,8 +104,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MonsterSetup
   startingAttackIds:
-  - Echoing_Tide
-  - Heal
+  - Wolf_Claws
+  - Earth_Strike
   monster: {fileID: 8900255455746139478}
 --- !u!1 &8782099375881524005
 GameObject:

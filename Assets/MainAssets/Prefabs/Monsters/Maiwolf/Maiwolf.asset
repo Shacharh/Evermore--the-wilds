@@ -30,7 +30,7 @@ MonoBehaviour:
   movePool:
   - attack: {fileID: 11400000, guid: dae42acfe3d61ef4894549f3a0cbad5a, type: 2}
     levelLearned: 0
-    AnimationTrigger: 
+    AnimationTrigger: Ability_1
   - attack: {fileID: 11400000, guid: c55195be02be0e046931d8afc71d8627, type: 2}
     levelLearned: 1
-    AnimationTrigger: 
+    AnimationTrigger: Ability_2

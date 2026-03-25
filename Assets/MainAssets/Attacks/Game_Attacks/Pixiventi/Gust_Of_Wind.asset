@@ -16,7 +16,17 @@ MonoBehaviour:
   displayName: Gust Of Wind
   description: shot a gust of air to an enemy
   element: 2
-  effects: []
+  effects:
+  - category: 0
+    value: 25
+    stageCount: 0
+    selfInflicted: 0
+    buffType: 0
+    chance: 0
+    isDebuff: 0
+    duration: 1
+    isInstantHeal: 0
+    statusEffect: {fileID: 0}
   maxPP: 0
   consumeActionPoints: 2
   guaranteedHit: 0

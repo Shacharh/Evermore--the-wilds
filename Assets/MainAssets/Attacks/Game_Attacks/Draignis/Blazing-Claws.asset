@@ -16,7 +16,17 @@ MonoBehaviour:
   displayName: Blazing Claws
   description: Scratch an enemy
   element: 0
-  effects: []
+  effects:
+  - category: 0
+    value: 150
+    stageCount: 0
+    selfInflicted: 0
+    buffType: 0
+    chance: 0
+    isDebuff: 0
+    duration: 1
+    isInstantHeal: 0
+    statusEffect: {fileID: 0}
   maxPP: 0
   consumeActionPoints: 5
   guaranteedHit: 0

@@ -16,7 +16,17 @@ MonoBehaviour:
   displayName: Heal
   description: Heal an ally
   element: 2
-  effects: []
+  effects:
+  - category: 1
+    value: 100
+    stageCount: 0
+    selfInflicted: 0
+    buffType: 0
+    chance: 0
+    isDebuff: 0
+    duration: 1
+    isInstantHeal: 1
+    statusEffect: {fileID: 0}
   maxPP: 0
   consumeActionPoints: 7
   guaranteedHit: 1

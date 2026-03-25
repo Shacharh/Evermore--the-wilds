@@ -16,7 +16,17 @@ MonoBehaviour:
   displayName: Wolf Claws
   description: attack an enemy with his claws
   element: 1
-  effects: []
+  effects:
+  - category: 0
+    value: 75
+    stageCount: 0
+    selfInflicted: 0
+    buffType: 0
+    chance: 0
+    isDebuff: 0
+    duration: 1
+    isInstantHeal: 0
+    statusEffect: {fileID: 0}
   maxPP: 0
   consumeActionPoints: 5
   guaranteedHit: 0

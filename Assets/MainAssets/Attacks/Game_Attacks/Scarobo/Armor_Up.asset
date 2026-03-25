@@ -16,7 +16,17 @@ MonoBehaviour:
   displayName: Armor Up
   description: Raise defense stat for self
   element: 4
-  effects: []
+  effects:
+  - category: 2
+    value: 0
+    stageCount: 0
+    selfInflicted: 1
+    buffType: 2
+    chance: 100
+    isDebuff: 0
+    duration: 3
+    isInstantHeal: 0
+    statusEffect: {fileID: 0}
   maxPP: 0
   consumeActionPoints: 5
   guaranteedHit: 1

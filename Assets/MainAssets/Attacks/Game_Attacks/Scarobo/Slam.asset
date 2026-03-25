@@ -16,7 +16,17 @@ MonoBehaviour:
   displayName: Slam
   description: Slam his fist on an enemy
   element: 4
-  effects: []
+  effects:
+  - category: 0
+    value: 50
+    stageCount: 0
+    selfInflicted: 0
+    buffType: 0
+    chance: 0
+    isDebuff: 0
+    duration: 1
+    isInstantHeal: 0
+    statusEffect: {fileID: 0}
   maxPP: 0
   consumeActionPoints: 3
   guaranteedHit: 0

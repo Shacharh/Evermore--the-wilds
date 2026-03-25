@@ -16,7 +16,17 @@ MonoBehaviour:
   displayName: Earth Strike
   description: hit the ground, hurting everyone around him
   element: 1
-  effects: []
+  effects:
+  - category: 0
+    value: 50
+    stageCount: 0
+    selfInflicted: 0
+    buffType: 0
+    chance: 0
+    isDebuff: 0
+    duration: 1
+    isInstantHeal: 0
+    statusEffect: {fileID: 0}
   maxPP: 0
   consumeActionPoints: 6
   guaranteedHit: 0
