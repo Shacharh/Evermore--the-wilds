@@ -329,14 +329,23 @@ public class Monster : MonoBehaviour
     }
 
     private void ApplyDamage(Monster attacker, Monster target, Monster effectTarget,
-        AttackData attackData, bool isDirect, AttackEffect effect)
+                             AttackData attackData, bool isDirect, AttackEffect effect)
     {
         int damage = attacker.CalculateDamage(target, attackData, isDirect, effect);
-        effectTarget.currentHP = Mathf.Max(0, effectTarget.currentHP - damage);
+        int newHP = Mathf.Max(0, effectTarget.currentHP - damage);
+
+        // ── Decide animation BEFORE applying HP ────────────────────────────
+        if (damage <= 0)
+            effectTarget.TriggerDodgeAnim();
+        else if (newHP <= 0)
+            effectTarget.TriggerDeathAnim();
+        else
+            effectTarget.TriggerDamageAnim();
+        // ───────────────────────────────────────────────────────────────────
+
+        effectTarget.currentHP = newHP;
         effectTarget.OnHPChanged?.Invoke(effectTarget.currentHP, effectTarget.MaxHP);
 
-        // Show visible on-screen feedback so you don't need to check the console.
-        // damage == 0 means the attack missed (CalculateDamage returned 0 from the dodge check).
         if (damage <= 0)
         {
             BattleMessage.Show($"{effectTarget.customeName} dodged the attack!", 2.5f);
@@ -642,13 +651,104 @@ public class Monster : MonoBehaviour
     {
         for (int i = activeStatuses.Count - 1; i >= 0; i--)
         {
-            activeStatuses[i].remainingTurns--;
-            if (activeStatuses[i].remainingTurns <= 0)
+            ActiveStatus status = activeStatuses[i];
+
+            // ── Apply DoT damage if the status deals damage ─────────────────
+            if (status.data.Damage > 0)
             {
-                Debug.Log($"{customeName} is no longer affected by {activeStatuses[i].data.name}.");
+                int newHP = Mathf.Max(0, currentHP - status.data.Damage);
+
+                if (newHP <= 0)
+                    TriggerDeathAnim();
+                else
+                    TriggerDamageAnim();
+
+                currentHP = newHP;
+                OnHPChanged?.Invoke(currentHP, MaxHP);
+
+                BattleMessage.Show($"{customeName} took {status.data.Damage} damage " +
+                                   $"from {status.data.name}! ({currentHP}/{MaxHP})", 1.5f);
+                Debug.Log($"[{gameObject.name}] {status.data.name} DoT: -{status.data.Damage} " +
+                          $"HP — {currentHP}/{MaxHP}");
+
+                if (currentHP <= 0)
+                {
+                    HandleDeath();
+                    return; // monster is dead, stop processing remaining statuses
+                }
+            }
+            // ────────────────────────────────────────────────────────────────
+
+            status.remainingTurns--;
+            if (status.remainingTurns <= 0)
+            {
+                Debug.Log($"{customeName} is no longer affected by {status.data.name}.");
                 activeStatuses.RemoveAt(i);
             }
         }
     }
+    #endregion
+
+    #region Animation Initialization
+    #region utility methods for triggering animations from AttackEntry.AnimationTrigger
+    private void TriggerAnimationFromTrigger(string trigger)
+    {
+        anim.SetTrigger(trigger);
+    }
+
+    private void TriggerAnimationFromBool(string trigger, bool value)
+    {
+        anim.SetBool(trigger, value);
+    }
+    #endregion
+
+    #region helper methods for triggering specific animations based on MonsterData configuration
+    private bool CheckAnimTriggerString(string triger)
+    {
+        return anim != null && !string.IsNullOrEmpty(triger);
+    }
+    private void TriggerMovementAnimation(bool IsMoving)
+    {
+        string triger = data.MovementAnimationBoolean;
+
+        if (CheckAnimTriggerString(triger))
+            TriggerAnimationFromBool(triger, IsMoving);
+    }
+
+    private void TrigerTrigerAnimation(string triger)
+    {
+        if (CheckAnimTriggerString(triger))
+            TriggerAnimationFromTrigger(triger);
+    }
+
+    #endregion
+    #region Public Animation Seters
+    public void TriggerMovementAnimationStart()
+    {
+        TriggerMovementAnimation(true);
+    }
+
+    public void TriggerMovementAnimationEnd()
+    {
+        TriggerMovementAnimation(false);
+    }
+
+    #region Private Animation Seters
+    public void TriggerDamageAnim()
+    {
+        TrigerTrigerAnimation(data.DoamageAnimationTrigger);
+    }
+
+    public void TriggerDodgeAnim()
+    {
+        TrigerTrigerAnimation(data.DogeAnimationTrigger);
+    }
+
+    public void TriggerDeathAnim()
+    {
+        TrigerTrigerAnimation(data.DeathAnimationTrigger);
+    }
+    #endregion
+    #endregion
     #endregion
 }

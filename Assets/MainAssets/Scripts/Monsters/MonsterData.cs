@@ -21,6 +21,12 @@ public class MonsterData : ScriptableObject
     [Tooltip("AP cost for this monster to move one tile.")]
     public int moveCost = 1;
 
+    [Header("Animation")]
+    [AnimatorBool] public string MovementAnimationBoolean;
+    [AnimatorTrigger] public string DoamageAnimationTrigger;
+    [AnimatorTrigger] public string DogeAnimationTrigger;
+    [AnimatorTrigger] public string DeathAnimationTrigger;
+
     [Tooltip("Attacks this monster can learn and the level at which it learns them")]
     public AttackEntry[] movePool;
 

@@ -153,6 +153,7 @@ public class EnemyTurnController : TurnController
         float dist    = Vector3.Distance(start, end);
         float t       = 0f;
 
+        monster.TriggerMovementAnimationStart();
         while (t < 1f)
         {
             t += Time.deltaTime * moveSpeed / Mathf.Max(dist, 0.01f);
@@ -161,6 +162,8 @@ public class EnemyTurnController : TurnController
         }
 
         monster.transform.position = end;
+        monster.TriggerMovementAnimationEnd();
+
         Debug.Log($"[EnemyAI] {monster.name} moved to {toTile.GridPosition}.");
     }
 
