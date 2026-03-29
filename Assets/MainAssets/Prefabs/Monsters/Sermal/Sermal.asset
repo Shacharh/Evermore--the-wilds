@@ -15,12 +15,12 @@ MonoBehaviour:
   monsterId: Sermal
   displayName: Sermal
   elementType: Wind
-  baseHP: 250
+  baseHP: 240
   baseAttack: 125
-  baseDefense: 100
+  baseDefense: 150
   baseSpeed: 6
   baseCritRate: 75
-  baseCritMod: 2
+  baseCritMod: 50
   baseDodge: 45
   moveCost: 1
   MovementAnimationBoolean: Movment
