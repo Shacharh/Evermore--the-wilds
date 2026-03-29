@@ -15,12 +15,12 @@ MonoBehaviour:
   monsterId: Draignis
   displayName: Draignis
   elementType: Fire
-  baseHP: 400
+  baseHP: 300
   baseAttack: 300
   baseDefense: 200
   baseSpeed: 4
   baseCritRate: 33
-  baseCritMod: 1
+  baseCritMod: 50
   baseDodge: 15
   moveCost: 1
   MovementAnimationBoolean: Movment
