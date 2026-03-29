@@ -445,7 +445,8 @@ public class Monster : MonoBehaviour
         float attackDefenseRatio = (float)Attack / Mathf.Max(1, target.Defense);
         float baseDamage = ((levelFactor * attackEffect.value * attackDefenseRatio) / 50f) + 2f;
 
-        if (Random.value < (CritRate / 100f)) baseDamage *= CritMod;
+        //if (Random.value < (CritRate / 100f)) baseDamage *= CritMod;
+        if (Random.value < (CritRate / 100f)) baseDamage += baseDamage * (CritMod / 100f);
         if (!attack.IsDirect && !isDirect) baseDamage *= attack.InDirectHitPercent;
 
         return Mathf.Max(1, Mathf.FloorToInt(baseDamage * Random.Range(0.85f, 1f)));
