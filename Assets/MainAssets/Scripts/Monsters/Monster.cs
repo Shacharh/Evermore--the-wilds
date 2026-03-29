@@ -77,6 +77,9 @@ public class Monster : MonoBehaviour
     /// </summary>
     public bool IsEnemy => enemyMonster;
 
+    /// <summary>The grid tile this monster currently occupies. Set by the spawner and updated on every move.</summary>
+    public Tile CurrentTile { get; set; }
+
     /// <summary>AP cost to move this monster one tile.</summary>
     /// <summary>AP cost to move this monster one tile. Defined on MonsterData ScriptableObject.</summary>
     public int MoveCost => data.moveCost;

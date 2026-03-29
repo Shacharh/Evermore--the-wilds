@@ -95,6 +95,17 @@ public class PlayerTurnController : TurnController
 
     // -- Auto-Discovery --------------------------------------------------------
 
+    /// <summary>
+    /// Always re-discovers player monsters from the scene, replacing any
+    /// Inspector-assigned list. This ensures the roster uses the spawner's
+    /// runtime instances (which have CurrentTile set).
+    /// </summary>
+    public override void AutoDiscoverMonsters()
+    {
+        monsters.Clear();
+        DiscoverMonsters();
+    }
+
     /// <summary>Scans the scene for all non-enemy monsters and adds them to this roster.</summary>
     protected override void DiscoverMonsters()
     {

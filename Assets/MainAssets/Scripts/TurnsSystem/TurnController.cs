@@ -104,7 +104,6 @@ public abstract class TurnController : MonoBehaviour
 
         SetAP(CurrentAP - amount);
         Debug.Log($"[{GetType().Name}] Spent {amount} AP -- {CurrentAP} remaining.");
-        CheckAutoEndTurn();
         return true;
     }
 
@@ -155,7 +154,7 @@ public abstract class TurnController : MonoBehaviour
     /// Only auto-fills the roster when no monsters were manually assigned
     /// in the Inspector — manual rosters are always respected.
     /// </summary>
-    public void AutoDiscoverMonsters()
+    public virtual void AutoDiscoverMonsters()
     {
         if (monsters.Count > 0) return; // inspector-assigned — keep them
         DiscoverMonsters();

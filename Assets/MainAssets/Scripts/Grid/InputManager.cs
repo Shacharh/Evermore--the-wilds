@@ -455,6 +455,12 @@ public class InputManager : MonoBehaviour
         GameObject monsterObj = movingMonster.gameObject;
         Vector3 startPos = monsterObj.transform.position;
         Vector3 endPos   = destinationTile.transform.position;
+
+        // Face the movement direction before sliding
+        Vector3 moveDir = new Vector3(endPos.x - startPos.x, 0f, endPos.z - startPos.z);
+        if (moveDir != Vector3.zero)
+            monsterObj.transform.root.rotation = Quaternion.LookRotation(moveDir);
+
         float distance   = Vector3.Distance(startPos, endPos);
         float duration   = distance / movementSpeed;
         float elapsed    = 0f;
@@ -471,6 +477,7 @@ public class InputManager : MonoBehaviour
 
         movementOriginTile.ClearOccupation();
         destinationTile.SetOccupation(Tile.OccupationType.Monster, monsterObj);
+        movingMonster.CurrentTile = destinationTile;
 
         Debug.Log($"[InputManager] {movingMonster.name} moved to {destinationTile.GridPosition}. " +
                   $"AP remaining: {playerTurnController?.CurrentAP}");
@@ -579,7 +586,8 @@ public class InputManager : MonoBehaviour
             return;
         }
 
-        Tile originTile = gridManager.GetTileAtWorldPosition(attackingMonster.transform.position);
+        Tile originTile = attackingMonster.CurrentTile
+                       ?? gridManager.GetTileAtWorldPosition(attackingMonster.transform.root.position);
         if (originTile == null)
         {
             Debug.LogError("[InputManager] Cannot find attacker's tile.");
@@ -651,6 +659,13 @@ public class InputManager : MonoBehaviour
             ExitTargetSelection();
             return;
         }
+
+        // Face the attack target before executing
+        Vector3 attackDir = new Vector3(
+            targetTile.transform.position.x - attackingMonster.transform.position.x, 0f,
+            targetTile.transform.position.z - attackingMonster.transform.position.z);
+        if (attackDir != Vector3.zero)
+            attackingMonster.transform.root.rotation = Quaternion.LookRotation(attackDir);
 
         attackingMonster.ExecuteAttack(target, selectedAttackIndex, selectedAttackData.IsDirect);
 

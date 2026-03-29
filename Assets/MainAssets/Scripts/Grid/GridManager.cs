@@ -73,7 +73,24 @@ public class GridManager : MonoBehaviour
         int y = Mathf.RoundToInt(worldPosition.z / tileSpacing);
         return GetTile(x, y);
     }
-    
+
+    // Find the tile that is currently occupied by a specific GameObject.
+    // Compares root GameObjects so it works whether the Monster component sits
+    // on the prefab root or on a child object.
+    public Tile FindTileOccupiedBy(GameObject occupant)
+    {
+        if (occupant == null) return null;
+        GameObject occupantRoot = occupant.transform.root.gameObject;
+        for (int x = 0; x < gridWidth; x++)
+            for (int y = 0; y < gridHeight; y++)
+            {
+                GameObject occ = grid[x, y].OccupyingObject;
+                if (occ != null && occ.transform.root.gameObject == occupantRoot)
+                    return grid[x, y];
+            }
+        return null;
+    }
+
     // Check if coordinates are valid
     public bool IsValidPosition(int x, int y)
     {

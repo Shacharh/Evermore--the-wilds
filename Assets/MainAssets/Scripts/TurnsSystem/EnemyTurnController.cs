@@ -22,7 +22,7 @@ public class EnemyTurnController : TurnController
     [Header("Testing / Development")]
     [Tooltip("When enabled the enemy skips its entire turn immediately " +
              "and returns control to the player. Disable when the AI is ready.")]
-    [SerializeField] private bool skipTurnForTesting = true;
+    [SerializeField] private bool skipTurnForTesting = false;
 
     // -- Timing ----------------------------------------------------------------
 
@@ -54,6 +54,17 @@ public class EnemyTurnController : TurnController
     }
 
     // -- Auto-Discovery --------------------------------------------------------
+
+    /// <summary>
+    /// Always re-discovers enemy monsters from the scene, replacing any
+    /// Inspector-assigned list. This ensures the AI uses the spawner's runtime
+    /// instances (which have CurrentTile set) rather than pre-placed scene objects.
+    /// </summary>
+    public override void AutoDiscoverMonsters()
+    {
+        monsters.Clear();
+        DiscoverMonsters();
+    }
 
     /// <summary>Scans the scene for all enemy monsters and adds them to this roster.</summary>
     protected override void DiscoverMonsters()
@@ -93,10 +104,17 @@ public class EnemyTurnController : TurnController
     /// </summary>
     protected virtual IEnumerator DecideAndAct(Monster monster)
     {
-        Tile currentTile = gridManager.GetTileAtWorldPosition(monster.transform.position);
+        Tile currentTile = monster.CurrentTile
+                        ?? gridManager.GetTileAtWorldPosition(monster.transform.root.position);
+        if (currentTile != null && monster.CurrentTile == null)
+        {
+            monster.CurrentTile = currentTile; // late-bind so future lookups are fast
+            Debug.Log($"[EnemyAI] {monster.name} CurrentTile late-bound to {currentTile.GridPosition}.");
+        }
         if (currentTile == null)
         {
-            Debug.LogWarning($"[EnemyAI] {monster.name} not on a valid tile.");
+            Debug.LogWarning($"[EnemyAI] {monster.name} not on a valid tile " +
+                             $"(root pos={monster.transform.root.position}).");
             monster.MarkActed();
             yield break;
         }
@@ -114,6 +132,14 @@ public class EnemyTurnController : TurnController
                     SpendAP(bestAttack.ConsumeActionPoints);
                     monster.MarkActed();
                     Monster target = attackTarget.GetMonster();
+
+                    // Face the attack target before executing
+                    Vector3 attackDir = new Vector3(
+                        attackTarget.transform.position.x - monster.transform.position.x, 0f,
+                        attackTarget.transform.position.z - monster.transform.position.z);
+                    if (attackDir != Vector3.zero)
+                        monster.transform.root.rotation = Quaternion.LookRotation(attackDir);
+
                     int attackIndex = GetAttackIndex(attacks, bestAttack);
                     monster.ExecuteAttack(target, attackIndex, true);
                     Debug.Log($"[EnemyAI] {monster.name} used '{bestAttack.DisplayName}' " +
@@ -150,6 +176,12 @@ public class EnemyTurnController : TurnController
 
         Vector3 start = monster.transform.position;
         Vector3 end   = toTile.transform.position;
+
+        // Face the movement direction before sliding
+        Vector3 moveDir = new Vector3(end.x - start.x, 0f, end.z - start.z);
+        if (moveDir != Vector3.zero)
+            monster.transform.root.rotation = Quaternion.LookRotation(moveDir);
+
         float dist    = Vector3.Distance(start, end);
         float t       = 0f;
 
@@ -162,6 +194,7 @@ public class EnemyTurnController : TurnController
         }
 
         monster.transform.position = end;
+        monster.CurrentTile = toTile;
         monster.TriggerMovementAnimationEnd();
 
         Debug.Log($"[EnemyAI] {monster.name} moved to {toTile.GridPosition}.");
@@ -218,7 +251,7 @@ public class EnemyTurnController : TurnController
         foreach (Monster m in playerCtrl.Monsters)
         {
             if (m == null) continue;
-            Tile t = gridManager.GetTileAtWorldPosition(m.transform.position);
+            Tile t = m.CurrentTile ?? gridManager.GetTileAtWorldPosition(m.transform.root.position);
             if (t == null) continue;
 
             int d = gridManager.GetDistanceBetweenTiles(origin, t);

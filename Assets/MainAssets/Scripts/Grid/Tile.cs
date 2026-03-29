@@ -311,6 +311,6 @@ public class Tile : MonoBehaviour
 
     public Monster GetMonster()
     {
-        return OccupyingObject != null ? OccupyingObject.GetComponent<Monster>() : null;
+        return OccupyingObject != null ? OccupyingObject.GetComponentInChildren<Monster>() : null;
     }
 }
