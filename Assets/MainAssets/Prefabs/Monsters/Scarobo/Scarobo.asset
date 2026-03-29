@@ -15,12 +15,12 @@ MonoBehaviour:
   monsterId: Scarobo
   displayName: Scarobo
   elementType: Water
-  baseHP: 500
+  baseHP: 450
   baseAttack: 150
-  baseDefense: 300
+  baseDefense: 250
   baseSpeed: 2
-  baseCritRate: 10
-  baseCritMod: 1
+  baseCritRate: 20
+  baseCritMod: 50
   baseDodge: 10
   moveCost: 1
   MovementAnimationBoolean: Movment
