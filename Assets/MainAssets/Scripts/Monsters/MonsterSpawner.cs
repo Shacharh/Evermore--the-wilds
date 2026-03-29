@@ -11,6 +11,8 @@ public class MonsterSpawner : MonoBehaviour
 
     [SerializeField] private GridManager gridManager;
     [SerializeField] private SpawnData[] monstersToSpawn;
+    [Tooltip("Rotate spawned monsters 180° on Y so they face the opposing side. Enable on the Enemy spawner.")]
+    [SerializeField] private bool flipFacing = false;
 
     void Start()
     {
@@ -30,7 +32,8 @@ public class MonsterSpawner : MonoBehaviour
             {
                 // 1. Physically Spawn
                 Vector3 worldPos = targetTile.transform.position;
-                GameObject newMonster = Instantiate(data.monsterPrefab, worldPos, Quaternion.identity);
+                Quaternion spawnRot   = flipFacing ? Quaternion.Euler(0, 180, 0) : Quaternion.identity;
+                GameObject newMonster = Instantiate(data.monsterPrefab, worldPos, spawnRot);
 
                 // 2. Register with the Data Layer
                 targetTile.SetOccupation(Tile.OccupationType.Monster, newMonster);
@@ -38,9 +41,10 @@ public class MonsterSpawner : MonoBehaviour
                 // 3. Attach a world-space HP bar
                 //    InitHPBarNextFrame waits one frame so Monster.Start() runs first and
                 //    sets currentHP before the bar reads it.
-                Monster monsterComp = newMonster.GetComponent<Monster>();
+                Monster monsterComp = newMonster.GetComponentInChildren<Monster>();
                 if (monsterComp != null)
                 {
+                    monsterComp.CurrentTile = targetTile;
                     MonsterHPBar hpBar = newMonster.AddComponent<MonsterHPBar>();
                     StartCoroutine(InitHPBarNextFrame(hpBar, monsterComp));
                 }
