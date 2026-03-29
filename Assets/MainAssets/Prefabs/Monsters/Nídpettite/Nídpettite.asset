@@ -19,8 +19,8 @@ MonoBehaviour:
   baseAttack: 250
   baseDefense: 150
   baseSpeed: 6
-  baseCritRate: 75
-  baseCritMod: 3
+  baseCritRate: 50
+  baseCritMod: 50
   baseDodge: 45
   moveCost: 1
   MovementAnimationBoolean: Movment
