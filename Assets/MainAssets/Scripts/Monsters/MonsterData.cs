@@ -22,10 +22,10 @@ public class MonsterData : ScriptableObject
     public int moveCost = 1;
 
     [Header("Animation")]
-    [AnimatorBool] public string MovementAnimationBoolean;
-    [AnimatorTrigger] public string DoamageAnimationTrigger;
-    [AnimatorTrigger] public string DogeAnimationTrigger;
-    [AnimatorTrigger] public string DeathAnimationTrigger;
+     public string MovementAnimationBoolean;
+     public string DoamageAnimationTrigger;
+     public string DogeAnimationTrigger;
+     public string DeathAnimationTrigger;
 
     [Tooltip("Attacks this monster can learn and the level at which it learns them")]
     public AttackEntry[] movePool;
