@@ -54,6 +54,6 @@ public class AttackEntry
     /// Shows a dropdown of every Trigger parameter found in the project's
     /// AnimatorControllers -- no typos possible.
     /// </summary>
-    [AnimatorTrigger]
+    
     public string AnimationTrigger;
 }
