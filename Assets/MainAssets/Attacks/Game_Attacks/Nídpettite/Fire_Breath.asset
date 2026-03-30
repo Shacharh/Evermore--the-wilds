@@ -28,7 +28,7 @@ MonoBehaviour:
     isInstantHeal: 0
     statusEffect: {fileID: 0}
   maxPP: 0
-  consumeActionPoints: 8
+  consumeActionPoints: 7
   guaranteedHit: 0
   accuracy: 85
   range: 1
