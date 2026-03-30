@@ -27,6 +27,16 @@ MonoBehaviour:
     duration: 1
     isInstantHeal: 0
     statusEffect: {fileID: 0}
+  - category: 3
+    value: 100
+    stageCount: 0
+    selfInflicted: 0
+    buffType: 0
+    chance: 100
+    isDebuff: 0
+    duration: 1
+    isInstantHeal: 0
+    statusEffect: {fileID: 11400000, guid: 7fb1cb487c4215747b31a2cefbcbbc8d, type: 2}
   maxPP: 0
   consumeActionPoints: 7
   guaranteedHit: 0
