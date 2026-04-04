@@ -77,6 +77,18 @@ public class PlayerTurnController : TurnController
             return false;
         }
 
+        // ── Freeze: monster cannot act ────────────────────────────────────────
+        if (monster.IsFrozen)
+        {
+            string name = monster.Data?.displayName ?? monster.gameObject.name;
+            BattleMessage.Show($"{name} is frozen and cannot act!", 2f);
+            Debug.Log($"[PlayerTurnController] {monster.gameObject.name} is frozen — action blocked.");
+            return false;
+        }
+
+        // ── Shock: increase AP cost ───────────────────────────────────────────
+        cost += monster.ShockAPCostIncrease;
+
         // NOTE: HasActed is intentionally NOT checked here.
         // Monsters may act multiple times per turn as long as there is enough AP.
 
