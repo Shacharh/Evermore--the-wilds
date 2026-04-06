@@ -28,9 +28,6 @@ MonoBehaviour:
   DogeAnimationTrigger: 
   DeathAnimationTrigger: Death
   movePool:
-  - attack: {fileID: 11400000, guid: b6a69ae52e4feec4d9eaa3662a4ea9d9, type: 2}
+  - attack: {fileID: 11400000, guid: 09a9f660e36994e459ee07562aca7171, type: 2}
     levelLearned: 0
-    AnimationTrigger: 
-  - attack: {fileID: 11400000, guid: 661b02ee254faa44cb9dabf76fe58999, type: 2}
-    levelLearned: 1
     AnimationTrigger: 
