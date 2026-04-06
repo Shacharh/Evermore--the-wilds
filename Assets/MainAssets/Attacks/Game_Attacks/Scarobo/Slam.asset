@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
   id: Slam
   displayName: Slam
-  description: Slam his fist on an enemy
+  description: Slam his fist on an enemy. May shock target
   element: 4
   effects:
   - category: 0
