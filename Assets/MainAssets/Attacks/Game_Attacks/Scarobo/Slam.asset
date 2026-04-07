@@ -14,11 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
   id: Slam
   displayName: Slam
-  description: Slam his fist on an enemy
+  description: Slam his fist on an enemy. May shock target
   element: 4
   effects:
   - category: 0
-    value: 50
+    value: 100
     stageCount: 0
     selfInflicted: 0
     buffType: 0
@@ -27,6 +27,16 @@ MonoBehaviour:
     duration: 1
     isInstantHeal: 0
     statusEffect: {fileID: 0}
+  - category: 3
+    value: 100
+    stageCount: 0
+    selfInflicted: 0
+    buffType: 0
+    chance: 66
+    isDebuff: 0
+    duration: 2
+    isInstantHeal: 0
+    statusEffect: {fileID: 11400000, guid: 4fb6775ac4fa0af4991965d6607bbc46, type: 2}
   maxPP: 0
   consumeActionPoints: 3
   guaranteedHit: 0

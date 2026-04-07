@@ -8,8 +8,18 @@ public class ShowIfDrawer : PropertyDrawer
     {
         ShowIfAttribute showIf = (ShowIfAttribute)attribute;
 
-        // Correctly find nested fields
-        string relativePath = property.propertyPath.Replace(property.name, showIf.conditionFieldName);
+        bool show = EvaluateCondition(property, showIf.conditionFieldName, showIf.compareValue, showIf.invert);
+
+        // AND condition: both must pass
+        if (show && !string.IsNullOrEmpty(showIf.andConditionFieldName))
+            show = EvaluateCondition(property, showIf.andConditionFieldName, showIf.andCompareValue, false);
+
+        return show;
+    }
+
+    private bool EvaluateCondition(SerializedProperty property, string fieldName, string compareValue, bool invert)
+    {
+        string relativePath = property.propertyPath.Replace(property.name, fieldName);
         SerializedProperty conditionField = property.serializedObject.FindProperty(relativePath);
 
         if (conditionField == null)
@@ -17,16 +27,14 @@ public class ShowIfDrawer : PropertyDrawer
 
         bool show = false;
 
-        if (!string.IsNullOrEmpty(showIf.compareValue))
+        if (!string.IsNullOrEmpty(compareValue))
         {
             if (conditionField.propertyType == SerializedPropertyType.Enum)
             {
-                string currentEnumValue = conditionField.enumNames[conditionField.enumValueIndex];
-                string[] compareValues = showIf.compareValue.Split('|');
-
-                foreach (var compareValue in compareValues)
+                string current = conditionField.enumNames[conditionField.enumValueIndex];
+                foreach (var v in compareValue.Split('|'))
                 {
-                    if (currentEnumValue.Equals(compareValue.Trim(), System.StringComparison.OrdinalIgnoreCase))
+                    if (current.Equals(v.Trim(), System.StringComparison.OrdinalIgnoreCase))
                     {
                         show = true;
                         break;
@@ -43,7 +51,7 @@ public class ShowIfDrawer : PropertyDrawer
             show = true;
         }
 
-        return showIf.invert ? !show : show;
+        return invert ? !show : show;
     }
 
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)

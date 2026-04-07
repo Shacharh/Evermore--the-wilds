@@ -65,6 +65,30 @@ public class Monster : MonoBehaviour
     #region Active Effects & Statuses
     private List<ActiveEffect> activeEffects = new List<ActiveEffect>();
     private List<ActiveStatus> activeStatuses = new List<ActiveStatus>();
+
+    /// <summary>True while a Freeze status is active — the monster cannot act.</summary>
+    public bool IsFrozen => HasActiveStatus(AttackEnum.StatusEffect.Freeze);
+
+    /// <summary>
+    /// Extra AP cost added to every action while Shock is active.
+    /// Uses ExtraAPCost from the StatusEffectData. Stacks if multiple Shock entries are active.
+    /// </summary>
+    public int ShockAPCostIncrease => GetActiveStatusValue(AttackEnum.StatusEffect.Shock);
+
+    private bool HasActiveStatus(AttackEnum.StatusEffect id)
+    {
+        foreach (var s in activeStatuses)
+            if (s.data.ID == id) return true;
+        return false;
+    }
+
+    private int GetActiveStatusValue(AttackEnum.StatusEffect id)
+    {
+        int total = 0;
+        foreach (var s in activeStatuses)
+            if (s.data.ID == id) total += s.data.ExtraAPCost;
+        return total;
+    }
     #endregion
 
     // -- TURN / AP INTEGRATION ------------------------------------------------
@@ -591,6 +615,36 @@ public class Monster : MonoBehaviour
     private void CalculateStatus(Monster target, AttackEffect effect)
     {
         if (effect.statusEffect == null) return;
+
+        // ── Dispel: remove instead of applying ───────────────────────────────
+        if (effect.statusEffect.Dispel)
+        {
+            if (effect.statusEffect.DispelAll)
+            {
+                int count = target.activeStatuses.Count;
+                target.activeStatuses.Clear();
+                Debug.Log($"{target.customeName} had all {count} status effect(s) dispelled!");
+                BattleMessage.Show($"{target.customeName}'s status effects were all cleared!", 2f);
+            }
+            else
+            {
+                int removed = target.activeStatuses.RemoveAll(
+                    s => s.data.ID == effect.statusEffect.ID);
+
+                if (removed > 0)
+                {
+                    Debug.Log($"{target.customeName}'s {effect.statusEffect.ID} was dispelled!");
+                    BattleMessage.Show($"{target.customeName}'s {effect.statusEffect.ID} was dispelled!", 2f);
+                }
+                else
+                {
+                    Debug.Log($"{target.customeName} had no {effect.statusEffect.ID} to dispel.");
+                    BattleMessage.Show($"No {effect.statusEffect.ID} on {target.customeName} to dispel.", 2f);
+                }
+            }
+            return;
+        }
+        // ─────────────────────────────────────────────────────────────────────
 
         if (Random.Range(0f, 100f) > effect.chance)
         {

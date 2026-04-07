@@ -119,17 +119,27 @@ public class EnemyTurnController : TurnController
             yield break;
         }
 
+        // ── Freeze: skip this monster's turn entirely ─────────────────────────
+        if (monster.IsFrozen)
+        {
+            string frozenName = monster.Data?.displayName ?? monster.gameObject.name;
+            BattleMessage.Show($"{frozenName} is frozen and cannot act!", 2f);
+            Debug.Log($"[EnemyAI] {monster.name} is frozen — skipping turn.");
+            monster.MarkActed();
+            yield break;
+        }
+
         // -- Try to attack an adjacent player monster ---------------------------
         var attacks = monster.GetAttacks();
         if (attacks != null && attacks.Count > 0)
         {
-            AttackData bestAttack = PickBestAffordableAttack(attacks);
+            AttackData bestAttack = PickBestAffordableAttack(attacks, monster.ShockAPCostIncrease);
             if (bestAttack != null)
             {
                 Tile attackTarget = FindAdjacentPlayerTile(currentTile);
                 if (attackTarget != null)
                 {
-                    SpendAP(bestAttack.ConsumeActionPoints);
+                    SpendAP(bestAttack.ConsumeActionPoints + monster.ShockAPCostIncrease);
                     monster.MarkActed();
                     Monster target = attackTarget.GetMonster();
 
@@ -150,12 +160,13 @@ public class EnemyTurnController : TurnController
         }
 
         // -- Try to move toward nearest player monster -------------------------
-        if (CanAfford(monster.MoveCost))
+        int moveCost = monster.MoveCost + monster.ShockAPCostIncrease;
+        if (CanAfford(moveCost))
         {
             Tile stepTile = FindStepTowardNearestPlayer(currentTile);
             if (stepTile != null)
             {
-                SpendAP(monster.MoveCost);
+                SpendAP(moveCost);
                 monster.MarkActed();
                 yield return StartCoroutine(SlideTo(monster, currentTile, stepTile));
                 yield break;
@@ -264,7 +275,8 @@ public class EnemyTurnController : TurnController
     // -- Attack Selection Helpers ----------------------------------------------
 
     private AttackData PickBestAffordableAttack(
-        System.Collections.Generic.IReadOnlyList<MonsterAttack> attacks)
+        System.Collections.Generic.IReadOnlyList<MonsterAttack> attacks,
+        int shockBonus = 0)
     {
         AttackData best     = null;
         int        bestCost = -1;
@@ -272,7 +284,7 @@ public class EnemyTurnController : TurnController
         foreach (MonsterAttack ma in attacks)
         {
             if (ma?.data == null) continue;
-            int cost = ma.data.ConsumeActionPoints;
+            int cost = ma.data.ConsumeActionPoints + shockBonus;
             if (CanAfford(cost) && cost > bestCost) { bestCost = cost; best = ma.data; }
         }
 

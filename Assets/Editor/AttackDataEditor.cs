@@ -119,6 +119,9 @@ public class AttackDataEditor : Editor
 
                 EditorGUI.PropertyField(new Rect(rect.x, y, rect.width, lineHeight), statusEffectProp);
                 y += lineHeight + spacing;
+
+                EditorGUI.PropertyField(new Rect(rect.x, y, rect.width, lineHeight), durationProp);
+                y += lineHeight + spacing;
             }
         };
 
