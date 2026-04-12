@@ -15,9 +15,9 @@ MonoBehaviour:
   monsterId: Sermal
   displayName: Sermal
   elementType: Wind
-  baseHP: 240
+  baseHP: 250
   baseAttack: 125
-  baseDefense: 150
+  baseDefense: 180
   baseSpeed: 6
   baseCritRate: 75
   baseCritMod: 50
@@ -31,3 +31,6 @@ MonoBehaviour:
   - attack: {fileID: 11400000, guid: 09a9f660e36994e459ee07562aca7171, type: 2}
     levelLearned: 0
     AnimationTrigger: Ability_1
+  - attack: {fileID: 11400000, guid: fc09cddb95e4d244fbe0fe2521c30e4c, type: 2}
+    levelLearned: 0
+    AnimationTrigger: Ability_2

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5bec574241e95d64f874367ce5a4cc34, type: 3}
   m_Name: Heal_S
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
-  id: Heal
+  id: Heal_S
   displayName: Heal
   description: Heal an ally. Cure statues affects
   element: 2
