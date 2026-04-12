@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5bec574241e95d64f874367ce5a4cc34, type: 3}
+  m_Name: Heal_S
+  m_EditorClassIdentifier: Assembly-CSharp::AttackData
+  id: Heal
+  displayName: Heal
+  description: Heal an ally. Cure statues affects
+  element: 2
+  effects:
+  - category: 1
+    value: 100
+    stageCount: 0
+    selfInflicted: 0
+    buffType: 0
+    chance: 0
+    isDebuff: 0
+    duration: 1
+    isInstantHeal: 1
+    statusEffect: {fileID: 0}
+  - category: 3
+    value: 100
+    stageCount: 0
+    selfInflicted: 0
+    buffType: 0
+    chance: 100
+    isDebuff: 0
+    duration: 1
+    isInstantHeal: 1
+    statusEffect: {fileID: 11400000, guid: f415da5e714f9ef49bc832d03e481ddb, type: 2}
+  maxPP: 0
+  consumeActionPoints: 7
+  guaranteedHit: 1
+  accuracy: 100
+  range: 5
+  target: 0
+  targetShape: 0
+  rangeTargetShapeSize: 1
+  isDirect: 1
+  inDirectHitPrecent: 0
