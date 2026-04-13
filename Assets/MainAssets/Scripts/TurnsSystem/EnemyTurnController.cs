@@ -160,16 +160,30 @@ public class EnemyTurnController : TurnController
         }
 
         // -- Try to move toward nearest player monster -------------------------
-        int moveCost = monster.MoveCost + monster.ShockAPCostIncrease;
-        if (CanAfford(moveCost))
+        // Use the same TilesPerAP formula as the player so enemies move multiple
+        // tiles when their Speed is high enough.
+        int tilesPerAP = monster.TilesPerAP;
+        int maxTiles   = tilesPerAP * CurrentAP;
+
+        if (maxTiles > 0)
         {
-            Tile stepTile = FindStepTowardNearestPlayer(currentTile);
-            if (stepTile != null)
+            List<Tile> path = FindPathTowardPlayer(currentTile, maxTiles, monster.IsFlying);
+            if (path != null && path.Count > 0)
             {
-                SpendAP(moveCost);
-                monster.MarkActed();
-                yield return StartCoroutine(SlideTo(monster, currentTile, stepTile));
-                yield break;
+                // Clamp to how far AP actually allows
+                int tilesToMove  = Mathf.Min(path.Count, maxTiles);
+                int apCost       = Mathf.CeilToInt((float)tilesToMove / tilesPerAP)
+                                   + monster.ShockAPCostIncrease;
+                apCost = Mathf.Max(1, apCost);
+
+                if (CanAfford(apCost))
+                {
+                    SpendAP(apCost);
+                    monster.MarkActed();
+                    var segment = path.GetRange(0, tilesToMove);
+                    yield return StartCoroutine(SlideAlongPath(monster, currentTile, segment));
+                    yield break;
+                }
             }
         }
 
@@ -178,37 +192,48 @@ public class EnemyTurnController : TurnController
         monster.MarkActed();
     }
 
-    // -- Movement Coroutine ----------------------------------------------------
+    // -- Movement Coroutines ---------------------------------------------------
 
-    private IEnumerator SlideTo(Monster monster, Tile fromTile, Tile toTile)
+    /// <summary>
+    /// Slides a monster along a multi-tile path, one tile at a time.
+    /// Faces the correct direction at each step (handles corners).
+    /// Starts/ends the walk animation around the full journey.
+    /// </summary>
+    private IEnumerator SlideAlongPath(Monster monster, Tile fromTile, List<Tile> path)
     {
-        fromTile.ClearOccupation();
-        toTile.SetOccupation(Tile.OccupationType.Monster, monster.gameObject);
-
-        Vector3 start = monster.transform.position;
-        Vector3 end   = toTile.transform.position;
-
-        // Face the movement direction before sliding
-        Vector3 moveDir = new Vector3(end.x - start.x, 0f, end.z - start.z);
-        if (moveDir != Vector3.zero)
-            monster.transform.root.rotation = Quaternion.LookRotation(moveDir);
-
-        float dist    = Vector3.Distance(start, end);
-        float t       = 0f;
+        if (path == null || path.Count == 0) yield break;
 
         monster.TriggerMovementAnimationStart();
-        while (t < 1f)
+
+        Tile previousTile = fromTile;
+        foreach (Tile nextTile in path)
         {
-            t += Time.deltaTime * moveSpeed / Mathf.Max(dist, 0.01f);
-            monster.transform.position = Vector3.Lerp(start, end, Mathf.SmoothStep(0f, 1f, t));
-            yield return null;
+            previousTile.ClearOccupation();
+            nextTile.SetOccupation(Tile.OccupationType.Monster, monster.gameObject);
+
+            Vector3 start = monster.transform.position;
+            Vector3 end   = nextTile.transform.position;
+
+            Vector3 moveDir = new Vector3(end.x - start.x, 0f, end.z - start.z);
+            if (moveDir != Vector3.zero)
+                monster.transform.root.rotation = Quaternion.LookRotation(moveDir);
+
+            float dist = Vector3.Distance(start, end);
+            float t    = 0f;
+            while (t < 1f)
+            {
+                t += Time.deltaTime * moveSpeed / Mathf.Max(dist, 0.01f);
+                monster.transform.position = Vector3.Lerp(start, end, Mathf.SmoothStep(0f, 1f, t));
+                yield return null;
+            }
+
+            monster.transform.position = end;
+            monster.CurrentTile        = nextTile;
+            previousTile               = nextTile;
         }
 
-        monster.transform.position = end;
-        monster.CurrentTile = toTile;
         monster.TriggerMovementAnimationEnd();
-
-        Debug.Log($"[EnemyAI] {monster.name} moved to {toTile.GridPosition}.");
+        Debug.Log($"[EnemyAI] {monster.name} moved to {path[path.Count - 1].GridPosition}.");
     }
 
     // -- Targeting Helpers -----------------------------------------------------
@@ -226,26 +251,36 @@ public class EnemyTurnController : TurnController
     }
 
     /// <summary>
-    /// Return the walkable adjacent tile that minimises Manhattan distance
-    /// to the nearest player monster.
+    /// Returns a path of up to <paramref name="maxTiles"/> walkable tiles toward the
+    /// nearest player monster, stopping one tile short of the target so the monster
+    /// does not land on an occupied tile.
+    /// Returns null if no path exists.
     /// </summary>
-    private Tile FindStepTowardNearestPlayer(Tile origin)
+    private List<Tile> FindPathTowardPlayer(Tile origin, int maxTiles, bool isFlying)
     {
         Tile targetTile = FindNearestPlayerTile(origin);
         if (targetTile == null) return null;
 
-        Tile best     = null;
-        int  bestDist = int.MaxValue;
-
-        foreach (Tile neighbour in gridManager.GetNeighbors(origin, includeDiagonals: false))
+        // Find the adjacent tile of the target that is walkable (so the enemy stands next to the player)
+        Tile adjacentGoal = null;
+        int  bestDist     = int.MaxValue;
+        foreach (Tile nb in gridManager.GetNeighbors(targetTile, includeDiagonals: false))
         {
-            if (!neighbour.IsWalkable()) continue;
-
-            int d = gridManager.GetDistanceBetweenTiles(neighbour, targetTile);
-            if (d < bestDist) { bestDist = d; best = neighbour; }
+            if (!nb.IsWalkable()) continue;
+            int d = gridManager.GetDistanceBetweenTiles(origin, nb);
+            if (d < bestDist) { bestDist = d; adjacentGoal = nb; }
         }
 
-        return best;
+        if (adjacentGoal == null) return null;
+
+        List<Tile> fullPath = gridManager.FindPath(origin, adjacentGoal, isFlying);
+        if (fullPath == null || fullPath.Count == 0) return null;
+
+        // Clamp to maxTiles
+        if (fullPath.Count > maxTiles)
+            fullPath = fullPath.GetRange(0, maxTiles);
+
+        return fullPath;
     }
 
     private Tile FindNearestPlayerTile(Tile origin)

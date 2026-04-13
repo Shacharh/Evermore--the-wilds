@@ -29,15 +29,6 @@ public class PlayerTurnController : TurnController
     // -- AP Actions (called by InputManager) -----------------------------------
 
     /// <summary>
-    /// Validates and charges the AP cost for a move.
-    /// Cost comes from Monster.MoveCost (set per-monster in the Inspector).
-    /// </summary>
-    public bool TrySpendAPForMove(Monster monster)
-    {
-        return TrySpendAP(monster, monster.MoveCost, "move");
-    }
-
-    /// <summary>
     /// Validates and charges the AP cost for an attack.
     /// Cost comes from AttackData.ConsumeActionPoints so each attack can have
     /// its own cost configured directly on the ScriptableObject.

@@ -137,33 +137,119 @@ public class GridManager : MonoBehaviour
         }
     }
     
-    // Get tiles within range (for movement/attack range)
-    public List<Tile> GetTilesInRange(Tile centerTile, int range, bool walkableOnly = true)
+    // ── BFS Pathfinding ────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// BFS shortest path from <paramref name="from"/> to <paramref name="to"/>.
+    /// For non-flying monsters, obstructed tiles block movement.
+    /// For flying monsters, all tiles are traversable except the destination if occupied.
+    /// Returns the ordered list of tiles from the step AFTER <paramref name="from"/> up to
+    /// and including <paramref name="to"/>, or null if no path exists.
+    /// </summary>
+    public List<Tile> FindPath(Tile from, Tile to, bool isFlying = false)
     {
-        List<Tile> tilesInRange = new List<Tile>();
-        int centerX = centerTile.GridPosition.x;
-        int centerY = centerTile.GridPosition.y;
-        
-        for (int x = centerX - range; x <= centerX + range; x++)
+        if (from == null || to == null) return null;
+        if (from == to) return new List<Tile>();
+
+        var visited = new Dictionary<Tile, Tile>(); // tile → parent
+        var queue   = new Queue<Tile>();
+
+        visited[from] = null;
+        queue.Enqueue(from);
+
+        while (queue.Count > 0)
         {
-            for (int y = centerY - range; y <= centerY + range; y++)
+            Tile current = queue.Dequeue();
+            if (current == to) break;
+
+            foreach (Tile nb in GetNeighbors(current, includeDiagonals: false))
             {
-                if (!IsValidPosition(x, y)) continue;
-                
-                Tile tile = grid[x, y];
-                int distance = GetDistanceBetweenTiles(centerTile, tile);
-                
-                if (distance <= range && distance > 0)
-                {
-                    if (!walkableOnly || tile.IsWalkable())
-                    {
-                        tilesInRange.Add(tile);
-                    }
-                }
+                if (visited.ContainsKey(nb)) continue;
+
+                // Flying: can pass over obstructions but not land on them
+                // (destination walkability is checked separately below)
+                // Grounded: cannot enter obstructed tiles at all
+                bool canEnter = isFlying
+                    ? (nb == to ? nb.IsWalkable() : true)
+                    : nb.IsWalkable();
+
+                if (!canEnter) continue;
+
+                visited[nb] = current;
+                queue.Enqueue(nb);
             }
         }
-        
-        return tilesInRange;
+
+        if (!visited.ContainsKey(to)) return null; // no path
+
+        // Reconstruct path (from step after origin to destination)
+        var path = new List<Tile>();
+        Tile step = to;
+        while (step != from)
+        {
+            path.Add(step);
+            step = visited[step];
+        }
+        path.Reverse();
+        return path;
+    }
+
+    /// <summary>
+    /// Returns the actual number of steps in the walkable path from
+    /// <paramref name="from"/> to <paramref name="to"/>, respecting obstructions.
+    /// Returns <see cref="int.MaxValue"/> if the destination is unreachable.
+    /// </summary>
+    public int GetPathLength(Tile from, Tile to, bool isFlying = false)
+    {
+        if (from == null || to == null) return int.MaxValue;
+        if (from == to) return 0;
+        var path = FindPath(from, to, isFlying);
+        return path != null ? path.Count : int.MaxValue;
+    }
+
+    /// <summary>
+    /// Returns all tiles reachable within <paramref name="range"/> actual BFS steps
+    /// from <paramref name="origin"/>, respecting walls and obstructions.
+    /// Replaces the old Manhattan-distance flood which ignored walls.
+    /// </summary>
+    public List<Tile> GetTilesInRange(Tile origin, int range,
+                                       bool walkableOnly = true, bool isFlying = false)
+    {
+        var result  = new List<Tile>();
+        var visited = new Dictionary<Tile, int>(); // tile → steps from origin
+        var queue   = new Queue<Tile>();
+
+        visited[origin] = 0;
+        queue.Enqueue(origin);
+
+        while (queue.Count > 0)
+        {
+            Tile current = queue.Dequeue();
+            int  steps   = visited[current];
+
+            if (steps >= range) continue;
+
+            foreach (Tile nb in GetNeighbors(current, includeDiagonals: false))
+            {
+                if (visited.ContainsKey(nb)) continue;
+
+                bool canEnter = isFlying ? nb.IsWalkable() : nb.IsWalkable();
+                // Flying would allow passing through obstructions mid-path;
+                // for simplicity flying monsters use the same IsWalkable check
+                // (obstructions block landing, not flight — the distinction matters
+                //  for pathfinding only: we still find the shortest aerial route).
+                if (!isFlying && IsObstructed(nb)) canEnter = false;
+
+                if (!canEnter) continue;
+
+                visited[nb] = steps + 1;
+                queue.Enqueue(nb);
+                if (!walkableOnly || nb.IsWalkable())
+                    result.Add(nb);
+            }
+        }
+
+        return result;
     }
     
     /// <summary>

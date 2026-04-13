@@ -125,7 +125,7 @@ public class MonsterInfoPanel : MonoBehaviour
         statsText.text =
             $"ATK       {currentMonster.Attack}\n" +
             $"DEF       {currentMonster.Defense}\n" +
-            $"SPD       {currentMonster.Speed}\n" +
+            $"SPD       {currentMonster.Speed}  ({currentMonster.TilesPerAP} tile(s)/AP)\n" +
             $"DGE       {currentMonster.Dodge}\n" +
             $"CRT Chance  {currentMonster.CritRate}%\n" +
             $"CRT Damage  ×{currentMonster.CritMod}";

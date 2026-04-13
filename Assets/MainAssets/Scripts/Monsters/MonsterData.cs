@@ -7,6 +7,9 @@ public class MonsterData : ScriptableObject
     public string monsterId;
     public string displayName;
     public string elementType;
+    [Tooltip("Flying monsters ignore ground obstructions and can pass over them.\n" +
+             "They still cannot LAND on an obstructed tile.")]
+    public bool isFlying;
 
     [Header("Base Stats")]
     public int baseHP;
@@ -16,10 +19,6 @@ public class MonsterData : ScriptableObject
     [Range(0, 100)] public int baseCritRate;
     public int baseCritMod;
     [Range(0, 100)] public int baseDodge;
-
-    [Header("Action Points")]
-    [Tooltip("AP cost for this monster to move one tile.")]
-    public int moveCost = 1;
 
     [Header("Animation")]
      public string MovementAnimationBoolean;
@@ -39,7 +38,6 @@ public class MonsterData : ScriptableObject
         baseCritRate = Mathf.Clamp(baseCritRate, 0, 100);
         baseCritMod = Mathf.Max(0, baseCritMod);
         baseDodge = Mathf.Clamp(baseDodge, 0, 100);
-        moveCost = Mathf.Max(1, moveCost);
     }
 }
 

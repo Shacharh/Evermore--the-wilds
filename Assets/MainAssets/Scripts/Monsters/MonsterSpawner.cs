@@ -49,6 +49,19 @@ public class MonsterSpawner : MonoBehaviour
                     StartCoroutine(InitHPBarNextFrame(hpBar, monsterComp));
                 }
 
+                // Add a CapsuleCollider on the root so the monster can be clicked
+                // directly by the player (monster-layer raycast in InputManager).
+                // The collider is sized to approximate a standing creature; it can
+                // be tuned per-monster later if needed.
+                if (newMonster.GetComponent<Collider>() == null)
+                {
+                    var cap = newMonster.AddComponent<CapsuleCollider>();
+                    cap.center = new Vector3(0f, 0.75f, 0f);
+                    cap.radius = 0.4f;
+                    cap.height = 1.5f;
+                }
+                newMonster.layer = LayerMask.NameToLayer("Monster");
+
                 Debug.Log($"Spawned {newMonster.name} at {data.gridPosition}");
             }
         }

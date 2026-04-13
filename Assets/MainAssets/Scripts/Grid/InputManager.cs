@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System.Collections.Generic;
 
 /// <summary>
 /// Handles all player input on the grid.
@@ -17,10 +18,12 @@ public class InputManager : MonoBehaviour
     [Header("Input Settings")]
     [SerializeField] private InputActionAsset inputActions;
     [SerializeField] private LayerMask        tileLayerMask;
+    [SerializeField] private LayerMask        monsterLayerMask;
 
     [Header("Movement Settings")]
     [SerializeField] private Color movementRangeColor = new Color(0.3f, 0.6f, 1f, 0.5f);
     [SerializeField] private Color selectedMoveColor  = new Color(0.2f, 1f, 0.3f, 0.7f);
+    [SerializeField] private Color pathPreviewColor   = new Color(0.9f, 0.9f, 0.2f, 0.7f);
     [SerializeField] private float movementSpeed = 5f;
 
     [Header("Attack Settings")]
@@ -36,6 +39,8 @@ public class InputManager : MonoBehaviour
     [SerializeField] private float attackJitterAmplitude  = 0.05f;
     [Tooltip("Jitter frequency (cycles per second) for enemy target tiles.")]
     [SerializeField] private float attackJitterFrequency  = 10f;
+    [Tooltip("Highlight color shown on AOE footprint tiles when hovering.")]
+    [SerializeField] private Color aoeFootprintColor = new Color(1f, 0.5f, 0.05f, 0.75f);
 
     // -- Input Actions ---------------------------------------------------------
 
@@ -66,12 +71,15 @@ public class InputManager : MonoBehaviour
     private System.Collections.Generic.List<Tile> validMovementTiles;
     /// <summary>Tiles covered per 1 AP for the currently-moving monster.</summary>
     private int                                  movingMonsterTilesPerAP;
+    /// <summary>Currently previewed path tiles (highlighted yellow on hover).</summary>
+    private System.Collections.Generic.List<Tile> previewedPathTiles;
 
     // Attack state
     private Monster                              attackingMonster;
     private AttackData                           selectedAttackData;
     private int                                  selectedAttackIndex;
-    private System.Collections.Generic.List<Tile> validTargetTiles;
+    private System.Collections.Generic.List<Tile> validTargetTiles;   // all aim-zone tiles
+    private System.Collections.Generic.List<Tile> currentAOEFootprint; // footprint on hovered tile
     private RadialMenu                           activeAttackMenu;
 
     // -- Lifecycle -------------------------------------------------------------
@@ -154,17 +162,26 @@ public class InputManager : MonoBehaviour
                     currentHoveredTile.SetHovered(true);
                 }
 
+                // AOE footprint preview on hover
+                if (currentState == InputState.TargetSelection && IsValidTarget(hitTile))
+                    UpdateAOEFootprint(hitTile);
+
                 // Show AP cost hint while in movement mode
                 if (currentState == InputState.MovementMode && IsValidMovementDestination(hitTile)
                     && movementOriginTile != null)
                 {
-                    int dist   = gridManager.GetDistanceBetweenTiles(movementOriginTile, hitTile);
-                    int apCost = Mathf.CeilToInt((float)dist / movingMonsterTilesPerAP);
+                    int pathLen = gridManager.GetPathLength(
+                        movementOriginTile, hitTile, movingMonster?.IsFlying ?? false);
+                    int apCost  = pathLen == int.MaxValue
+                        ? 0
+                        : Mathf.CeilToInt((float)pathLen / movingMonsterTilesPerAP);
                     MoveCostHint.Show($"Move cost: {apCost} AP");
+                    ShowPathHighlight(hitTile);
                 }
                 else if (currentState == InputState.MovementMode)
                 {
                     MoveCostHint.Hide();
+                    ClearPathHighlight();
                 }
             }
         }
@@ -177,6 +194,8 @@ public class InputManager : MonoBehaviour
             }
             if (currentState == InputState.MovementMode)
                 MoveCostHint.Hide();
+            if (currentState == InputState.TargetSelection)
+                ClearAOEFootprint();
         }
     }
 
@@ -186,6 +205,28 @@ public class InputManager : MonoBehaviour
     {
         if (Time.time - menuOpenTime < MenuClickDelay) return;
         if (IsPointerOverUIElement()) return;
+
+        // Try to click a monster model directly — if hit, redirect to its tile
+        if (currentState == InputState.Normal || currentState == InputState.TargetSelection)
+        {
+            Vector2 mousePos = mousePositionAction.ReadValue<Vector2>();
+            Ray ray = mainCamera.ScreenPointToRay(mousePos);
+            if (Physics.Raycast(ray, out RaycastHit monsterHit, Mathf.Infinity, monsterLayerMask))
+            {
+                Monster hitMonster = monsterHit.collider.GetComponentInChildren<Monster>()
+                                  ?? monsterHit.collider.GetComponentInParent<Monster>();
+                if (hitMonster != null && hitMonster.CurrentTile != null)
+                {
+                    // Treat as if the player clicked the monster's tile
+                    if (currentState == InputState.Normal)
+                        HandleNormalClick(hitMonster.CurrentTile);
+                    else if (currentState == InputState.TargetSelection)
+                        HandleTargetClick(hitMonster.CurrentTile);
+                    return;
+                }
+            }
+        }
+
         if (currentHoveredTile == null) return;
 
         switch (currentState)
@@ -377,9 +418,9 @@ public class InputManager : MonoBehaviour
             return;
         }
 
-        if (playerTurnController != null && !playerTurnController.CanAfford(monster.MoveCost))
+        if (playerTurnController != null && !playerTurnController.CanAfford(1))
         {
-            BattleMessage.Show($"Not enough AP to move! (need {monster.MoveCost})", 2f);
+            BattleMessage.Show($"Not enough AP to move!", 2f);
             CloseRadialMenu();
             return;
         }
@@ -394,14 +435,14 @@ public class InputManager : MonoBehaviour
         movingMonster      = monster;
         movementOriginTile = originTile;
 
-        // Speed / 10 tiles per AP (min 1 so a Speed of 0 never gets stuck).
-        movingMonsterTilesPerAP = Mathf.Max(1, monster.Speed / 10);
+        movingMonsterTilesPerAP = monster.TilesPerAP;
 
         // Total reachable range = tiles-per-AP × remaining AP
         int currentAP = playerTurnController != null ? playerTurnController.CurrentAP : 1;
         int range     = movingMonsterTilesPerAP * currentAP;
 
-        validMovementTiles = gridManager.GetTilesInRange(originTile, range, walkableOnly: true);
+        validMovementTiles = gridManager.GetTilesInRange(
+            originTile, range, walkableOnly: true, isFlying: monster.IsFlying);
         gridManager.HighlightTiles(validMovementTiles, movementRangeColor, 0.15f);
 
         Debug.Log($"[InputManager] Movement mode — Speed {monster.Speed}, " +
@@ -412,12 +453,82 @@ public class InputManager : MonoBehaviour
     void ExitMovementMode()
     {
         MoveCostHint.Hide();
+        ClearPathHighlight();
         gridManager.ClearAllHighlights();
         currentState            = InputState.Normal;
         movingMonster           = null;
         movementOriginTile      = null;
         validMovementTiles      = null;
         movingMonsterTilesPerAP = 1;
+    }
+
+    // -- Path Preview Helpers --------------------------------------------------
+
+    /// <summary>
+    /// Highlights the BFS path from the movement origin to <paramref name="destination"/>
+    /// in the path-preview color. Clears any previously shown path first.
+    /// </summary>
+    private void ShowPathHighlight(Tile destination)
+    {
+        ClearPathHighlight();
+        if (movementOriginTile == null || movingMonster == null) return;
+
+        var path = gridManager.FindPath(
+            movementOriginTile, destination, movingMonster.IsFlying);
+        if (path == null || path.Count == 0) return;
+
+        previewedPathTiles = path;
+        foreach (Tile t in previewedPathTiles)
+            t.Highlight(pathPreviewColor, 0.25f);
+    }
+
+    /// <summary>Restores movement-range highlights on any previously previewed path tiles.</summary>
+    private void ClearPathHighlight()
+    {
+        if (previewedPathTiles == null) return;
+        foreach (Tile t in previewedPathTiles)
+        {
+            if (validMovementTiles != null && validMovementTiles.Contains(t))
+                t.Highlight(movementRangeColor, 0.15f);
+            else
+                t.ResetVisuals();
+        }
+        previewedPathTiles = null;
+    }
+
+    // -- AOE Footprint Helpers -------------------------------------------------
+
+    /// <summary>
+    /// Updates the orange AOE footprint highlight centered on <paramref name="center"/>.
+    /// Only shown when the selected attack has RangeTargetShapeSize > 1.
+    /// </summary>
+    private void UpdateAOEFootprint(Tile center)
+    {
+        if (selectedAttackData == null || selectedAttackData.RangeTargetShapeSize <= 1) return;
+
+        ClearAOEFootprint();
+
+        currentAOEFootprint = gridManager.GetTilesInAttackShape(
+            center,
+            selectedAttackData.RangeTargetShapeSize,
+            selectedAttackData.TargetShape);
+
+        foreach (Tile t in currentAOEFootprint)
+            t.Highlight(aoeFootprintColor, 0.3f);
+    }
+
+    /// <summary>Removes the AOE footprint highlight, restoring aim-zone dim color.</summary>
+    private void ClearAOEFootprint()
+    {
+        if (currentAOEFootprint == null) return;
+        foreach (Tile t in currentAOEFootprint)
+        {
+            if (validTargetTiles != null && validTargetTiles.Contains(t))
+                t.Highlight(attackRangeColor, 0.05f);
+            else
+                t.ResetVisuals();
+        }
+        currentAOEFootprint = null;
     }
 
     bool IsValidMovementDestination(Tile tile)
@@ -433,12 +544,20 @@ public class InputManager : MonoBehaviour
             yield break;
         }
 
+        // Find the actual walkable path (respects walls, flying flag)
+        List<Tile> path = gridManager.FindPath(
+            movementOriginTile, destinationTile, movingMonster.IsFlying);
+
+        if (path == null || path.Count == 0)
+        {
+            Debug.LogWarning("[InputManager] No walkable path to destination.");
+            ExitMovementMode();
+            yield break;
+        }
+
         if (playerTurnController != null)
         {
-            // Compute the actual AP cost based on distance and tiles-per-AP for this monster.
-            int dist   = gridManager.GetDistanceBetweenTiles(movementOriginTile, destinationTile);
-            int apCost = Mathf.CeilToInt((float)dist / movingMonsterTilesPerAP);
-
+            int apCost = Mathf.CeilToInt((float)path.Count / movingMonsterTilesPerAP);
             if (!playerTurnController.TrySpendAPForDistanceMove(movingMonster, apCost))
             {
                 ExitMovementMode();
@@ -446,38 +565,48 @@ public class InputManager : MonoBehaviour
             }
         }
 
-        MoveCostHint.Hide();   // hide hint as soon as movement commits
+        MoveCostHint.Hide();
+        ClearPathHighlight();
 
         currentState = InputState.Moving;
         gridManager.ClearAllHighlights();
         destinationTile.Highlight(selectedMoveColor, 0.2f);
 
         GameObject monsterObj = movingMonster.gameObject;
-        Vector3 startPos = monsterObj.transform.position;
-        Vector3 endPos   = destinationTile.transform.position;
 
-        // Face the movement direction before sliding
-        Vector3 moveDir = new Vector3(endPos.x - startPos.x, 0f, endPos.z - startPos.z);
-        if (moveDir != Vector3.zero)
-            monsterObj.transform.root.rotation = Quaternion.LookRotation(moveDir);
+        // Start walk animation
+        movingMonster.TriggerMovementAnimationStart();
 
-        float distance   = Vector3.Distance(startPos, endPos);
-        float duration   = distance / movementSpeed;
-        float elapsed    = 0f;
-
-        while (elapsed < duration)
+        // Walk along each waypoint in the path
+        Tile previousTile = movementOriginTile;
+        foreach (Tile waypoint in path)
         {
-            elapsed += Time.deltaTime;
-            monsterObj.transform.position =
-                Vector3.Lerp(startPos, endPos, Mathf.SmoothStep(0f, 1f, elapsed / duration));
-            yield return null;
+            previousTile.ClearOccupation();
+            waypoint.SetOccupation(Tile.OccupationType.Monster, monsterObj);
+
+            Vector3 startPos = monsterObj.transform.position;
+            Vector3 endPos   = waypoint.transform.position;
+
+            Vector3 moveDir = new Vector3(endPos.x - startPos.x, 0f, endPos.z - startPos.z);
+            if (moveDir != Vector3.zero)
+                monsterObj.transform.root.rotation = Quaternion.LookRotation(moveDir);
+
+            float distance = Vector3.Distance(startPos, endPos);
+            float t        = 0f;
+            while (t < 1f)
+            {
+                t += Time.deltaTime * movementSpeed / Mathf.Max(distance, 0.01f);
+                monsterObj.transform.position =
+                    Vector3.Lerp(startPos, endPos, Mathf.SmoothStep(0f, 1f, t));
+                yield return null;
+            }
+
+            monsterObj.transform.position = endPos;
+            movingMonster.CurrentTile     = waypoint;
+            previousTile                  = waypoint;
         }
 
-        monsterObj.transform.position = endPos;
-
-        movementOriginTile.ClearOccupation();
-        destinationTile.SetOccupation(Tile.OccupationType.Monster, monsterObj);
-        movingMonster.CurrentTile = destinationTile;
+        movingMonster.TriggerMovementAnimationEnd();
 
         Debug.Log($"[InputManager] {movingMonster.name} moved to {destinationTile.GridPosition}. " +
                   $"AP remaining: {playerTurnController?.CurrentAP}");
@@ -596,38 +725,62 @@ public class InputManager : MonoBehaviour
             return;
         }
 
-        // ── 1. Get ALL tiles in the attack's shape/range ────────────────────
-        var allShapeTiles = gridManager.GetTilesInAttackShape(
-            originTile, selectedAttackData.Range, selectedAttackData.TargetShape);
+        bool isAOE = selectedAttackData.RangeTargetShapeSize > 1;
 
-        // ── 2. Dim-highlight every tile in range so the shape is visible ────
+        // ── 1. Aim-zone: all tiles the attacker can project the attack center onto
+        //      AOE   → plain radius circle (same appearance as single-target)
+        //      Single → attack shape (line, column, etc.)
+        var allShapeTiles = isAOE
+            ? gridManager.GetTilesInRange(originTile, selectedAttackData.Range, walkableOnly: false)
+            : gridManager.GetTilesInAttackShape(
+                originTile, selectedAttackData.Range, selectedAttackData.TargetShape);
+
+        // ── 2. Dim-highlight every aim-zone tile so the range is visible ────
         gridManager.HighlightTiles(allShapeTiles, attackRangeColor, 0.05f);
 
-        // ── 3. Find tiles with valid opposing-monster targets ────────────────
-        validTargetTiles = allShapeTiles.FindAll(t =>
-            t.Occupation == Tile.OccupationType.Monster &&
-            t.GetMonster() != null &&
-            t.GetMonster().IsEnemy != attackingMonster.IsEnemy);
-
-        // ── 4. Pulse + jitter enemy tiles so they stand out ─────────────────
-        foreach (var t in validTargetTiles)
+        if (isAOE)
         {
-            t.StartPulse(attackPulseColorA, attackPulseColorB, attackPulseSpeed);
-            t.StartJitter(attackJitterAmplitude, attackJitterFrequency);
+            // For AOE: any tile in the aim zone is a valid click target
+            // (footprint preview is shown on hover in HandleTileHovering)
+            validTargetTiles = allShapeTiles;
+
+            // Pulse any enemy monsters in the full aim zone so the player can see
+            // which ones might be hit
+            foreach (var t in validTargetTiles)
+            {
+                Monster m = t.GetMonster();
+                if (m != null && m.IsEnemy != attackingMonster.IsEnemy)
+                {
+                    t.StartPulse(attackPulseColorA, attackPulseColorB, attackPulseSpeed);
+                    t.StartJitter(attackJitterAmplitude, attackJitterFrequency);
+                }
+            }
         }
-
-        // ── 5. Notify player if there are no targets ─────────────────────────
-        if (validTargetTiles.Count == 0)
+        else
         {
-            Debug.Log($"[InputManager] No targets for '{selectedAttackData.DisplayName}'.");
-            BattleMessage.Show($"No targets in range for {selectedAttackData.DisplayName}!", 2.5f);
-            // Stay in TargetSelection — the shape is still highlighted.
-            // Player can press right-click to cancel.
+            // ── Single target: only tiles with a valid opposing monster ──────
+            validTargetTiles = allShapeTiles.FindAll(t =>
+                t.Occupation == Tile.OccupationType.Monster &&
+                t.GetMonster() != null &&
+                t.GetMonster().IsEnemy != attackingMonster.IsEnemy);
+
+            foreach (var t in validTargetTiles)
+            {
+                t.StartPulse(attackPulseColorA, attackPulseColorB, attackPulseSpeed);
+                t.StartJitter(attackJitterAmplitude, attackJitterFrequency);
+            }
+
+            if (validTargetTiles.Count == 0)
+            {
+                Debug.Log($"[InputManager] No targets for '{selectedAttackData.DisplayName}'.");
+                BattleMessage.Show($"No targets in range for {selectedAttackData.DisplayName}!", 2.5f);
+            }
         }
 
         currentState = InputState.TargetSelection;
-        Debug.Log($"[InputManager] Targeting '{selectedAttackData.DisplayName}' — " +
-                  $"{validTargetTiles.Count} target(s), {allShapeTiles.Count} tile(s) highlighted.");
+        Debug.Log($"[InputManager] Targeting '{selectedAttackData.DisplayName}' " +
+                  $"({(isAOE ? "AOE" : "single")}) — " +
+                  $"{validTargetTiles.Count} aim tile(s) highlighted.");
     }
 
     void HandleTargetClick(Tile clickedTile)
@@ -644,45 +797,99 @@ public class InputManager : MonoBehaviour
 
     void ExecutePlayerAttack(Tile targetTile)
     {
-        Monster target = targetTile.GetMonster();
-        if (target == null || attackingMonster == null || selectedAttackData == null)
+        if (attackingMonster == null || selectedAttackData == null)
         {
             Debug.LogError("[InputManager] Invalid attack state!");
             ExitTargetSelection();
             return;
         }
 
-        if (playerTurnController != null &&
-            !playerTurnController.TrySpendAPForAttack(attackingMonster, selectedAttackData))
+        bool isAOE = selectedAttackData.RangeTargetShapeSize > 1;
+
+        if (isAOE)
         {
-            Debug.Log("[InputManager] Attack cancelled — not enough AP.");
-            ExitTargetSelection();
-            return;
+            // Collect all monsters in the footprint centered on the clicked tile
+            var footprint = gridManager.GetTilesInAttackShape(
+                targetTile,
+                selectedAttackData.RangeTargetShapeSize,
+                selectedAttackData.TargetShape);
+
+            var targets = new System.Collections.Generic.List<Monster>();
+            foreach (Tile ft in footprint)
+            {
+                Monster m = ft.GetMonster();
+                if (m != null && m.IsEnemy != attackingMonster.IsEnemy)
+                    targets.Add(m);
+            }
+
+            if (targets.Count == 0)
+            {
+                Debug.Log("[InputManager] AOE clicked but no targets in footprint.");
+                ExitTargetSelection();
+                return;
+            }
+
+            if (playerTurnController != null &&
+                !playerTurnController.TrySpendAPForAttack(attackingMonster, selectedAttackData))
+            {
+                Debug.Log("[InputManager] AOE cancelled — not enough AP.");
+                ExitTargetSelection();
+                return;
+            }
+
+            // Face the click point
+            Vector3 aoeDir = new Vector3(
+                targetTile.transform.position.x - attackingMonster.transform.position.x, 0f,
+                targetTile.transform.position.z - attackingMonster.transform.position.z);
+            if (aoeDir != Vector3.zero)
+                attackingMonster.transform.root.rotation = Quaternion.LookRotation(aoeDir);
+
+            foreach (Monster t in targets)
+            {
+                attackingMonster.ExecuteAttack(t, selectedAttackIndex, selectedAttackData.IsDirect);
+                Debug.Log($"[InputManager] AOE '{selectedAttackData.DisplayName}' hit {t.name}.");
+            }
+        }
+        else
+        {
+            // Single target
+            Monster target = targetTile.GetMonster();
+            if (target == null)
+            {
+                Debug.LogError("[InputManager] Invalid attack state — no monster on target tile!");
+                ExitTargetSelection();
+                return;
+            }
+
+            if (playerTurnController != null &&
+                !playerTurnController.TrySpendAPForAttack(attackingMonster, selectedAttackData))
+            {
+                Debug.Log("[InputManager] Attack cancelled — not enough AP.");
+                ExitTargetSelection();
+                return;
+            }
+
+            Vector3 attackDir = new Vector3(
+                targetTile.transform.position.x - attackingMonster.transform.position.x, 0f,
+                targetTile.transform.position.z - attackingMonster.transform.position.z);
+            if (attackDir != Vector3.zero)
+                attackingMonster.transform.root.rotation = Quaternion.LookRotation(attackDir);
+
+            attackingMonster.ExecuteAttack(target, selectedAttackIndex, selectedAttackData.IsDirect);
+            Debug.Log($"[InputManager] {attackingMonster.name} used '{selectedAttackData.DisplayName}' " +
+                      $"on {target.name}.");
         }
 
-        // Face the attack target before executing
-        Vector3 attackDir = new Vector3(
-            targetTile.transform.position.x - attackingMonster.transform.position.x, 0f,
-            targetTile.transform.position.z - attackingMonster.transform.position.z);
-        if (attackDir != Vector3.zero)
-            attackingMonster.transform.root.rotation = Quaternion.LookRotation(attackDir);
-
-        attackingMonster.ExecuteAttack(target, selectedAttackIndex, selectedAttackData.IsDirect);
-
-        // Hide the attack info panel — once the attack fires there is no reason
-        // for it to keep showing the move details on screen.
         AttackInfoPanel.Hide();
-
-        Debug.Log($"[InputManager] {attackingMonster.name} used '{selectedAttackData.DisplayName}' " +
-                  $"on {target.name}.");
-
         ExitTargetSelection();
         playerTurnController?.CheckAutoEndTurn();
     }
 
     void ExitTargetSelection()
     {
-        // Stop pulse + jitter on enemy target tiles before clearing all highlights
+        ClearAOEFootprint();
+
+        // Stop pulse + jitter on any target tiles
         if (validTargetTiles != null)
             foreach (var t in validTargetTiles)
             {
@@ -690,11 +897,12 @@ public class InputManager : MonoBehaviour
                 t.StopJitter();
             }
 
-        gridManager.ClearAllHighlights();   // resets dim colour on all range tiles too
-        currentState       = InputState.Normal;
-        attackingMonster   = null;
-        selectedAttackData = null;
-        validTargetTiles   = null;
+        gridManager.ClearAllHighlights();
+        currentState        = InputState.Normal;
+        attackingMonster    = null;
+        selectedAttackData  = null;
+        validTargetTiles    = null;
+        currentAOEFootprint = null;
         if (selectedTile != null) { selectedTile.SetSelected(false); selectedTile = null; }
     }
 
