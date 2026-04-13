@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5bec574241e95d64f874367ce5a4cc34, type: 3}
-  m_Name: Blazing_Claws
+  m_Name: Fire_Strom
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
-  id: Blazing_Claws
-  displayName: Blazing Claws
+  id: Fire_Strom
+  displayName: Fire strom
   description: Scratch an enemy
   element: 0
   effects:
@@ -32,18 +32,18 @@ MonoBehaviour:
     stageCount: 0
     selfInflicted: 0
     buffType: 0
-    chance: 0
+    chance: 70
     isDebuff: 0
-    duration: 1
+    duration: 3
     isInstantHeal: 0
-    statusEffect: {fileID: 11400000, guid: 7fb1cb487c4215747b31a2cefbcbbc8d, type: 2}
+    statusEffect: {fileID: 11400000, guid: 6c0fa79ae077b454d83cccabeab89e78, type: 2}
   maxPP: 0
-  consumeActionPoints: 5
+  consumeActionPoints: 7
   guaranteedHit: 0
   accuracy: 100
-  range: 1
+  range: 3
   target: 0
   targetShape: 0
-  rangeTargetShapeSize: 1
+  rangeTargetShapeSize: 3
   isDirect: 1
   inDirectHitPrecent: 0
