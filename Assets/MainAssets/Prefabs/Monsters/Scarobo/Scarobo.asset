@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Scarobo
   elementType: Water
   baseHP: 450
-  baseAttack: 150
+  baseAttack: 175
   baseDefense: 250
   baseSpeed: 2
   baseCritRate: 20
