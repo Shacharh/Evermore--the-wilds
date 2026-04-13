@@ -31,6 +31,6 @@ MonoBehaviour:
   - attack: {fileID: 11400000, guid: 24cfdb420733aee4fb0ed074efd96413, type: 2}
     levelLearned: 0
     AnimationTrigger: Ability_1
-  - attack: {fileID: 11400000, guid: 672588544208f2d499fc4d2afb76e5db, type: 2}
+  - attack: {fileID: 11400000, guid: bc673b17201210d4a9331bb96f396b83, type: 2}
     levelLearned: 1
     AnimationTrigger: Ability_2
