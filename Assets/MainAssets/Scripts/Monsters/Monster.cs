@@ -167,6 +167,8 @@ public class Monster : MonoBehaviour
     public int         Level => level;
     /// <summary>True for flying monsters — they ignore ground obstructions.</summary>
     public bool        IsFlying => isFlying;
+    /// <summary>How strongly Dodge reduces incoming hit chance (0 = no effect, 1 = full effect).</summary>
+    public float       DodgeEffectiveness => dodgeEffectiveness;
     #endregion
 
     #region Unity Lifecycle

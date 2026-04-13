@@ -34,3 +34,4 @@ MonoBehaviour:
   - attack: {fileID: 11400000, guid: 819202d1ced208e42b62f68416a8aef2, type: 2}
     levelLearned: 1
     AnimationTrigger: Ability_2
+  personality: {fileID: 11400000, guid: 062e770488c89884caf00ace14bef405, type: 2}

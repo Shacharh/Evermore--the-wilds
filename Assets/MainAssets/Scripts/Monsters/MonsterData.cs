@@ -30,6 +30,12 @@ public class MonsterData : ScriptableObject
     [Tooltip("Attacks this monster can learn and the level at which it learns them")]
     public AttackEntry[] movePool;
 
+    [Header("AI")]
+    [Tooltip("Personality asset that tunes this monster's AI scoring weights.\n" +
+             "Leave empty to use default balanced behaviour.\n" +
+             "Create via: Assets → Create → Evermore → AI → Monster Personality")]
+    public MonsterPersonality personality;
+
     private void OnValidate()
     {
         baseHP = Mathf.Max(0, baseHP);
