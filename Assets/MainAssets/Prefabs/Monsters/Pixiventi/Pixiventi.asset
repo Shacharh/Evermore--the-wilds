@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Pixiventi
   elementType: Wind
   baseHP: 250
-  baseAttack: 150
+  baseAttack: 170
   baseDefense: 100
   baseSpeed: 6
   baseCritRate: 75

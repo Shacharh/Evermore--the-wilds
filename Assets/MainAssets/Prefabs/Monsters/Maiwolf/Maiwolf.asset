@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Maiwolf
   elementType: Water
   baseHP: 450
-  baseAttack: 175
+  baseAttack: 200
   baseDefense: 250
   baseSpeed: 4
   baseCritRate: 30

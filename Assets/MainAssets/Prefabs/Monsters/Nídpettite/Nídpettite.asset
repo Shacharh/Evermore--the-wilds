@@ -15,10 +15,10 @@ MonoBehaviour:
   monsterId: "N\xEDdpettite"
   displayName: "N\xEDdpettite"
   elementType: Fire
-  baseHP: 250
+  baseHP: 260
   baseAttack: 270
-  baseDefense: 150
-  baseSpeed: 6
+  baseDefense: 170
+  baseSpeed: 5
   baseCritRate: 65
   baseCritMod: 50
   baseDodge: 45

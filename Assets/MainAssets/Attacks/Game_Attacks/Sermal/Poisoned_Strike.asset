@@ -18,7 +18,7 @@ MonoBehaviour:
   element: 3
   effects:
   - category: 0
-    value: 75
+    value: 100
     stageCount: 0
     selfInflicted: 0
     buffType: 0
@@ -32,7 +32,7 @@ MonoBehaviour:
     stageCount: 0
     selfInflicted: 0
     buffType: 0
-    chance: 70
+    chance: 100
     isDebuff: 0
     duration: 3
     isInstantHeal: 0
