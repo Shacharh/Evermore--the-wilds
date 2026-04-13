@@ -41,7 +41,7 @@ MonoBehaviour:
   consumeActionPoints: 7
   guaranteedHit: 0
   accuracy: 90
-  range: 1
+  range: 3
   target: 0
   targetShape: 3
   rangeTargetShapeSize: 3
