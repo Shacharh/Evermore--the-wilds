@@ -18,7 +18,7 @@ MonoBehaviour:
   element: 1
   effects:
   - category: 0
-    value: 50
+    value: 100
     stageCount: 0
     selfInflicted: 0
     buffType: 0
@@ -40,7 +40,7 @@ MonoBehaviour:
   maxPP: 0
   consumeActionPoints: 6
   guaranteedHit: 0
-  accuracy: 75
+  accuracy: 85
   range: 1
   target: 0
   targetShape: 1
