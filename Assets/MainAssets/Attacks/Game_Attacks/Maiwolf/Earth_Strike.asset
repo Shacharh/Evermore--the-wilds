@@ -18,7 +18,7 @@ MonoBehaviour:
   element: 1
   effects:
   - category: 0
-    value: 50
+    value: 100
     stageCount: 0
     selfInflicted: 0
     buffType: 0
@@ -38,9 +38,9 @@ MonoBehaviour:
     isInstantHeal: 0
     statusEffect: {fileID: 11400000, guid: 7fb1cb487c4215747b31a2cefbcbbc8d, type: 2}
   maxPP: 0
-  consumeActionPoints: 6
+  consumeActionPoints: 4
   guaranteedHit: 0
-  accuracy: 75
+  accuracy: 90
   range: 1
   target: 0
   targetShape: 1

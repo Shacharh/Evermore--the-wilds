@@ -166,7 +166,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MonsterSetup
   startingAttackIds:
-  - Blazing_Claws
+  - Fire_Storm
   - Tail_Swipe
   monster: {fileID: 8900255455746139478}
 --- !u!1 &5669713048702843335

@@ -205,7 +205,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Monster
   data: {fileID: 11400000, guid: 24b3530724bbb074296d4b16817d0213, type: 2}
-  enemyMonster: 0
+  enemyMonster: 1
   level: 37
   learnedAttacks:
   - data: {fileID: 11400000, guid: dae42acfe3d61ef4894549f3a0cbad5a, type: 2}

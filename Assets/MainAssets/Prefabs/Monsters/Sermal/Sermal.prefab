@@ -159,6 +159,7 @@ MonoBehaviour:
   level: 42
   learnedAttacks:
   - data: {fileID: 11400000, guid: 09a9f660e36994e459ee07562aca7171, type: 2}
+  - data: {fileID: 11400000, guid: fc09cddb95e4d244fbe0fe2521c30e4c, type: 2}
   anim: {fileID: 119398597672714227}
   gridManager: {fileID: 0}
   stageConfig: {fileID: 11400000, guid: 8ad1c409ab618f049986d2c0c7c1bda1, type: 2}
@@ -179,6 +180,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterSetup
   startingAttackIds:
   - Poisoned_Strike
+  - Heal_S
   monster: {fileID: 8900255455746139478}
 --- !u!1 &6808065231322360950
 GameObject:
