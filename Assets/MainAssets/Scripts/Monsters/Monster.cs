@@ -107,6 +107,12 @@ public class Monster : MonoBehaviour
     /// </summary>
     public int TilesPerAP => Mathf.Max(1, Speed / 10);
 
+    /// <summary>
+    /// Exposes the dodge-effectiveness tuning value for AI damage estimation.
+    /// 1.0 = full dodge effect; 0.5 = half effect (default); 0.0 = no dodge.
+    /// </summary>
+    public float DodgeEffectiveness => dodgeEffectiveness;
+
     // NOTE: Attack AP cost is NOT stored here.
     // It lives on AttackData.ConsumeActionPoints so each attack can have its own cost.
 
@@ -133,8 +139,23 @@ public class Monster : MonoBehaviour
     public void ResetForNewTurn()
     {
         HasActed = false;
+        if (_turnsSinceLastFrozen < int.MaxValue) _turnsSinceLastFrozen++;
         OnStartTurn(); // ticks effects and statuses (existing logic below)
     }
+
+    // ── Freeze age tracking (used by AI scoring) ──────────────────────────────
+
+    private int _turnsSinceLastFrozen = int.MaxValue;
+
+    /// <summary>
+    /// How many turns have passed since this monster was last frozen.
+    /// int.MaxValue means it has never been frozen.
+    /// Reset to 0 each time a Freeze status is applied.
+    /// </summary>
+    public int TurnsSinceLastFrozen => _turnsSinceLastFrozen;
+
+    /// <summary>Called by CalculateStatus when a Freeze effect is applied to this monster.</summary>
+    public void NotifyFreezeApplied() => _turnsSinceLastFrozen = 0;
 
     #endregion
     // ------------------------------------------------------------------------
@@ -685,6 +706,8 @@ public class Monster : MonoBehaviour
         }
 
         target.activeStatuses.Add(new ActiveStatus(effect.statusEffect, effect.duration));
+        if (effect.statusEffect.ID == AttackEnum.StatusEffect.Freeze)
+            target.NotifyFreezeApplied();
         Debug.Log($"{target.customeName} is affected by {effect.statusEffect.name}!");
     }
     #endregion

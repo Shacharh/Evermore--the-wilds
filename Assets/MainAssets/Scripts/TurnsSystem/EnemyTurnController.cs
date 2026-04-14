@@ -3,12 +3,25 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Enemy-side TurnController.
-/// On its turn, loops through all unacted enemy monsters in order,
-/// decides an action for each (attack if adjacent, otherwise move toward
-/// nearest player monster), spends shared AP, and ends the turn when done.
+/// Enemy-side TurnController with scoring-based AI.
 ///
-/// Override DecideAndAct() to plug in your own AI logic.
+/// On its turn:
+///   1. Scores every possible action for every unacted enemy monster via MonsterAIBrain.
+///   2. Sorts monsters by their best available action score — highest opportunity acts first.
+///   3. Re-evaluates each monster just before execution (AP may have changed since the sort).
+///   4. Executes: AttackAction, MoveAction, MoveAndAttackAction, or PassAction.
+///   5. Ends the turn when all monsters have acted or AP is depleted.
+///
+/// Scoring formula (per action):
+///   finalScore = AIGameStateScorePoints (global baseline)
+///              + MonsterPersonality     (per-monster bonus, 0 if not assigned)
+///              + Random(0, randomJitter) (unpredictability)
+///
+/// Setup in the Inspector:
+///   • Assign an AIGameStateScorePoints asset to "Game State Score Points"
+///     (create via Assets → Create → Evermore → AI → AI Game State Score Points).
+///   • Assign a MonsterPersonality to each MonsterData
+///     (create via Assets → Create → Evermore → AI → Monster Personality).
 /// </summary>
 public class EnemyTurnController : TurnController
 {
@@ -17,21 +30,43 @@ public class EnemyTurnController : TurnController
     [Header("References")]
     [SerializeField] private GridManager gridManager;
 
-    // -- Testing ---------------------------------------------------------------
+    [Header("AI Configuration")]
+    [Tooltip("Global score thresholds and base values shared by all enemy monsters.\n" +
+             "Leave empty to use built-in defaults.\n" +
+             "Create via: Assets → Create → Evermore → AI → AI Game State Score Points")]
+    [SerializeField] private AIGameStateScorePoints gameStateScorePoints;
+
+    // -- Testing / Debug -------------------------------------------------------
 
     [Header("Testing / Development")]
-    [Tooltip("When enabled the enemy skips its entire turn immediately " +
-             "and returns control to the player. Disable when the AI is ready.")]
+    [Tooltip("When enabled the enemy skips its entire turn immediately. Disable when the AI is ready.")]
     [SerializeField] private bool skipTurnForTesting = false;
+
+    [Tooltip("When enabled, shows the AI turn queue debug panel for the entire session.\n" +
+             "The panel refreshes its content at the start of each enemy turn.")]
+    [SerializeField] private bool showTurnDebugPanel = false;
+
+    [Tooltip("Height of the debug panel in UI pixels (reference resolution 1920×1080).\n" +
+             "Adjust until all queue entries are comfortably visible.")]
+    [SerializeField] private float debugPanelHeight = 800f;
 
     // -- Timing ----------------------------------------------------------------
 
     [Header("AI Timing")]
-    [Tooltip("Pause between each monster's action so the player can follow.")]
+    [Tooltip("Pause between each monster's action so the player can follow what is happening.")]
     [SerializeField] private float actionDelay = 0.9f;
 
-    [Tooltip("Speed at which enemy monsters slide to their new tile.")]
+    [Tooltip("Speed at which enemy monsters slide to their new tile (world units per second).")]
     [SerializeField] private float moveSpeed = 5f;
+
+    // -- Brain -----------------------------------------------------------------
+
+    private MonsterAIBrain _brain;
+
+    // -- First-Actor Fatigue State ---------------------------------------------
+
+    private Monster _lastFirstActor      = null;
+    private int     _consecutiveFirstCount = 0;
 
     // -- Turn Lifecycle --------------------------------------------------------
 
@@ -39,6 +74,9 @@ public class EnemyTurnController : TurnController
     {
         if (gridManager == null)
             gridManager = FindFirstObjectByType<GridManager>();
+
+        _brain = new MonsterAIBrain(gameStateScorePoints);
+        AITurnQueueDebug.SetEnabled(showTurnDebugPanel, debugPanelHeight);
     }
 
     protected override void OnTurnStarted()
@@ -55,18 +93,12 @@ public class EnemyTurnController : TurnController
 
     // -- Auto-Discovery --------------------------------------------------------
 
-    /// <summary>
-    /// Always re-discovers enemy monsters from the scene, replacing any
-    /// Inspector-assigned list. This ensures the AI uses the spawner's runtime
-    /// instances (which have CurrentTile set) rather than pre-placed scene objects.
-    /// </summary>
     public override void AutoDiscoverMonsters()
     {
         monsters.Clear();
         DiscoverMonsters();
     }
 
-    /// <summary>Scans the scene for all enemy monsters and adds them to this roster.</summary>
     protected override void DiscoverMonsters()
     {
         var all = FindObjectsByType<Monster>(FindObjectsSortMode.None);
@@ -82,122 +114,251 @@ public class EnemyTurnController : TurnController
     {
         Debug.Log("[EnemyAI] Starting AI turn...");
 
-        List<Monster> queue = GetUnactedMonsters();
+        List<Monster> playerTargets = CollectPlayerTargets();
+        List<Monster> allyMonsters  = CollectAllyMonsters();
 
-        foreach (Monster monster in queue)
+        // Late-bind CurrentTile for any monster that lost it between turns.
+        foreach (var m in monsters)
         {
-            if (CurrentAP <= 0) break;
-
-            yield return new WaitForSeconds(actionDelay);
-            yield return StartCoroutine(DecideAndAct(monster));
+            if (m != null && m.CurrentTile == null)
+            {
+                Tile found = gridManager.GetTileAtWorldPosition(m.transform.root.position);
+                if (found != null)
+                {
+                    m.CurrentTile = found;
+                    Debug.Log($"[EnemyAI] {m.name} CurrentTile late-bound to {found.GridPosition}.");
+                }
+            }
         }
 
+        // ── Score everything once at turn start ───────────────────────────────
+        // Collect every possible action from every living monster into one flat
+        // list, then sort it highest-to-lowest. This order is fixed for the
+        // entire turn — no re-scoring happens after this point.
+        var turnQueue = new List<(Monster monster, AIAction action)>();
+
+        foreach (var monster in monsters)
+        {
+            if (monster == null || !monster.IsAlive) continue;
+            if (monster.CurrentTile == null) continue;
+            if (monster.IsFrozen)
+            {
+                string name = monster.Data?.displayName ?? monster.gameObject.name;
+                BattleMessage.Show($"{name} is frozen and cannot act!", 2f);
+                Debug.Log($"[EnemyAI] {monster.name} is frozen — excluded from turn queue.");
+                continue;
+            }
+
+            var ctx     = AIContext.Build(monster, CurrentAP, gridManager, playerTargets, allyMonsters);
+            var actions = _brain.GetAllScoredActions(ctx);
+
+            foreach (var action in actions)
+                turnQueue.Add((monster, action));
+        }
+
+        float repPenalty = gameStateScorePoints != null
+            ? gameStateScorePoints.repetitionPenalty
+            : 30f;
+
+        // ── Step 1: initial sort by raw score ─────────────────────────────────
+        turnQueue.Sort((a, b) => b.action.Score.CompareTo(a.action.Score));
+
+        // ── Step 2: consecutive repetition penalty ────────────────────────────
+        // Walk the sorted list. Each time the same monster appears again
+        // immediately after itself, the streak counter grows and the penalty
+        // increases. A different monster in between resets the streak to 0.
+        //
+        //   streak | penalty applied to that action
+        //     0    | 0          (first or fresh appearance)
+        //     1    | 1 × repPenalty   (2nd in a row)
+        //     2    | 2 × repPenalty   (3rd in a row)
+        //     ...
+        if (repPenalty > 0f)
+        {
+            Monster lastMonster   = null;
+            int     streak        = 0;
+
+            foreach (var (monster, action) in turnQueue)
+            {
+                if (monster == lastMonster)
+                {
+                    streak++;
+                    action.Score -= repPenalty * streak;
+                }
+                else
+                {
+                    streak      = 0;
+                    lastMonster = monster;
+                }
+            }
+        }
+
+        // ── Step 3: first-actor fatigue penalty ───────────────────────────────
+        // If the same monster has acted first for >= firstActorFatigueLimit
+        // consecutive turns, subtract an increasing penalty from all its actions
+        // so a different monster is more likely to reach the top slot.
+        int   fatigueLimit   = gameStateScorePoints != null ? gameStateScorePoints.firstActorFatigueLimit   : 2;
+        float fatiguePenalty = gameStateScorePoints != null ? gameStateScorePoints.firstActorFatiguePenalty : 80f;
+
+        if (fatigueLimit > 0
+            && _lastFirstActor != null
+            && _consecutiveFirstCount >= fatigueLimit)
+        {
+            int   extraTurns    = _consecutiveFirstCount - fatigueLimit + 1;
+            float totalPenalty  = fatiguePenalty * extraTurns;
+            foreach (var (monster, action) in turnQueue)
+                if (monster == _lastFirstActor)
+                    action.Score -= totalPenalty;
+
+            Debug.Log($"[EnemyAI] First-actor fatigue: {_lastFirstActor.name} " +
+                      $"penalised -{totalPenalty} pts ({_consecutiveFirstCount} consecutive turns first).");
+        }
+
+        // ── Step 4: final sort ────────────────────────────────────────────────
+        turnQueue.Sort((a, b) => b.action.Score.CompareTo(a.action.Score));
+
+        // ── Step 5: guaranteed exact slot (per MonsterPersonality) ───────────
+        // Applied AFTER scoring sort. Forces a monster's best action to a
+        // specific 1-based position, shifting others around it.
+        ApplyGuaranteedExactSlots(turnQueue);
+
+        // ── Step 6: guaranteed window appearance (per MonsterPersonality) ─────
+        // Applied last. Ensures a monster appears at least once in every
+        // consecutive block of X slots.
+        ApplyGuaranteedWindowAppearances(turnQueue);
+
+        // ── Record first actor for fatigue tracking ───────────────────────────
+        if (turnQueue.Count > 0)
+        {
+            Monster first = turnQueue[0].monster;
+            if (first == _lastFirstActor)
+                _consecutiveFirstCount++;
+            else
+            {
+                _lastFirstActor       = first;
+                _consecutiveFirstCount = 1;
+            }
+        }
+
+        Debug.Log($"[EnemyAI] Turn queue built — {turnQueue.Count} actions across all monsters.");
+
+        // Show the full queue in the debug overlay.
+        AITurnQueueDebug.ShowQueue(turnQueue);
+
+        // ── Execute in sorted order ───────────────────────────────────────────
+        for (int i = 0; i < turnQueue.Count; i++)
+        {
+            if (CurrentAP <= 0)
+            {
+                Debug.Log("[EnemyAI] AP depleted — stopping execution.");
+                break;
+            }
+
+            var (monster, action) = turnQueue[i];
+            if (monster == null || !monster.IsAlive) continue;
+
+            AITurnQueueDebug.SetActiveIndex(i);
+
+            yield return new WaitForSeconds(actionDelay);
+            yield return StartCoroutine(ExecuteAction(monster, action));
+        }
+
+        // Mark all monsters as acted so the turn system is satisfied.
+        foreach (var m in monsters)
+            if (m != null) m.MarkActed();
+
+        AITurnQueueDebug.ClearActiveIndex();
         Debug.Log("[EnemyAI] All actions complete — ending turn.");
         ForceEndTurn();
     }
 
-    // -- Decision Logic --------------------------------------------------------
+    // -- Action Execution ──────────────────────────────────────────────────────
 
-    /// <summary>
-    /// Override to replace with BehaviourTree, GOAP, or any other AI.
-    /// Default: attack adjacent player monster → move toward nearest → pass.
-    /// </summary>
-    protected virtual IEnumerator DecideAndAct(Monster monster)
+    private IEnumerator ExecuteAction(Monster monster, AIAction action)
     {
-        Tile currentTile = monster.CurrentTile
-                        ?? gridManager.GetTileAtWorldPosition(monster.transform.root.position);
-        if (currentTile != null && monster.CurrentTile == null)
+        switch (action)
         {
-            monster.CurrentTile = currentTile; // late-bind so future lookups are fast
-            Debug.Log($"[EnemyAI] {monster.name} CurrentTile late-bound to {currentTile.GridPosition}.");
+            case AttackAction atk:
+                yield return StartCoroutine(PerformAttack(monster, atk.Target, atk.AttackIndex));
+                break;
+
+            case MoveAction move:
+                yield return StartCoroutine(PerformMove(monster, move.Destination));
+                break;
+
+            case MoveAndAttackAction moveAtk:
+                yield return StartCoroutine(PerformMove(monster, moveAtk.MoveTo));
+                // Only attack if the target survived the move.
+                if (moveAtk.Target != null && moveAtk.Target.IsAlive)
+                    yield return StartCoroutine(PerformAttack(monster, moveAtk.Target, moveAtk.AttackIndex));
+                break;
+
+            default: // PassAction
+                Debug.Log($"[EnemyAI] {monster.name} passes — no beneficial action found.");
+                break;
         }
-        if (currentTile == null)
-        {
-            Debug.LogWarning($"[EnemyAI] {monster.name} not on a valid tile " +
-                             $"(root pos={monster.transform.root.position}).");
-            monster.MarkActed();
-            yield break;
-        }
-
-        // ── Freeze: skip this monster's turn entirely ─────────────────────────
-        if (monster.IsFrozen)
-        {
-            string frozenName = monster.Data?.displayName ?? monster.gameObject.name;
-            BattleMessage.Show($"{frozenName} is frozen and cannot act!", 2f);
-            Debug.Log($"[EnemyAI] {monster.name} is frozen — skipping turn.");
-            monster.MarkActed();
-            yield break;
-        }
-
-        // -- Try to attack an adjacent player monster ---------------------------
-        var attacks = monster.GetAttacks();
-        if (attacks != null && attacks.Count > 0)
-        {
-            AttackData bestAttack = PickBestAffordableAttack(attacks, monster.ShockAPCostIncrease);
-            if (bestAttack != null)
-            {
-                Tile attackTarget = FindAdjacentPlayerTile(currentTile);
-                if (attackTarget != null)
-                {
-                    SpendAP(bestAttack.ConsumeActionPoints + monster.ShockAPCostIncrease);
-                    monster.MarkActed();
-                    Monster target = attackTarget.GetMonster();
-
-                    // Face the attack target before executing
-                    Vector3 attackDir = new Vector3(
-                        attackTarget.transform.position.x - monster.transform.position.x, 0f,
-                        attackTarget.transform.position.z - monster.transform.position.z);
-                    if (attackDir != Vector3.zero)
-                        monster.transform.root.rotation = Quaternion.LookRotation(attackDir);
-
-                    int attackIndex = GetAttackIndex(attacks, bestAttack);
-                    monster.ExecuteAttack(target, attackIndex, true);
-                    Debug.Log($"[EnemyAI] {monster.name} used '{bestAttack.DisplayName}' " +
-                              $"on {target.name}! (cost {bestAttack.ConsumeActionPoints} AP)");
-                    yield break;
-                }
-            }
-        }
-
-        // -- Try to move toward nearest player monster -------------------------
-        // Use the same TilesPerAP formula as the player so enemies move multiple
-        // tiles when their Speed is high enough.
-        int tilesPerAP = monster.TilesPerAP;
-        int maxTiles   = tilesPerAP * CurrentAP;
-
-        if (maxTiles > 0)
-        {
-            List<Tile> path = FindPathTowardPlayer(currentTile, maxTiles, monster.IsFlying);
-            if (path != null && path.Count > 0)
-            {
-                // Clamp to how far AP actually allows
-                int tilesToMove  = Mathf.Min(path.Count, maxTiles);
-                int apCost       = Mathf.CeilToInt((float)tilesToMove / tilesPerAP)
-                                   + monster.ShockAPCostIncrease;
-                apCost = Mathf.Max(1, apCost);
-
-                if (CanAfford(apCost))
-                {
-                    SpendAP(apCost);
-                    monster.MarkActed();
-                    var segment = path.GetRange(0, tilesToMove);
-                    yield return StartCoroutine(SlideAlongPath(monster, currentTile, segment));
-                    yield break;
-                }
-            }
-        }
-
-        // -- Nothing affordable ------------------------------------------------
-        Debug.Log($"[EnemyAI] {monster.name} has no valid action — passing.");
-        monster.MarkActed();
     }
 
-    // -- Movement Coroutines ---------------------------------------------------
+    private IEnumerator PerformAttack(Monster monster, Monster target, int attackIndex)
+    {
+        if (target == null || !target.IsAlive) yield break;
+
+        var attacks = monster.GetAttacks();
+        if (attackIndex < 0 || attackIndex >= attacks.Count) yield break;
+
+        AttackData attackData = attacks[attackIndex].data;
+        if (attackData == null) yield break;
+
+        int apCost = attackData.ConsumeActionPoints + monster.ShockAPCostIncrease;
+        if (!SpendAP(apCost)) yield break;
+
+        // Face the target before striking.
+        Vector3 dir = target.transform.position - monster.transform.position;
+        dir.y = 0f;
+        if (dir != Vector3.zero)
+            monster.transform.root.rotation = Quaternion.LookRotation(dir);
+
+        monster.ExecuteAttack(target, attackIndex, attackData.IsDirect);
+
+        Debug.Log($"[EnemyAI] {monster.name} used '{attackData.DisplayName}' " +
+                  $"on {target.name}! (cost {apCost} AP)");
+    }
+
+    private IEnumerator PerformMove(Monster monster, Tile destination)
+    {
+        if (destination == null || monster.CurrentTile == null) yield break;
+
+        // Safety check: destination might have been taken by another monster acting earlier.
+        if (!destination.IsWalkable())
+        {
+            Debug.Log($"[EnemyAI] {monster.name} destination {destination.GridPosition} " +
+                      "is no longer walkable — skipping move.");
+            yield break;
+        }
+
+        // Find the actual BFS path so the monster walks around walls correctly.
+        List<Tile> path = gridManager.FindPath(monster.CurrentTile, destination, monster.IsFlying);
+        if (path == null || path.Count == 0)
+        {
+            Debug.Log($"[EnemyAI] {monster.name} no path to {destination.GridPosition} — skipping.");
+            yield break;
+        }
+
+        // AP cost mirrors the player movement formula: ceiling(tiles / tilesPerAP) + shock.
+        int moveCost = Mathf.CeilToInt((float)path.Count / monster.TilesPerAP)
+                     + monster.ShockAPCostIncrease;
+        moveCost = Mathf.Max(1, moveCost);
+
+        if (!SpendAP(moveCost)) yield break;
+
+        yield return StartCoroutine(SlideAlongPath(monster, monster.CurrentTile, path));
+    }
+
+    // -- Movement Coroutine ────────────────────────────────────────────────────
 
     /// <summary>
-    /// Slides a monster along a multi-tile path, one tile at a time.
-    /// Faces the correct direction at each step (handles corners).
-    /// Starts/ends the walk animation around the full journey.
+    /// Slides a monster along a multi-tile BFS path, one tile at a time.
+    /// Faces the correct direction at each step. Starts/ends the walk animation.
     /// </summary>
     private IEnumerator SlideAlongPath(Monster monster, Tile fromTile, List<Tile> path)
     {
@@ -236,102 +397,119 @@ public class EnemyTurnController : TurnController
         Debug.Log($"[EnemyAI] {monster.name} moved to {path[path.Count - 1].GridPosition}.");
     }
 
-    // -- Targeting Helpers -----------------------------------------------------
+    // -- Queue Post-Processing ─────────────────────────────────────────────────
 
-    /// <summary>Return the first cardinal-adjacent tile that has a player monster.</summary>
-    private Tile FindAdjacentPlayerTile(Tile origin)
+    /// <summary>
+    /// Feature 3 — Guaranteed exact slot.
+    /// For every monster whose personality has guaranteedExactSlotEnabled,
+    /// finds its best action in the queue and moves it to the requested 1-based slot.
+    /// Processed in queue order so lower-slot constraints win ties.
+    /// </summary>
+    private void ApplyGuaranteedExactSlots(List<(Monster monster, AIAction action)> queue)
     {
-        foreach (Tile neighbour in gridManager.GetNeighbors(origin, includeDiagonals: false))
+        // Collect all monsters that want an exact slot, sorted by requested slot ascending
+        // so earlier slots are placed first and don't displace later ones.
+        var requests = new List<(Monster monster, int slot)>();
+        foreach (var m in monsters)
         {
-            Monster m = neighbour.GetMonster();
-            if (m != null && !m.IsEnemy)
-                return neighbour;
+            if (m == null || m.Data?.personality == null) continue;
+            var p = m.Data.personality;
+            if (p.guaranteedExactSlotEnabled)
+                requests.Add((m, p.guaranteedExactSlot));
         }
-        return null;
+        requests.Sort((a, b) => a.slot.CompareTo(b.slot));
+
+        foreach (var (monster, slot) in requests)
+        {
+            int targetIdx = Mathf.Clamp(slot - 1, 0, queue.Count - 1);
+
+            // Find the monster's first (best-scored) action currently in the queue.
+            int sourceIdx = -1;
+            for (int i = 0; i < queue.Count; i++)
+                if (queue[i].monster == monster) { sourceIdx = i; break; }
+
+            if (sourceIdx < 0 || sourceIdx == targetIdx) continue;
+
+            var entry = queue[sourceIdx];
+            queue.RemoveAt(sourceIdx);
+            queue.Insert(targetIdx, entry);
+        }
     }
 
     /// <summary>
-    /// Returns a path of up to <paramref name="maxTiles"/> walkable tiles toward the
-    /// nearest player monster, stopping one tile short of the target so the monster
-    /// does not land on an occupied tile.
-    /// Returns null if no path exists.
+    /// Feature 2 — Guaranteed window appearance.
+    /// For every monster whose personality has guaranteedAppearanceEnabled,
+    /// scans the queue in windows of guaranteedEveryXActions. If the monster
+    /// is absent from a window it has actions remaining for, moves its next
+    /// action into the last slot of that window.
     /// </summary>
-    private List<Tile> FindPathTowardPlayer(Tile origin, int maxTiles, bool isFlying)
+    private void ApplyGuaranteedWindowAppearances(List<(Monster monster, AIAction action)> queue)
     {
-        Tile targetTile = FindNearestPlayerTile(origin);
-        if (targetTile == null) return null;
-
-        // Find the adjacent tile of the target that is walkable (so the enemy stands next to the player)
-        Tile adjacentGoal = null;
-        int  bestDist     = int.MaxValue;
-        foreach (Tile nb in gridManager.GetNeighbors(targetTile, includeDiagonals: false))
+        foreach (var m in monsters)
         {
-            if (!nb.IsWalkable()) continue;
-            int d = gridManager.GetDistanceBetweenTiles(origin, nb);
-            if (d < bestDist) { bestDist = d; adjacentGoal = nb; }
+            if (m == null || m.Data?.personality == null) continue;
+            var p = m.Data.personality;
+            if (!p.guaranteedAppearanceEnabled || p.guaranteedEveryXActions < 1) continue;
+
+            int windowSize = p.guaranteedEveryXActions;
+            int windowStart = 0;
+
+            while (windowStart < queue.Count)
+            {
+                int windowEnd = Mathf.Min(windowStart + windowSize, queue.Count);
+
+                // Check if monster appears in [windowStart, windowEnd).
+                bool found = false;
+                for (int i = windowStart; i < windowEnd; i++)
+                    if (queue[i].monster == m) { found = true; break; }
+
+                if (!found)
+                {
+                    // Find the monster's next action anywhere after this window.
+                    int sourceIdx = -1;
+                    for (int i = windowEnd; i < queue.Count; i++)
+                        if (queue[i].monster == m) { sourceIdx = i; break; }
+
+                    if (sourceIdx >= 0)
+                    {
+                        // Pull it into the last slot of this window.
+                        var entry = queue[sourceIdx];
+                        queue.RemoveAt(sourceIdx);
+                        queue.Insert(windowEnd - 1, entry);
+                    }
+                    // No more actions for this monster — nothing to guarantee.
+                }
+
+                windowStart += windowSize;
+            }
         }
-
-        if (adjacentGoal == null) return null;
-
-        List<Tile> fullPath = gridManager.FindPath(origin, adjacentGoal, isFlying);
-        if (fullPath == null || fullPath.Count == 0) return null;
-
-        // Clamp to maxTiles
-        if (fullPath.Count > maxTiles)
-            fullPath = fullPath.GetRange(0, maxTiles);
-
-        return fullPath;
     }
 
-    private Tile FindNearestPlayerTile(Tile origin)
-    {
-        Tile nearest  = null;
-        int  bestDist = int.MaxValue;
+    // -- Helpers ───────────────────────────────────────────────────────────────
 
+    private List<Monster> CollectPlayerTargets()
+    {
         PlayerTurnController playerCtrl =
             TurnManager.Instance?.ActiveController as PlayerTurnController
             ?? FindFirstObjectByType<PlayerTurnController>();
 
-        if (playerCtrl == null) return null;
+        var targets = new List<Monster>();
+        if (playerCtrl == null) return targets;
 
-        foreach (Monster m in playerCtrl.Monsters)
-        {
-            if (m == null) continue;
-            Tile t = m.CurrentTile ?? gridManager.GetTileAtWorldPosition(m.transform.root.position);
-            if (t == null) continue;
+        foreach (var m in playerCtrl.Monsters)
+            if (m != null && m.IsAlive)
+                targets.Add(m);
 
-            int d = gridManager.GetDistanceBetweenTiles(origin, t);
-            if (d < bestDist) { bestDist = d; nearest = t; }
-        }
-
-        return nearest;
+        return targets;
     }
 
-    // -- Attack Selection Helpers ----------------------------------------------
-
-    private AttackData PickBestAffordableAttack(
-        System.Collections.Generic.IReadOnlyList<MonsterAttack> attacks,
-        int shockBonus = 0)
+    /// <summary>All living enemy-side monsters (allies for heal scoring, excludes Self per context).</summary>
+    private List<Monster> CollectAllyMonsters()
     {
-        AttackData best     = null;
-        int        bestCost = -1;
-
-        foreach (MonsterAttack ma in attacks)
-        {
-            if (ma?.data == null) continue;
-            int cost = ma.data.ConsumeActionPoints + shockBonus;
-            if (CanAfford(cost) && cost > bestCost) { bestCost = cost; best = ma.data; }
-        }
-
-        return best;
-    }
-
-    private int GetAttackIndex(
-        System.Collections.Generic.IReadOnlyList<MonsterAttack> attacks,
-        AttackData target)
-    {
-        for (int i = 0; i < attacks.Count; i++)
-            if (attacks[i]?.data == target) return i;
-        return 0;
+        var allies = new List<Monster>();
+        foreach (var m in monsters)
+            if (m != null && m.IsAlive)
+                allies.Add(m);
+        return allies;
     }
 }

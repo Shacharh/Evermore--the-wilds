@@ -26,6 +26,12 @@ public class MonsterData : ScriptableObject
      public string DogeAnimationTrigger;
      public string DeathAnimationTrigger;
 
+    [Header("AI")]
+    [Tooltip("Optional personality that biases this monster's action scoring.\n" +
+             "Leave empty to use only the global AIGameStateScorePoints baseline.\n" +
+             "Create via: Assets → Create → Evermore → AI → Monster Personality")]
+    public MonsterPersonality personality;
+
     [Tooltip("Attacks this monster can learn and the level at which it learns them")]
     public AttackEntry[] movePool;
 
