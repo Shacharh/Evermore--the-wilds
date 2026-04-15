@@ -20,10 +20,6 @@ public class Monster : MonoBehaviour
              "If left empty the system falls back to 1.0 (no stage effect).")]
     [SerializeField] private StatStageConfig stageConfig;
 
-    [Header("Unit Type")]
-    [Tooltip("Flying monsters ignore ground obstructions and can pass over them.\n" +
-             "They still cannot LAND on an obstructed tile.")]
-    [SerializeField] private bool isFlying = false;
 
     [Header("Evasion Tuning")]
     [Tooltip("Scales how much the Dodge stat reduces incoming hit chance.\n" +
@@ -104,9 +100,18 @@ public class Monster : MonoBehaviour
     /// <summary>The grid tile this monster currently occupies. Set by the spawner and updated on every move.</summary>
     public Tile CurrentTile { get; set; }
 
-    /// <summary>AP cost to move this monster one tile.</summary>
-    /// <summary>AP cost to move this monster one tile. Defined on MonsterData ScriptableObject.</summary>
-    public int MoveCost => data.moveCost;
+    /// <summary>
+    /// How many tiles this monster moves per 1 AP spent.
+    /// Derived from Speed: every 10 Speed = 1 tile/AP (minimum 1).
+    /// Used for movement cost display and AP calculations.
+    /// </summary>
+    public int TilesPerAP => Mathf.Max(1, Speed / 10);
+
+    /// <summary>
+    /// Exposes the dodge-effectiveness tuning value for AI damage estimation.
+    /// 1.0 = full dodge effect; 0.5 = half effect (default); 0.0 = no dodge.
+    /// </summary>
+    public float DodgeEffectiveness => dodgeEffectiveness;
 
     // NOTE: Attack AP cost is NOT stored here.
     // It lives on AttackData.ConsumeActionPoints so each attack can have its own cost.
@@ -134,8 +139,23 @@ public class Monster : MonoBehaviour
     public void ResetForNewTurn()
     {
         HasActed = false;
+        if (_turnsSinceLastFrozen < int.MaxValue) _turnsSinceLastFrozen++;
         OnStartTurn(); // ticks effects and statuses (existing logic below)
     }
+
+    // ── Freeze age tracking (used by AI scoring) ──────────────────────────────
+
+    private int _turnsSinceLastFrozen = int.MaxValue;
+
+    /// <summary>
+    /// How many turns have passed since this monster was last frozen.
+    /// int.MaxValue means it has never been frozen.
+    /// Reset to 0 each time a Freeze status is applied.
+    /// </summary>
+    public int TurnsSinceLastFrozen => _turnsSinceLastFrozen;
+
+    /// <summary>Called by CalculateStatus when a Freeze effect is applied to this monster.</summary>
+    public void NotifyFreezeApplied() => _turnsSinceLastFrozen = 0;
 
     #endregion
     // ------------------------------------------------------------------------
@@ -158,7 +178,11 @@ public class Monster : MonoBehaviour
     public int MaxHP   => CalculateStat(data.baseHP,       ivHP,       AttackEnum.AttackBuffType.HP,       isHP: true);
     public int Attack  => CalculateStat(data.baseAttack,   ivAttack,   AttackEnum.AttackBuffType.Attack);
     public int Defense => CalculateStat(data.baseDefense,  ivDefense,  AttackEnum.AttackBuffType.Defense);
-    public int Speed   => CalculateStat(data.baseSpeed,    ivSpeed,    AttackEnum.AttackBuffType.Speed);
+    // Speed does NOT scale with level — it returns baseSpeed directly so that
+    // TilesPerAP stays constant and the Info panel shows the real movement rate.
+    // Stage buffs/debuffs (e.g. from attacks) still apply via the active effects.
+    public int Speed   => Mathf.Max(0, ApplyStageMultiplier(data != null ? data.baseSpeed : 0,
+                                                             AttackEnum.AttackBuffType.Speed));
     public int CritRate=> CalculateStat(data.baseCritRate, ivCritRate, AttackEnum.AttackBuffType.CritRate);
     public int CritMod => CalculateStat(data.baseCritMod,  ivCritMod,  AttackEnum.AttackBuffType.CritMod);
     public int Dodge   => CalculateStat(data.baseDodge,    ivDodge,    AttackEnum.AttackBuffType.Dodge);
@@ -166,7 +190,7 @@ public class Monster : MonoBehaviour
     /// <summary>Monster's current level — shown in the info panel.</summary>
     public int         Level => level;
     /// <summary>True for flying monsters — they ignore ground obstructions.</summary>
-    public bool        IsFlying => isFlying;
+    public bool        IsFlying => data != null && data.isFlying;
     #endregion
 
     #region Unity Lifecycle
@@ -496,6 +520,21 @@ public class Monster : MonoBehaviour
     }
 
     /// <summary>
+    /// Applies only the stage-multiplier portion of stat calculation to a raw base value,
+    /// without any level or IV scaling. Used for Speed which intentionally skips level growth.
+    /// </summary>
+    private int ApplyStageMultiplier(int baseValue, AttackEnum.AttackBuffType buffType)
+    {
+        int totalStages = 0;
+        foreach (var effect in activeEffects)
+            if (effect.stat == buffType)
+                totalStages += effect.value;
+        totalStages = Mathf.Clamp(totalStages, -6, 6);
+        float multiplier = stageConfig != null ? stageConfig.GetMultiplier(totalStages) : 1f;
+        return Mathf.RoundToInt(baseValue * multiplier);
+    }
+
+    /// <summary>
     /// Returns the effective stage (-6 to +6) currently applied to <paramref name="buffType"/>.
     /// Useful for displaying stage info in the UI.
     /// </summary>
@@ -568,7 +607,9 @@ public class Monster : MonoBehaviour
         }
 
         // ── Dodge roll ────────────────────────────────────────────────────────
-        if (!attack.GuaranteedHit && Random.value * 100f > hitChance)
+        // Direct attacks (IsDirect = true) always hit — skip the dodge roll entirely.
+        bool alwaysHits = attack.IsDirect || isDirect || attack.GuaranteedHit;
+        if (!alwaysHits && Random.value * 100f > hitChance)
         {
             Debug.Log($"{target.customeName} avoided the attack!");
             return 0;
@@ -665,6 +706,8 @@ public class Monster : MonoBehaviour
         }
 
         target.activeStatuses.Add(new ActiveStatus(effect.statusEffect, effect.duration));
+        if (effect.statusEffect.ID == AttackEnum.StatusEffect.Freeze)
+            target.NotifyFreezeApplied();
         Debug.Log($"{target.customeName} is affected by {effect.statusEffect.name}!");
     }
     #endregion

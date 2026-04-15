@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 using Unity.Cinemachine;
 
 public class CameraController : MonoBehaviour
@@ -15,30 +16,48 @@ public class CameraController : MonoBehaviour
 
     [Header("Zoom Settings")]
     [SerializeField] private float zoomSpeed = 5f;
-    [SerializeField] private float minZoom = 5f;   // Closest view
-    [SerializeField] private float maxZoom = 40f;  // Furthest view
+    [SerializeField] private float minZoom = 5f;
+    [SerializeField] private float maxZoom = 40f;
     [SerializeField] private float currentZoom = 15f;
 
     [Header("Camera Angle")]
     [Range(20f, 80f)]
     [SerializeField] private float cameraAngle = 45f;
 
+    [Header("Middle-Mouse Pan")]
+    [Tooltip("How fast the camera pans when dragging with the middle mouse button.")]
+    [SerializeField] private float panSpeed = 0.03f;
+
+    [Header("Edge Scrolling")]
+    [Tooltip("Pixels from the screen edge that trigger edge scrolling.")]
+    [SerializeField] private float edgeScrollMargin = 20f;
+    [Tooltip("Maximum scroll speed when the cursor is hard against the edge.")]
+    [SerializeField] private float edgeScrollMaxSpeed = 25f;
+    [Tooltip("How quickly edge-scroll speed ramps up/down (higher = snappier).")]
+    [SerializeField] private float edgeScrollAcceleration = 8f;
+
     [Header("Map Bounds (optional)")]
     [Tooltip("Two empty GameObjects that mark the bottom-left and top-right corners " +
              "of the playable area. The camera target is clamped between them so the " +
              "player cannot pan off the map.\n" +
              "Leave both unassigned for unlimited panning.")]
-    [SerializeField] private Transform boundsMinCorner;   // bottom-left corner
-    [SerializeField] private Transform boundsMaxCorner;   // top-right  corner
+    [SerializeField] private Transform boundsMinCorner;
+    [SerializeField] private Transform boundsMaxCorner;
 
     private InputAction moveAction;
     private InputAction zoomAction;
     private Vector3 currentVelocity;
     private float targetZoom;
 
+    // Middle-mouse pan state
+    private bool _isPanning;
+
+    // Edge-scroll current speed (smoothly ramped)
+    private Vector3 _edgeScrollVelocity;
+
     void Awake()
     {
-        targetZoom = currentZoom; // Initialize zoom target
+        targetZoom = currentZoom;
 
         if (inputActions != null)
         {
@@ -56,9 +75,66 @@ public class CameraController : MonoBehaviour
     {
         if (cameraTarget == null || cinemachineCamera == null) return;
 
+        HandleMiddleMousePan();
+        HandleEdgeScroll();
         HandleMovement();
         HandleZoom();
         ApplyCameraPosition();
+    }
+
+    // ── Middle-mouse pan ──────────────────────────────────────────────────────
+
+    private void HandleMiddleMousePan()
+    {
+        var mouse = Mouse.current;
+        if (mouse == null) return;
+
+        if (mouse.middleButton.wasPressedThisFrame)  _isPanning = true;
+        if (mouse.middleButton.wasReleasedThisFrame) _isPanning = false;
+
+        if (!_isPanning) return;
+
+        // delta is the pixel movement since last frame — already computed by the Input System
+        Vector2 delta = mouse.delta.ReadValue();
+
+        // Invert so dragging right pans the world rightward
+        Vector3 move = new Vector3(-delta.x, 0f, -delta.y) * panSpeed;
+        cameraTarget.Translate(move, Space.World);
+        ApplyBoundsClamping();
+    }
+
+    // ── Edge scrolling ────────────────────────────────────────────────────────
+
+    private void HandleEdgeScroll()
+    {
+        if (_isPanning) return;
+
+        var mouse = Mouse.current;
+        if (mouse == null) return;
+
+        Vector2 mousePos = mouse.position.ReadValue();
+        float sw = Screen.width;
+        float sh = Screen.height;
+
+        float right = Mathf.InverseLerp(sw - edgeScrollMargin, sw, mousePos.x);
+        float left  = Mathf.InverseLerp(edgeScrollMargin, 0f,  mousePos.x);
+        float up    = Mathf.InverseLerp(sh - edgeScrollMargin, sh, mousePos.y);
+        float down  = Mathf.InverseLerp(edgeScrollMargin, 0f,  mousePos.y);
+
+        Vector3 targetVel = new Vector3(
+            (right - left) * edgeScrollMaxSpeed,
+            0f,
+            (up - down)    * edgeScrollMaxSpeed);
+
+        _edgeScrollVelocity = Vector3.Lerp(
+            _edgeScrollVelocity, targetVel,
+            Time.deltaTime * edgeScrollAcceleration);
+
+        if (_edgeScrollVelocity.sqrMagnitude > 0.001f)
+        {
+            cameraTarget.Translate(_edgeScrollVelocity * Time.deltaTime, Space.World);
+            ApplyBoundsClamping();
+        }
     }
 
     private void HandleMovement()
@@ -69,7 +145,6 @@ public class CameraController : MonoBehaviour
         if (input.sqrMagnitude > 0.01f)
         {
             Vector3 direction = new Vector3(input.x, 0, input.y);
-            // Move the target relative to world space
             cameraTarget.Translate(direction * moveSpeed * Time.deltaTime, Space.World);
             ApplyBoundsClamping();
         }

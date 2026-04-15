@@ -7,6 +7,9 @@ public class MonsterData : ScriptableObject
     public string monsterId;
     public string displayName;
     public string elementType;
+    [Tooltip("Flying monsters ignore ground obstructions and can pass over them.\n" +
+             "They still cannot LAND on an obstructed tile.")]
+    public bool isFlying;
 
     [Header("Base Stats")]
     public int baseHP;
@@ -17,15 +20,17 @@ public class MonsterData : ScriptableObject
     public int baseCritMod;
     [Range(0, 100)] public int baseDodge;
 
-    [Header("Action Points")]
-    [Tooltip("AP cost for this monster to move one tile.")]
-    public int moveCost = 1;
-
     [Header("Animation")]
      public string MovementAnimationBoolean;
      public string DoamageAnimationTrigger;
      public string DogeAnimationTrigger;
      public string DeathAnimationTrigger;
+
+    [Header("AI")]
+    [Tooltip("Optional personality that biases this monster's action scoring.\n" +
+             "Leave empty to use only the global AIGameStateScorePoints baseline.\n" +
+             "Create via: Assets → Create → Evermore → AI → Monster Personality")]
+    public MonsterPersonality personality;
 
     [Tooltip("Attacks this monster can learn and the level at which it learns them")]
     public AttackEntry[] movePool;
@@ -39,7 +44,6 @@ public class MonsterData : ScriptableObject
         baseCritRate = Mathf.Clamp(baseCritRate, 0, 100);
         baseCritMod = Mathf.Max(0, baseCritMod);
         baseDodge = Mathf.Clamp(baseDodge, 0, 100);
-        moveCost = Mathf.Max(1, moveCost);
     }
 }
 

@@ -15,6 +15,7 @@ MonoBehaviour:
   monsterId: Draignis
   displayName: Draignis
   elementType: Fire
+  isFlying: 0
   baseHP: 400
   baseAttack: 300
   baseDefense: 220
@@ -22,11 +23,11 @@ MonoBehaviour:
   baseCritRate: 33
   baseCritMod: 50
   baseDodge: 15
-  moveCost: 1
   MovementAnimationBoolean: Movment
   DoamageAnimationTrigger: Hit
   DogeAnimationTrigger: 
   DeathAnimationTrigger: Death
+  personality: {fileID: 11400000, guid: 1d2a935bcfe0025478a597d459479e4c, type: 2}
   movePool:
   - attack: {fileID: 11400000, guid: 24cfdb420733aee4fb0ed074efd96413, type: 2}
     levelLearned: 0
