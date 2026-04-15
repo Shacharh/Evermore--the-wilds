@@ -12,21 +12,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30265db758921944e8915d5f57f52450, type: 3}
   m_Name: Sermal_Personality
   m_EditorClassIdentifier: Assembly-CSharp::MonsterPersonality
-  killShotBonus: 10
-  damageEfficiencyMultiplier: 10
+  killShotBonus: 5
+  damageEfficiencyMultiplier: 5
   focusFireBonus: 10
-  freezeBonus: 10
-  dotBonus: 10
+  freezeBonus: 0
+  dotBonus: 15
   shockBonus: 10
-  aggressionBonus: 10
-  multiTargetBonus: 10
+  aggressionBonus: 5
+  multiTargetBonus: 0
   obstructionPenalty: 10
-  lowHPCautionPenalty: 10
-  survivalInstinctBonus: 10
+  lowHPCautionPenalty: 15
+  survivalInstinctBonus: 20
   enemyCloseBonus: 10
-  attackFrozenBonus: 10
-  allyHealBonus: 10
-  guaranteedAppearanceEnabled: 1
+  attackFrozenBonus: 5
+  allyHealBonus: 20
+  guaranteedAppearanceEnabled: 0
   guaranteedEveryXActions: 3
-  guaranteedExactSlotEnabled: 1
+  guaranteedExactSlotEnabled: 0
   guaranteedExactSlot: 1
