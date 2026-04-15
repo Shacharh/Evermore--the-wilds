@@ -25,7 +25,7 @@ MonoBehaviour:
   survivalInstinctBonus: 20
   enemyCloseBonus: 10
   attackFrozenBonus: 5
-  allyHealBonus: 20
+  allyHealBonus: 30
   guaranteedAppearanceEnabled: 0
   guaranteedEveryXActions: 3
   guaranteedExactSlotEnabled: 0

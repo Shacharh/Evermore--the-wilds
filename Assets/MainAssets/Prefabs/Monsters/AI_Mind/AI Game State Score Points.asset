@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: AI Game State Score Points
   m_EditorClassIdentifier: Assembly-CSharp::AIGameStateScorePoints
   focusFireHPThreshold: 0.5
-  lowHPCautionThreshold: 0.25
+  lowHPCautionThreshold: 0.3
   dangerHPThreshold: 0.3
-  repositionPenalty: 3
+  repositionPenalty: 10
   unknownStatusScore: 5
   obstructedDamageMultiplier: 0.5
   damageRollMidpoint: 0.925
@@ -23,7 +23,7 @@ MonoBehaviour:
   firstActorFatigueLimit: 3
   firstActorFatiguePenalty: 60
   repetitionPenalty: 25
-  killShotBonus: 100
+  killShotBonus: 75
   damageEfficiencyMultiplier: 15
   focusFireBonus: 30
   freezeBonus: 40
@@ -39,4 +39,4 @@ MonoBehaviour:
   attackFrozenBonus: 35
   freezeBonusTurnDuration: 2
   allyLowHPThreshold: 0.5
-  allyHealBonus: 40
+  allyHealBonus: 50
