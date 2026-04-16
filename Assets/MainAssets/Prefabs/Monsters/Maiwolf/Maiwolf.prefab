@@ -88,7 +88,6 @@ MonoBehaviour:
   anim: {fileID: 2648511698983056934}
   gridManager: {fileID: 0}
   stageConfig: {fileID: 11400000, guid: 8ad1c409ab618f049986d2c0c7c1bda1, type: 2}
-  isFlying: 0
   dodgeEffectiveness: 0.4
   obstructionConfig: {fileID: 11400000, guid: f31d9c0d1c582fd4aa15ae27a1196141, type: 2}
 --- !u!114 &735031748614082259
@@ -868,7 +867,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4506510151132973733, guid: 8f41bbc315dbe224185686c52e012982, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -0.595
       objectReference: {fileID: 0}
     - target: {fileID: 4506510151132973733, guid: 8f41bbc315dbe224185686c52e012982, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -882,6 +881,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5299684576892288162, guid: 8f41bbc315dbe224185686c52e012982, type: 3}
+      propertyPath: m_PresetInfoIsWorld
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6842870400179317273, guid: 8f41bbc315dbe224185686c52e012982, type: 3}
       propertyPath: m_Name
       value: Unit_Identifier
@@ -889,7 +892,7 @@ PrefabInstance:
     - target: {fileID: 7705015472914541334, guid: 8f41bbc315dbe224185686c52e012982, type: 3}
       propertyPath: m_Material
       value: 
-      objectReference: {fileID: 2100000, guid: 2daae15b14ab90343b4a2b6e7470fa3e, type: 2}
+      objectReference: {fileID: 2100000, guid: e3bd10826e609ef4da753a2349f3ba1a, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

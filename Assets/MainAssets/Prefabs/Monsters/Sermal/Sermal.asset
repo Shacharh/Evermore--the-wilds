@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterData
   monsterId: Sermal
   displayName: Sermal
-  elementType: Wind
+  elementType: Poison
   isFlying: 0
   baseHP: 250
   baseAttack: 125
