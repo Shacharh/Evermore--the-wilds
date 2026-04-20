@@ -28,11 +28,17 @@ public class AttackEnum : MonoBehaviour
         status
     }
 
-    public enum AttackTarget
+    /// <summary>
+    /// Which team the attack can hit.
+    /// enemy  — targets the opposing team only.
+    /// ally   — targets monsters on the same team (including self).
+    /// self   — instantly targets only the monster using the attack; no selection UI.
+    /// </summary>
+    public enum AttackTargetTeam
     {
-        self,
-        singleTarget,
-        AOE
+        enemy,
+        ally,
+        self
     }
 
     public enum AttackTargetShape
