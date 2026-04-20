@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterData
   monsterId: Scarobo
   displayName: Scarobo
-  elementType: Water
+  elementType: Electric
+  isFlying: 0
   baseHP: 450
   baseAttack: 200
   baseDefense: 250
@@ -22,11 +23,11 @@ MonoBehaviour:
   baseCritRate: 20
   baseCritMod: 50
   baseDodge: 10
-  moveCost: 1
   MovementAnimationBoolean: Movment
   DoamageAnimationTrigger: Hit
   DogeAnimationTrigger: 
   DeathAnimationTrigger: Death
+  personality: {fileID: 0}
   movePool:
   - attack: {fileID: 11400000, guid: 252e20731444d2541a5b85575d6bd6e4, type: 2}
     levelLearned: 0
