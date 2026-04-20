@@ -104,12 +104,24 @@ public class MonsterAIBrain
             int        attackCost = attack.ConsumeActionPoints + shockCost;
             if (attackCost > ctx.AvailableAP) continue;
 
-            // Self-targeting (e.g. self-heal) — scored separately against ctx.Self
-            if (attack.Target == AttackEnum.AttackTarget.self)
+            // Self-only: instantly targets the caster with no selection.
+            if (attack.TargetTeam == AttackEnum.AttackTargetTeam.self)
             {
                 float score = ScoreSelfAction(ctx, attack) + Jitter();
                 if (score > 0f)
                     list.Add(new AttackAction { AttackIndex = i, Target = ctx.Self, Score = score });
+                continue;
+            }
+
+            // Ally-targeting: heals or buffs monsters on the same team.
+            if (attack.TargetTeam == AttackEnum.AttackTargetTeam.ally)
+            {
+                foreach (var ally in GetAllyTargetsInRange(ctx.SelfTile, attack, ctx))
+                {
+                    float score = ScoreAllyAction(ctx, attack, ally) + Jitter();
+                    if (score > 0f)
+                        list.Add(new AttackAction { AttackIndex = i, Target = ally, Score = score });
+                }
                 continue;
             }
 
@@ -135,6 +147,28 @@ public class MonsterAIBrain
                 int dist       = ctx.Grid.GetDistanceBetweenTiles(ctx.SelfTile, destTile);
                 int moveAPCost = Mathf.CeilToInt((float)dist / tilesPerAP) + shockCost;
                 if (moveAPCost + attackCost > ctx.AvailableAP) continue;
+
+                // Self-only attacks don't benefit from repositioning.
+                if (attack.TargetTeam == AttackEnum.AttackTargetTeam.self) continue;
+
+                if (attack.TargetTeam == AttackEnum.AttackTargetTeam.ally)
+                {
+                    foreach (var ally in GetAllyTargetsInRange(destTile, attack, ctx))
+                    {
+                        float score = ScoreAllyAction(ctx, attack, ally)
+                                    - _sp.repositionPenalty
+                                    + Jitter();
+                        if (score > 0f)
+                            list.Add(new MoveAndAttackAction
+                            {
+                                MoveTo      = destTile,
+                                AttackIndex = i,
+                                Target      = ally,
+                                Score       = score
+                            });
+                    }
+                    continue;
+                }
 
                 foreach (var target in GetTargetsInRange(destTile, attack, ctx))
                 {
@@ -192,7 +226,7 @@ public class MonsterAIBrain
             score += _sp.focusFireBonus + (p != null ? p.focusFireBonus : 0f);
 
         // ── AoE multi-target: base + bonus per extra target ──────────────────
-        if (attack.Target == AttackEnum.AttackTarget.AOE)
+        if (attack.RangeTargetShapeSize > 1)
         {
             int extraTargets = CountPlayersInAttackRangeFrom(fromTile, attack, ctx) - 1;
             if (extraTargets > 0)
@@ -390,6 +424,46 @@ public class MonsterAIBrain
             if (player.CurrentTile != null && tileSet.Contains(player.CurrentTile))
                 result.Add(player);
         return result;
+    }
+
+    /// <summary>
+    /// Returns all living allies (including Self) that are within the attack's range/shape
+    /// when launched from <paramref name="origin"/>.
+    /// </summary>
+    private List<Monster> GetAllyTargetsInRange(Tile origin, AttackData attack, AIContext ctx)
+    {
+        var result  = new List<Monster>();
+        if (origin == null) return result;
+        var tileSet = new HashSet<Tile>(
+            ctx.Grid.GetTilesInAttackShape(origin, attack.Range, attack.TargetShape));
+
+        // Include self
+        if (ctx.SelfTile != null && tileSet.Contains(ctx.SelfTile))
+            result.Add(ctx.Self);
+
+        // Include other allies
+        foreach (var ally in ctx.AllyMonsters)
+            if (ally != null && ally.IsAlive && ally.CurrentTile != null
+                && tileSet.Contains(ally.CurrentTile))
+                result.Add(ally);
+
+        return result;
+    }
+
+    /// <summary>
+    /// Scores an ally-targeting action (e.g. ally heal).
+    /// Returns a positive score only when the target is actually injured.
+    /// </summary>
+    private float ScoreAllyAction(AIContext ctx, AttackData attack, Monster ally)
+    {
+        if (!HasHealEffect(attack)) return 0f;
+
+        MonsterPersonality p  = GetPersonality(ctx.Self);
+        float allyHPPct       = (float)ally.CurrentHP / Mathf.Max(1, ally.MaxHP);
+        float healBonus       = _sp.allyHealBonus + (p != null ? p.allyHealBonus : 0f);
+
+        if (allyHPPct >= _sp.allyLowHPThreshold) return 0f;
+        return healBonus * (1f - allyHPPct); // higher score the more hurt the ally is
     }
 
     private int CountPlayersInAttackRangeFrom(Tile origin, AttackData attack, AIContext ctx)
