@@ -625,6 +625,17 @@ public class Monster : MonoBehaviour
         if (isRanged)               baseDamage *= attack.InDirectHitPercent;
         baseDamage                             *= obstructionDamageMult;   // 1.0 if unobstructed
 
+        // ── Type matchup multiplier ───────────────────────────────────────────
+        // Reads as: "how does a [attack.Element] attack affect a [defenderType] monster?"
+        TypeMatchupTable matchupTable = GameInitializer.Instance?.typeMatchupTable;
+        if (matchupTable != null)
+        {
+            float typeMult = matchupTable.GetMultiplier(target.data.elementType, attack.Element);
+            baseDamage *= typeMult;
+            if (typeMult != 1f)
+                Debug.Log($"[TypeMatchup] {attack.Element} attack on {target.data.elementType} monster → x{typeMult:F2}");
+        }
+
         return Mathf.Max(1, Mathf.FloorToInt(baseDamage * Random.Range(0.85f, 1f)));
     }
     #endregion

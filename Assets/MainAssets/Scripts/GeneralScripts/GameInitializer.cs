@@ -11,6 +11,11 @@ public class GameInitializer : MonoBehaviour
     //[Header("Databases")]
     public AttackDatabase attackDatabase;
 
+    [Header("Type System")]
+    [Tooltip("Assign the TypeMatchupTable asset here.\n" +
+             "Create one via: Assets > Create > Evermore > Type Matchup Table")]
+    public TypeMatchupTable typeMatchupTable;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
