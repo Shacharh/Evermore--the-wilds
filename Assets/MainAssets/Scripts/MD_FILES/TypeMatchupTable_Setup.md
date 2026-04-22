@@ -123,4 +123,3 @@ A debug log is printed whenever the multiplier is not 1.0:
 - Monster element type is set on `MonsterData` under **Monster General > Element Type**.
 - Attack element type is set on `AttackData` under **Element > Element**.
 - The standalone editor window can be found under **Window > Type Matchup Editor** if you ever close it and need it back.
-</thinking>
