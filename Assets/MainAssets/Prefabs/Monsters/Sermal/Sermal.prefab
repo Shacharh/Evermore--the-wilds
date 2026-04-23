@@ -975,6 +975,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 7
       objectReference: {fileID: 0}
+    - target: {fileID: 7819634541519678047, guid: 3d58ad831109cc240b716b4718da9c3c, type: 3}
+      propertyPath: m_RenderingLayerMask
+      value: 5
+      objectReference: {fileID: 0}
     - target: {fileID: 8181732778087345490, guid: 3d58ad831109cc240b716b4718da9c3c, type: 3}
       propertyPath: m_Layer
       value: 7
