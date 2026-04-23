@@ -15,6 +15,7 @@ MonoBehaviour:
   monsterId: "N\xEDdpettite"
   displayName: "N\xEDdpettite"
   elementType: Fire
+  isFlying: 1
   baseHP: 260
   baseAttack: 270
   baseDefense: 170
@@ -22,11 +23,11 @@ MonoBehaviour:
   baseCritRate: 65
   baseCritMod: 50
   baseDodge: 45
-  moveCost: 1
   MovementAnimationBoolean: Movment
   DoamageAnimationTrigger: Hit
   DogeAnimationTrigger: 
   DeathAnimationTrigger: Death
+  personality: {fileID: 0}
   movePool:
   - attack: {fileID: 11400000, guid: 9242119da1029b1469789b36b58027c3, type: 2}
     levelLearned: 0

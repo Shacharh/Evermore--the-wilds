@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 92ed900871858eb46b592e7dbce365b1, type: 3}
+  m_Name: AI Game State Score Points
+  m_EditorClassIdentifier: Assembly-CSharp::AIGameStateScorePoints
+  focusFireHPThreshold: 0.5
+  lowHPCautionThreshold: 0.3
+  dangerHPThreshold: 0.3
+  repositionPenalty: 10
+  unknownStatusScore: 5
+  obstructedDamageMultiplier: 0.5
+  damageRollMidpoint: 0.925
+  randomJitter: 7.5
+  firstActorFatigueLimit: 3
+  firstActorFatiguePenalty: 60
+  repetitionPenalty: 25
+  killShotBonus: 75
+  damageEfficiencyMultiplier: 15
+  focusFireBonus: 30
+  freezeBonus: 40
+  dotBonus: 20
+  shockBonus: 15
+  aggressionBonus: 5
+  multiTargetBonus: 15
+  obstructionPenalty: 15
+  lowHPCautionPenalty: 25
+  survivalInstinctBonus: 30
+  enemyCloseThreshold: 3
+  enemyCloseBonus: 25
+  attackFrozenBonus: 35
+  freezeBonusTurnDuration: 2
+  allyLowHPThreshold: 0.5
+  allyHealBonus: 50
