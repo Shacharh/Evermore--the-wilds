@@ -41,6 +41,10 @@ public class InputManager : MonoBehaviour
     [SerializeField] private float attackJitterFrequency  = 10f;
     [Tooltip("Highlight color shown on AOE footprint tiles when hovering.")]
     [SerializeField] private Color aoeFootprintColor = new Color(1f, 0.5f, 0.05f, 0.75f);
+    [Tooltip("Bright pulse colour A for ally-targeting attacks.")]
+    [SerializeField] private Color allyPulseColorA = new Color(0.1f, 1f, 0.2f, 0.95f);
+    [Tooltip("Dim pulse colour B for ally-targeting attacks.")]
+    [SerializeField] private Color allyPulseColorB = new Color(0.02f, 0.55f, 0.05f, 0.50f);
 
     // -- Input Actions ---------------------------------------------------------
 
@@ -725,7 +729,33 @@ public class InputManager : MonoBehaviour
             return;
         }
 
-        bool isAOE = selectedAttackData.RangeTargetShapeSize > 1;
+        // ── Self-only: no targeting UI — execute immediately on the caster ──
+        if (selectedAttackData.TargetTeam == AttackEnum.AttackTargetTeam.self)
+        {
+            if (playerTurnController != null &&
+                !playerTurnController.TrySpendAPForAttack(attackingMonster, selectedAttackData))
+            {
+                Debug.Log("[InputManager] Self attack cancelled — not enough AP.");
+                currentState     = InputState.Normal;
+                attackingMonster = null;
+                if (selectedTile != null) { selectedTile.SetSelected(false); selectedTile = null; }
+                return;
+            }
+
+            attackingMonster.ExecuteAttack(attackingMonster, selectedAttackIndex, selectedAttackData.IsDirect);
+            Debug.Log($"[InputManager] {attackingMonster.name} used '{selectedAttackData.DisplayName}' on itself.");
+
+            AttackInfoPanel.Hide();
+            currentState       = InputState.Normal;
+            attackingMonster   = null;
+            selectedAttackData = null;
+            if (selectedTile != null) { selectedTile.SetSelected(false); selectedTile = null; }
+            playerTurnController?.CheckAutoEndTurn();
+            return;
+        }
+
+        bool isAOE       = selectedAttackData.RangeTargetShapeSize > 1;
+        bool targetAlly  = selectedAttackData.TargetTeam == AttackEnum.AttackTargetTeam.ally;
 
         // ── 1. Aim-zone: all tiles the attacker can project the attack center onto
         //      AOE   → plain radius circle (same appearance as single-target)
@@ -738,35 +768,46 @@ public class InputManager : MonoBehaviour
         // ── 2. Dim-highlight every aim-zone tile so the range is visible ────
         gridManager.HighlightTiles(allShapeTiles, attackRangeColor, 0.05f);
 
+        // Pick pulse colours based on whether we're targeting allies or enemies.
+        Color pulseA = targetAlly ? allyPulseColorA : attackPulseColorA;
+        Color pulseB = targetAlly ? allyPulseColorB : attackPulseColorB;
+
         if (isAOE)
         {
             // For AOE: any tile in the aim zone is a valid click target
             // (footprint preview is shown on hover in HandleTileHovering)
             validTargetTiles = allShapeTiles;
 
-            // Pulse any enemy monsters in the full aim zone so the player can see
-            // which ones might be hit
+            // Pulse monsters of the correct team so the player can see who might be hit.
             foreach (var t in validTargetTiles)
             {
                 Monster m = t.GetMonster();
-                if (m != null && m.IsEnemy != attackingMonster.IsEnemy)
+                bool isValidTeam = targetAlly
+                    ? m != null && m.IsEnemy == attackingMonster.IsEnemy
+                    : m != null && m.IsEnemy != attackingMonster.IsEnemy;
+                if (isValidTeam)
                 {
-                    t.StartPulse(attackPulseColorA, attackPulseColorB, attackPulseSpeed);
+                    t.StartPulse(pulseA, pulseB, attackPulseSpeed);
                     t.StartJitter(attackJitterAmplitude, attackJitterFrequency);
                 }
             }
         }
         else
         {
-            // ── Single target: only tiles with a valid opposing monster ──────
+            // ── Single target: only tiles with a valid monster of the correct team ──
             validTargetTiles = allShapeTiles.FindAll(t =>
-                t.Occupation == Tile.OccupationType.Monster &&
-                t.GetMonster() != null &&
-                t.GetMonster().IsEnemy != attackingMonster.IsEnemy);
+            {
+                if (t.Occupation != Tile.OccupationType.Monster) return false;
+                Monster m = t.GetMonster();
+                if (m == null) return false;
+                return targetAlly
+                    ? m.IsEnemy == attackingMonster.IsEnemy
+                    : m.IsEnemy != attackingMonster.IsEnemy;
+            });
 
             foreach (var t in validTargetTiles)
             {
-                t.StartPulse(attackPulseColorA, attackPulseColorB, attackPulseSpeed);
+                t.StartPulse(pulseA, pulseB, attackPulseSpeed);
                 t.StartJitter(attackJitterAmplitude, attackJitterFrequency);
             }
 
@@ -814,12 +855,16 @@ public class InputManager : MonoBehaviour
                 selectedAttackData.RangeTargetShapeSize,
                 selectedAttackData.TargetShape);
 
+            bool targetAllyAOE = selectedAttackData.TargetTeam == AttackEnum.AttackTargetTeam.ally;
             var targets = new System.Collections.Generic.List<Monster>();
             foreach (Tile ft in footprint)
             {
                 Monster m = ft.GetMonster();
-                if (m != null && m.IsEnemy != attackingMonster.IsEnemy)
-                    targets.Add(m);
+                if (m == null) continue;
+                bool validTeam = targetAllyAOE
+                    ? m.IsEnemy == attackingMonster.IsEnemy
+                    : m.IsEnemy != attackingMonster.IsEnemy;
+                if (validTeam) targets.Add(m);
             }
 
             if (targets.Count == 0)

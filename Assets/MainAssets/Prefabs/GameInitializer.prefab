@@ -45,7 +45,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1394682aa60ef8941bcd17997452e192, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameInitializer
-  attackDatabase: {fileID: 11400000, guid: ea9bcebef0a04b2418fe662dd01da20f, type: 2}
+  attackDatabase: {fileID: 11400000, guid: de47781e07c176240a8709d6a2de7fe1, type: 2}
+  typeMatchupTable: {fileID: 11400000, guid: 0a84dc74465eb9a47a56a13a1a5c92a2, type: 2}
 --- !u!114 &6084655521446035949
 MonoBehaviour:
   m_ObjectHideFlags: 0

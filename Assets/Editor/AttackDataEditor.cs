@@ -15,6 +15,7 @@ public class AttackDataEditor : Editor
     private SerializedProperty guaranteedHit;
     private SerializedProperty accuracy;
     private SerializedProperty range;
+    private SerializedProperty targetTeam;
     private SerializedProperty targetShape;
     private SerializedProperty rangeTargetShapeSize;
     private SerializedProperty isDirect;
@@ -34,6 +35,7 @@ public class AttackDataEditor : Editor
         guaranteedHit = serializedObject.FindProperty("guaranteedHit");
         accuracy = serializedObject.FindProperty("accuracy");
         range = serializedObject.FindProperty("range");
+        targetTeam = serializedObject.FindProperty("targetTeam");
         targetShape = serializedObject.FindProperty("targetShape");
         rangeTargetShapeSize = serializedObject.FindProperty("rangeTargetShapeSize");
         isDirect = serializedObject.FindProperty("isDirect");
@@ -174,6 +176,7 @@ public class AttackDataEditor : Editor
             EditorGUILayout.PropertyField(accuracy);
 
         EditorGUILayout.PropertyField(range);
+        EditorGUILayout.PropertyField(targetTeam);
         EditorGUILayout.PropertyField(targetShape);
         EditorGUILayout.PropertyField(rangeTargetShapeSize);
 

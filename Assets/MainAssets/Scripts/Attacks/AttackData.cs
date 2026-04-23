@@ -26,7 +26,7 @@ public class AttackData : ScriptableObject
 
     [Header("Targeting")]
     [SerializeField] private int range = 1;
-    [SerializeField] private AttackEnum.AttackTarget target;
+    [SerializeField] private AttackEnum.AttackTargetTeam targetTeam = AttackEnum.AttackTargetTeam.enemy;
     [SerializeField] private AttackEnum.AttackTargetShape targetShape;
     [SerializeField] private int rangeTargetShapeSize = 1;
 
@@ -45,7 +45,7 @@ public class AttackData : ScriptableObject
     public bool GuaranteedHit => guaranteedHit;
     public int Accuracy => guaranteedHit ? 100 : accuracy;
     public int Range => range;
-    public AttackEnum.AttackTarget Target => target;
+    public AttackEnum.AttackTargetTeam TargetTeam => targetTeam;
     public AttackEnum.AttackTargetShape TargetShape => targetShape;
     public int RangeTargetShapeSize => rangeTargetShapeSize;
     public bool IsDirect => isDirect;

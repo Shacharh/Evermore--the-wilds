@@ -6,7 +6,7 @@ public class MonsterData : ScriptableObject
     [Header("Monster General")]
     public string monsterId;
     public string displayName;
-    public string elementType;
+    public AttackEnum.ElementType elementType;
     [Tooltip("Flying monsters ignore ground obstructions and can pass over them.\n" +
              "They still cannot LAND on an obstructed tile.")]
     public bool isFlying;
