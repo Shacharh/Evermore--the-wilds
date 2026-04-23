@@ -7,7 +7,8 @@ public class AttackEnum : MonoBehaviour
         Fire,
         Water,
         Wind,
-        Grass,
+        Earth,
+        Poison,
         Electric
     }
 
