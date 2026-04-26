@@ -72,7 +72,9 @@ Material:
     - _RefractionModel: 0
     - _RenderQueueType: 1
     - _RequireSplitLighting: 0
-    - _RippleAmount: 2.87
+    - _RippleAmount: 2.24
+    - _RippleDensity: 10.2
+    - _RippleStreangth: 2
     - _SrcBlend: 1
     - _StencilRef: 0
     - _StencilRefDepth: 1
@@ -94,19 +96,20 @@ Material:
     - _TransparentSortPriority: 0
     - _TransparentWritingMotionVec: 0
     - _TransparentZWrite: 0
+    - _Transperancy: 0.085
     - _UseShadowThreshold: 0
-    - _VertexOffset: 0.05
+    - _VertexOffset: 0.0836
     - _VoronoiSpeed: 5.78
     - _ZTestDepthEqualForOpaque: 3
     - _ZTestGBuffer: 4
     - _ZTestTransparent: 4
     - _ZWrite: 1
-    - _foamStreangth: 11.97
+    - _foamStreangth: 9.52
     m_Colors:
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
     - _RippleColor: {r: 1, g: 1, b: 1, a: 1}
-    - _RippleSpeed: {r: 0.3, g: 0, b: 0, a: 0}
+    - _RippleSpeed: {r: -0.3, g: -0.4, b: 0, a: 0}
     - _Water_Color: {r: 0.09019607, g: 0.23006776, b: 0.7647059, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
