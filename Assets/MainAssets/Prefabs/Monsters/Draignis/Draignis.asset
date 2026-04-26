@@ -14,12 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterData
   monsterId: Draignis
   displayName: Draignis
-  elementType: Fire
+  elementType: 0
   isFlying: 0
   baseHP: 400
   baseAttack: 300
   baseDefense: 220
-  baseSpeed: 4
+  baseSpeed: 20
   baseCritRate: 33
   baseCritMod: 50
   baseDodge: 15

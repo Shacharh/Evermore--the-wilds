@@ -14,12 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterData
   monsterId: "N\xEDdpettite"
   displayName: "N\xEDdpettite"
-  elementType: Fire
+  elementType: 0
   isFlying: 1
-  baseHP: 260
+  baseHP: 270
   baseAttack: 270
-  baseDefense: 170
-  baseSpeed: 5
+  baseDefense: 180
+  baseSpeed: 50
   baseCritRate: 65
   baseCritMod: 50
   baseDodge: 45

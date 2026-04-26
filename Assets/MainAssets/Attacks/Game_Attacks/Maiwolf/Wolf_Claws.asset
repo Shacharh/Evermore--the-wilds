@@ -15,7 +15,7 @@ MonoBehaviour:
   id: Wolf_Claws
   displayName: Wolf Claws
   description: attack an enemy with his claws. May freeze target
-  element: 1
+  element: 3
   effects:
   - category: 0
     value: 150

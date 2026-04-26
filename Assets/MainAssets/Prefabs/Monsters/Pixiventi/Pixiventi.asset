@@ -15,11 +15,11 @@ MonoBehaviour:
   monsterId: Pixiventi
   displayName: Pixiventi
   elementType: 2
-  isFlying: 1
+  isFlying: 0
   baseHP: 250
   baseAttack: 170
   baseDefense: 100
-  baseSpeed: 6
+  baseSpeed: 30
   baseCritRate: 75
   baseCritMod: 2
   baseDodge: 30
