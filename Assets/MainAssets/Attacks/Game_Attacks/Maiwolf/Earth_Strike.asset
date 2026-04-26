@@ -15,7 +15,7 @@ MonoBehaviour:
   id: Earth_Strike
   displayName: Earth Strike
   description: hit the ground, hurting everyone around him
-  element: 1
+  element: 3
   effects:
   - category: 0
     value: 100
@@ -42,7 +42,7 @@ MonoBehaviour:
   guaranteedHit: 0
   accuracy: 90
   range: 1
-  target: 0
+  targetTeam: 0
   targetShape: 1
   rangeTargetShapeSize: 3
   isDirect: 1

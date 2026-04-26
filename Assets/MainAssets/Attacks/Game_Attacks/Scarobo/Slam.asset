@@ -15,7 +15,7 @@ MonoBehaviour:
   id: Slam
   displayName: Slam
   description: Slam his fist on an enemy. May shock target
-  element: 4
+  element: 5
   effects:
   - category: 0
     value: 120
@@ -42,7 +42,7 @@ MonoBehaviour:
   guaranteedHit: 0
   accuracy: 85
   range: 1
-  target: 0
+  targetTeam: 0
   targetShape: 0
   rangeTargetShapeSize: 1
   isDirect: 1
