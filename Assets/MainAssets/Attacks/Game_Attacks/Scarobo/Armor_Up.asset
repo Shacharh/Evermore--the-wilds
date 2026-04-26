@@ -32,7 +32,7 @@ MonoBehaviour:
   guaranteedHit: 1
   accuracy: 100
   range: 1
-  targetTeam: 0
+  targetTeam: 2
   targetShape: 0
   rangeTargetShapeSize: 1
   isDirect: 1
