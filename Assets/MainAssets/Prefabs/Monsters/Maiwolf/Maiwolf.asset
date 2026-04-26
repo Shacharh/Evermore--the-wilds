@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterData
   monsterId: Maiwolf
   displayName: Maiwolf
-  elementType: Water
+  elementType: 3
   isFlying: 0
   baseHP: 450
   baseAttack: 200
