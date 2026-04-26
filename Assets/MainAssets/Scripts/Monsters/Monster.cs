@@ -397,6 +397,9 @@ public class Monster : MonoBehaviour
         effectTarget.currentHP = newHP;
         effectTarget.OnHPChanged?.Invoke(effectTarget.currentHP, effectTarget.MaxHP);
 
+        if (damage > 0)
+            FloatingDamageNumber.Spawn(effectTarget.transform.position, damage);
+
         if (damage <= 0)
         {
             BattleMessage.Show($"{effectTarget.customeName} dodged the attack!", 2.5f);
@@ -420,8 +423,13 @@ public class Monster : MonoBehaviour
     {
         // CalculateDamage returns a negative value for heals, so subtracting it adds HP.
         int healAmount = attacker.CalculateDamage(target, attackData, isDirect, effect);
+        int prevHP = effectTarget.currentHP;
         effectTarget.currentHP = Mathf.Min(effectTarget.MaxHP, effectTarget.currentHP - healAmount);
         effectTarget.OnHPChanged?.Invoke(effectTarget.currentHP, effectTarget.MaxHP);
+
+        int actualHeal = effectTarget.currentHP - prevHP;
+        if (actualHeal > 0)
+            FloatingDamageNumber.Spawn(effectTarget.transform.position, actualHeal, isHeal: true);
 
         Debug.Log($"[{effectTarget.gameObject.name}] healed — " +
                   $"HP: {effectTarget.currentHP}/{effectTarget.MaxHP}");

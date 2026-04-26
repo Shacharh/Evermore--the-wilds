@@ -45,6 +45,7 @@ public class MonsterInfoPanel : MonoBehaviour
     private TextMeshProUGUI hpText;
     private TextMeshProUGUI statsText;
     private TextMeshProUGUI stagesText;   // right column — live buff/debuff stages
+    private UnityEngine.UI.Image typeIconImage; // element type sprite (top-left of title bar)
 
     // ── State ─────────────────────────────────────────────────────────────────
 
@@ -119,6 +120,15 @@ public class MonsterInfoPanel : MonoBehaviour
                                               : "<color=#66FF88>Ally</color>";
 
         titleText.text = $"<b>{displayName}</b>  Lv.{currentMonster.Level}  {side}";
+
+        // Update the type icon sprite
+        if (typeIconImage != null && currentMonster.Data != null)
+        {
+            var lib = TypeIconLibrary.Instance;
+            var sprite = lib != null ? lib.GetIcon(currentMonster.Data.elementType) : null;
+            typeIconImage.sprite  = sprite;
+            typeIconImage.enabled = sprite != null;
+        }
 
         hpText.text = $"HP   <color=#66FF88>{currentMonster.CurrentHP}</color> / {currentMonster.MaxHP}";
 
@@ -209,11 +219,23 @@ public class MonsterInfoPanel : MonoBehaviour
         barRT.sizeDelta        = new Vector2(0f, 50f);
         barGO.AddComponent<Image>().color = new Color(0.15f, 0.15f, 0.25f, 1f);
 
+        // ── Type icon (inside top bar, left side) ────────────────────────────
+        var iconGO = MakeChild(barGO, "TypeIcon");
+        var iconRT = iconGO.GetComponent<RectTransform>();
+        iconRT.anchorMin        = new Vector2(0f, 0.5f);
+        iconRT.anchorMax        = new Vector2(0f, 0.5f);
+        iconRT.pivot            = new Vector2(0f, 0.5f);
+        iconRT.anchoredPosition = new Vector2(8f, 0f);
+        iconRT.sizeDelta        = new Vector2(32f, 32f);
+        typeIconImage           = iconGO.AddComponent<UnityEngine.UI.Image>();
+        typeIconImage.preserveAspect = true;
+        typeIconImage.enabled   = false; // hidden until a sprite is assigned
+
         // ── Title (inside top bar) ────────────────────────────────────────────
         var titleGO = MakeChild(barGO, "Title");
         var titleRT = titleGO.GetComponent<RectTransform>();
         titleRT.anchorMin = Vector2.zero; titleRT.anchorMax = Vector2.one;
-        titleRT.offsetMin = new Vector2(14f, 4f); titleRT.offsetMax = new Vector2(-14f, -4f);
+        titleRT.offsetMin = new Vector2(46f, 4f); titleRT.offsetMax = new Vector2(-14f, -4f);
         titleText = titleGO.AddComponent<TextMeshProUGUI>();
         titleText.fontSize           = 22f;
         titleText.color              = Color.white;

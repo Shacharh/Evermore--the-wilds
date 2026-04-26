@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterData
   monsterId: Scarobo
   displayName: Scarobo
-  elementType: Electric
+  elementType: 5
   isFlying: 0
   baseHP: 450
   baseAttack: 200

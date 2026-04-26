@@ -1,0 +1,99 @@
+using System.Collections;
+using UnityEngine;
+using TMPro;
+
+/// <summary>
+/// Spawns a world-space floating number above a monster when it takes damage or
+/// is healed.  No scene setup required — call FloatingDamageNumber.Spawn() from
+/// anywhere and the object manages its own lifetime.
+/// </summary>
+public class FloatingDamageNumber : MonoBehaviour
+{
+    // ── Public API ────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Spawns a floating number at <paramref name="worldPos"/>.
+    /// </summary>
+    /// <param name="worldPos">World position of the target monster.</param>
+    /// <param name="amount">Absolute value to display (positive integer).</param>
+    /// <param name="isHeal">True → green "+N" text.</param>
+    /// <param name="isCrit">True → gold, larger text with a "!" prefix.</param>
+    public static void Spawn(Vector3 worldPos, int amount, bool isHeal = false, bool isCrit = false)
+    {
+        if (amount <= 0) return;
+        var go = new GameObject("FloatingDamageNumber");
+        go.AddComponent<FloatingDamageNumber>().Init(worldPos, amount, isHeal, isCrit);
+    }
+
+    // ── Internal ──────────────────────────────────────────────────────────────
+
+    private void Init(Vector3 worldPos, int amount, bool isHeal, bool isCrit)
+    {
+        // Spawn slightly above the monster's feet
+        transform.position = worldPos + Vector3.up * 2.2f;
+
+        var tmp = gameObject.AddComponent<TextMeshPro>();
+        tmp.alignment   = TextAlignmentOptions.Center;
+        tmp.sortingOrder = 20;
+
+        if (isHeal)
+        {
+            tmp.text      = $"+{amount}";
+            tmp.color     = new Color(0.2f, 1f, 0.35f);
+            tmp.fontSize  = 6f;
+            tmp.fontStyle = FontStyles.Bold;
+        }
+        else if (isCrit)
+        {
+            tmp.text      = $"!{amount}!";
+            tmp.color     = new Color(1f, 0.85f, 0f);
+            tmp.fontSize  = 8f;
+            tmp.fontStyle = FontStyles.Bold;
+        }
+        else
+        {
+            tmp.text      = $"-{amount}";
+            tmp.color     = new Color(1f, 0.3f, 0.3f);
+            tmp.fontSize  = 6f;
+            tmp.fontStyle = FontStyles.Normal;
+        }
+
+        float drift = Random.Range(-0.25f, 0.25f);
+        StartCoroutine(Animate(tmp, drift));
+    }
+
+    private IEnumerator Animate(TextMeshPro tmp, float horizontalDrift)
+    {
+        const float duration   = 1.4f;
+        const float floatHeight = 1.8f;
+        const float fadeStart  = 0.55f; // fraction of duration when fade begins
+
+        Vector3 startPos = transform.position;
+        Color   baseColor = tmp.color;
+        float   elapsed   = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime; // unscaled so it works while paused
+            float t = elapsed / duration;
+
+            // Float upward with slight horizontal drift
+            transform.position = startPos + new Vector3(horizontalDrift * t, floatHeight * t, 0f);
+
+            // Face the camera (billboard)
+            if (Camera.main != null)
+                transform.forward = Camera.main.transform.forward;
+
+            // Fade out in the latter portion
+            float alpha = t < fadeStart
+                ? 1f
+                : Mathf.Lerp(1f, 0f, (t - fadeStart) / (1f - fadeStart));
+
+            tmp.color = new Color(baseColor.r, baseColor.g, baseColor.b, alpha);
+
+            yield return null;
+        }
+
+        Destroy(gameObject);
+    }
+}

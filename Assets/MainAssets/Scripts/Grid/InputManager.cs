@@ -126,6 +126,7 @@ public class InputManager : MonoBehaviour
     void Update()
     {
         HandleTileHovering();
+        HandleHotkeys();
 
         // Auto-find PlayerTurnController if TurnManager created it after Awake
         if (playerTurnController == null)
@@ -136,6 +137,25 @@ public class InputManager : MonoBehaviour
         {
             playerTurnController.onTurnEnd.AddListener(OnPlayerTurnEnded);
             _subscribedToTurnEnd = true;
+        }
+    }
+
+    /// <summary>
+    /// Keyboard shortcuts that work any time it is the player's turn.
+    ///   Space → pass turn (same as clicking End Turn)
+    /// </summary>
+    private void HandleHotkeys()
+    {
+        var kb = Keyboard.current;
+        if (kb == null) return;
+
+        if (kb.spaceKey.wasPressedThisFrame)
+        {
+            if (playerTurnController != null && playerTurnController.IsActive)
+            {
+                Debug.Log("[InputManager] Space pressed — passing turn.");
+                playerTurnController.OnEndTurnButtonPressed();
+            }
         }
     }
 
