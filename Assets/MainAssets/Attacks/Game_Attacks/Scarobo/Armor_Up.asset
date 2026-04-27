@@ -15,7 +15,7 @@ MonoBehaviour:
   id: Armor_Up
   displayName: Armor Up
   description: Raise defense stat for self
-  element: 4
+  element: 7
   effects:
   - category: 2
     value: 0
@@ -32,7 +32,7 @@ MonoBehaviour:
   guaranteedHit: 1
   accuracy: 100
   range: 1
-  target: 0
+  targetTeam: 2
   targetShape: 0
   rangeTargetShapeSize: 1
   isDirect: 1

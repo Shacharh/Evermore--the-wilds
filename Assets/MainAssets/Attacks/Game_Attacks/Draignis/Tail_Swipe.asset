@@ -15,7 +15,7 @@ MonoBehaviour:
   id: Tail_Swipe
   displayName: Tail Swipe
   description: hit an enemy with his tail
-  element: 0
+  element: 2
   effects:
   - category: 0
     value: 165
@@ -42,7 +42,7 @@ MonoBehaviour:
   guaranteedHit: 0
   accuracy: 100
   range: 1
-  target: 0
+  targetTeam: 0
   targetShape: 0
   rangeTargetShapeSize: 1
   isDirect: 1

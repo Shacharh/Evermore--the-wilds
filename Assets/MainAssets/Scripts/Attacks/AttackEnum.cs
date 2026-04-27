@@ -9,7 +9,9 @@ public class AttackEnum : MonoBehaviour
         Wind,
         Earth,
         Poison,
-        Electric
+        Electric,
+        Plant,
+        Metal
     }
 
     public enum StatusEffect
