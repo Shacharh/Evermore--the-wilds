@@ -27,7 +27,7 @@ Transform:
   m_GameObject: {fileID: 3194258045460261768}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -0.97567445, y: 0, z: -0.2740916}
+  m_LocalPosition: {x: -0.753, y: -0, z: -0.274}
   m_LocalScale: {x: 1.1279482, y: 1.1279478, z: 1.1279479}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -44,8 +44,8 @@ Light:
   serializedVersion: 12
   m_Type: 2
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 11.354331
-  m_Range: 10
+  m_Intensity: 4.8931694
+  m_Range: 6.01
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 0.5, y: 0.5}
@@ -82,18 +82,18 @@ Light:
   m_CullingMask:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_RenderingLayerMask: 1
+  m_RenderingLayerMask: 5
   m_Lightmapping: 4
   m_LightShadowCasterMode: 2
   m_AreaSize: {x: 1, y: 1}
   m_BounceIntensity: 1
-  m_ColorTemperature: 2808
+  m_ColorTemperature: 7413
   m_UseColorTemperature: 1
-  m_BoundingSphereOverride: {x: 14681.103, y: 1.8331856e+31, z: 8.480153e-33, w: 1.7086692e+19}
+  m_BoundingSphereOverride: {x: 0, y: 1, z: 0, w: 22.279}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ForceVisible: 0
-  m_ShadowRadius: 0
+  m_ShadowRadius: 0.84
   m_ShadowAngle: 0
   m_LightUnit: 0
   m_LuxAtDistance: 1
@@ -129,7 +129,7 @@ MonoBehaviour:
   m_AffectDiffuse: 1
   m_AffectSpecular: 1
   m_NonLightmappedOnly: 0
-  m_ShapeRadius: 0.025
+  m_ShapeRadius: 0.84
   m_SoftnessScale: 1
   m_UseCustomSpotLightShadowCone: 0
   m_CustomSpotLightShadowCone: 30
