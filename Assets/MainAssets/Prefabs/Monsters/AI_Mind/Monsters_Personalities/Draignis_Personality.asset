@@ -21,8 +21,8 @@ MonoBehaviour:
   aggressionBonus: 10
   multiTargetBonus: 30
   obstructionPenalty: 10
-  lowHPCautionPenalty: 20
-  survivalInstinctBonus: 20
+  lowHPCautionPenalty: 60
+  survivalInstinctBonus: 80
   enemyCloseBonus: 10
   attackFrozenBonus: 15
   allyHealBonus: 0
