@@ -14,15 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterPersonality
   killShotBonus: 20
   damageEfficiencyMultiplier: 15
-  focusFireBonus: 20
+  focusFireBonus: 10
   freezeBonus: 0
   dotBonus: 15
   shockBonus: 10
-  aggressionBonus: 20
+  aggressionBonus: 10
   multiTargetBonus: 30
   obstructionPenalty: 10
-  lowHPCautionPenalty: 15
-  survivalInstinctBonus: 10
+  lowHPCautionPenalty: 20
+  survivalInstinctBonus: 20
   enemyCloseBonus: 10
   attackFrozenBonus: 15
   allyHealBonus: 0

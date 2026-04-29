@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterPersonality
   killShotBonus: 20
   damageEfficiencyMultiplier: 15
-  focusFireBonus: 15
+  focusFireBonus: 5
   freezeBonus: 10
   dotBonus: 10
   shockBonus: 10
