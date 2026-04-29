@@ -18,7 +18,7 @@ MonoBehaviour:
   element: 2
   effects:
   - category: 0
-    value: 165
+    value: 145
     stageCount: 0
     selfInflicted: 0
     buffType: 0

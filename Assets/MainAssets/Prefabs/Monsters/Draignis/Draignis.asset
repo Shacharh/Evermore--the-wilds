@@ -17,7 +17,7 @@ MonoBehaviour:
   elementType: 0
   isFlying: 0
   baseHP: 400
-  baseAttack: 300
+  baseAttack: 280
   baseDefense: 220
   baseSpeed: 20
   baseCritRate: 33
