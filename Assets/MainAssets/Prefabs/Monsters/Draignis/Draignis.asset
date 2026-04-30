@@ -18,7 +18,7 @@ MonoBehaviour:
   isFlying: 0
   baseHP: 350
   baseAttack: 240
-  baseDefense: 175
+  baseDefense: 140
   baseSpeed: 20
   baseCritRate: 33
   baseCritMod: 50
