@@ -89,7 +89,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 9252
   m_UseColorTemperature: 1
-  m_BoundingSphereOverride: {x: 8.52e-43, y: 0.00059760036, z: 8.52e-43, w: 1e-45}
+  m_BoundingSphereOverride: {x: 1.3563128e-19, y: 1.3563156e-19, z: 2.6213528e+14, w: 4.3712434e+24}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ForceVisible: 0
@@ -5301,7 +5301,7 @@ ParticleSystem:
       serializedVersion: 2
       minMaxState: 0
       minColor: {r: 1, g: 1, b: 1, a: 1}
-      maxColor: {r: 0, g: 1, b: 0.5425916, a: 1}
+      maxColor: {r: 0.24870951, g: 0.6509434, b: 0.43202654, a: 1}
       maxGradient:
         serializedVersion: 2
         key0: {r: 1, g: 1, b: 1, a: 1}
@@ -6557,8 +6557,8 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     speedRange: {x: 0, y: 1}
-    tilesX: 1
-    tilesY: 1
+    tilesX: 8
+    tilesY: 5
     animationType: 0
     rowIndex: 0
     cycles: 1
