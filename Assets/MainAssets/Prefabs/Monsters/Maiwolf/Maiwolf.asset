@@ -16,9 +16,9 @@ MonoBehaviour:
   displayName: Maiwolf
   elementType: 3
   isFlying: 0
-  baseHP: 450
+  baseHP: 400
   baseAttack: 200
-  baseDefense: 250
+  baseDefense: 200
   baseSpeed: 20
   baseCritRate: 30
   baseCritMod: 1

@@ -501,6 +501,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 7
       objectReference: {fileID: 0}
+    - target: {fileID: -8709060579871635336, guid: 527cc00d3f629a84a8397d0d5e56c28b, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: ec619fc55edd2df4bb7a9d34f6105a5d, type: 2}
     - target: {fileID: -8679921383154817045, guid: 527cc00d3f629a84a8397d0d5e56c28b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -1105,6 +1109,10 @@ PrefabInstance:
       propertyPath: m_RenderingLayerMask
       value: 5
       objectReference: {fileID: 0}
+    - target: {fileID: 7743641725680446516, guid: 527cc00d3f629a84a8397d0d5e56c28b, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 03aeceaf0f6488a47830ed103dcb14dc, type: 2}
     - target: {fileID: 7776880187379920487, guid: 527cc00d3f629a84a8397d0d5e56c28b, type: 3}
       propertyPath: m_Layer
       value: 7

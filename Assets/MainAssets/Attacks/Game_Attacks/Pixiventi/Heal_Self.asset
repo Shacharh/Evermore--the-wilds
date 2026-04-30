@@ -10,39 +10,39 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5bec574241e95d64f874367ce5a4cc34, type: 3}
-  m_Name: Tail_Swipe
+  m_Name: Heal_Self
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
-  id: Tail_Swipe
-  displayName: Tail Swipe
-  description: hit an enemy with his tail
-  element: 0
+  id: Heal_Self
+  displayName: Heal self
+  description: Heal self. Cure statues affects
+  element: 2
   effects:
-  - category: 0
-    value: 125
+  - category: 1
+    value: 100
     stageCount: 0
-    selfInflicted: 0
+    selfInflicted: 1
     buffType: 0
     chance: 0
     isDebuff: 0
     duration: 1
-    isInstantHeal: 0
+    isInstantHeal: 1
     statusEffect: {fileID: 0}
   - category: 3
-    value: 165
+    value: 100
     stageCount: 0
-    selfInflicted: 0
+    selfInflicted: 1
     buffType: 0
-    chance: 50
+    chance: 100
     isDebuff: 0
     duration: 1
-    isInstantHeal: 0
-    statusEffect: {fileID: 11400000, guid: 6c0fa79ae077b454d83cccabeab89e78, type: 2}
+    isInstantHeal: 1
+    statusEffect: {fileID: 11400000, guid: f415da5e714f9ef49bc832d03e481ddb, type: 2}
   maxPP: 0
-  consumeActionPoints: 3
-  guaranteedHit: 0
+  consumeActionPoints: 5
+  guaranteedHit: 1
   accuracy: 100
-  range: 1
-  targetTeam: 0
+  range: 5
+  targetTeam: 2
   targetShape: 0
   rangeTargetShapeSize: 1
   isDirect: 1
