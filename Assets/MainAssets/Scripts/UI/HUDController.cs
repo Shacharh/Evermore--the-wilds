@@ -28,6 +28,15 @@ public class HUDController : MonoBehaviour
     [Header("End Turn")]
     [SerializeField] private Button endTurnButton;
 
+    [Header("Pause / Settings Button")]
+    [Tooltip("The HUD Button that opens the pause/settings menu.\n" +
+             "Leave empty to auto-find by the name in 'Pause Button Name'.")]
+    [SerializeField] private Button pauseButton;
+
+    [Tooltip("Name of the HUD GameObject that holds the pause/settings Button component. " +
+             "Only used when Pause Button is left empty above.")]
+    [SerializeField] private string pauseButtonName = "Settings";
+
     [Header("References (auto-found if empty)")]
     [SerializeField] private PlayerTurnController playerTurnController;
 
@@ -89,6 +98,20 @@ public class HUDController : MonoBehaviour
 
     private void AutoFindUIReferences()
     {
+        // Pause / Settings button
+        if (pauseButton == null && !string.IsNullOrEmpty(pauseButtonName))
+        {
+            var go = GameObject.Find(pauseButtonName);
+            if (go != null)
+                pauseButton = go.GetComponent<Button>();
+        }
+
+        if (pauseButton != null)
+        {
+            pauseButton.onClick.RemoveAllListeners();
+            pauseButton.onClick.AddListener(() => PauseMenu.Instance?.Toggle());
+        }
+
         // AP_Meter
         if (apBarImage == null)
         {

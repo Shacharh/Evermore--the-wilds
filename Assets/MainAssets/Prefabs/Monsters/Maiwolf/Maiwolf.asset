@@ -14,19 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterData
   monsterId: Maiwolf
   displayName: Maiwolf
-  elementType: Water
-  baseHP: 450
+  elementType: 3
+  isFlying: 0
+  baseHP: 400
   baseAttack: 200
-  baseDefense: 250
-  baseSpeed: 4
+  baseDefense: 200
+  baseSpeed: 20
   baseCritRate: 30
   baseCritMod: 1
   baseDodge: 38
-  moveCost: 1
   MovementAnimationBoolean: Movment
   DoamageAnimationTrigger: Hit
   DogeAnimationTrigger: 
   DeathAnimationTrigger: Death
+  personality: {fileID: 11400000, guid: 389b8296e69c5ff4a865c684289b29bb, type: 2}
   movePool:
   - attack: {fileID: 11400000, guid: dae42acfe3d61ef4894549f3a0cbad5a, type: 2}
     levelLearned: 0

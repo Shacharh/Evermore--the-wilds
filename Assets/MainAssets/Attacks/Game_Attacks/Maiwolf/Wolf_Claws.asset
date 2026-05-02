@@ -15,7 +15,7 @@ MonoBehaviour:
   id: Wolf_Claws
   displayName: Wolf Claws
   description: attack an enemy with his claws. May freeze target
-  element: 1
+  element: 3
   effects:
   - category: 0
     value: 150
@@ -32,7 +32,7 @@ MonoBehaviour:
     stageCount: 0
     selfInflicted: 0
     buffType: 0
-    chance: 85
+    chance: 35
     isDebuff: 0
     duration: 2
     isInstantHeal: 0

@@ -16,10 +16,10 @@ MonoBehaviour:
   displayName: Draignis
   elementType: 0
   isFlying: 0
-  baseHP: 400
-  baseAttack: 300
-  baseDefense: 220
-  baseSpeed: 4
+  baseHP: 350
+  baseAttack: 240
+  baseDefense: 140
+  baseSpeed: 20
   baseCritRate: 33
   baseCritMod: 50
   baseDodge: 15

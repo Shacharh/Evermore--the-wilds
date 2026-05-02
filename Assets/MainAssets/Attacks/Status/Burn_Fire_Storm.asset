@@ -15,7 +15,7 @@ MonoBehaviour:
   id: 0
   element: 0
   dispel: 0
-  damage: 30
+  damage: 25
   extraAPCost: 0
   stacks: 0
   dispelAll: 0

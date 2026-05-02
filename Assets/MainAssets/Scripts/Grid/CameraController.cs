@@ -107,6 +107,7 @@ public class CameraController : MonoBehaviour
 
     private void HandleEdgeScroll()
     {
+        if (!GameSettings.EdgeScrollEnabled) return;
         if (_isPanning) return;
 
         var mouse = Mouse.current;

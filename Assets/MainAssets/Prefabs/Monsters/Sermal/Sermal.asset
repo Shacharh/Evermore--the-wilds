@@ -14,23 +14,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterData
   monsterId: Sermal
   displayName: Sermal
-  elementType: Wind
+  elementType: 4
+  isFlying: 0
   baseHP: 250
   baseAttack: 125
   baseDefense: 180
-  baseSpeed: 6
+  baseSpeed: 40
   baseCritRate: 75
   baseCritMod: 50
   baseDodge: 45
-  moveCost: 1
   MovementAnimationBoolean: Movment
   DoamageAnimationTrigger: Hit
   DogeAnimationTrigger: 
   DeathAnimationTrigger: Death
+  personality: {fileID: 11400000, guid: 6b1231130e93b83449be9f9313203ab4, type: 2}
   movePool:
   - attack: {fileID: 11400000, guid: 09a9f660e36994e459ee07562aca7171, type: 2}
     levelLearned: 0
     AnimationTrigger: Ability_1
   - attack: {fileID: 11400000, guid: fc09cddb95e4d244fbe0fe2521c30e4c, type: 2}
+    levelLearned: 0
+    AnimationTrigger: Ability_2
+  - attack: {fileID: 11400000, guid: 54d0935b136a40445803ceb3ff519735, type: 2}
     levelLearned: 0
     AnimationTrigger: Ability_2

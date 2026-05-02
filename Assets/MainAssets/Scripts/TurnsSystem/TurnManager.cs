@@ -114,6 +114,9 @@ public class TurnManager : MonoBehaviour
     public TurnController ActiveController =>
         IsPlayerTurn ? (TurnController)playerController : enemyController;
 
+    public PlayerTurnController PlayerController => playerController;
+    public EnemyTurnController  EnemyController  => enemyController;
+
     // -- Internal Flow ---------------------------------------------------------
 
     private void BeginTurn(TurnOwner owner)
