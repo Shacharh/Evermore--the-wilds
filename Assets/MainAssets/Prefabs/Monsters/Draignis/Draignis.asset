@@ -27,7 +27,7 @@ MonoBehaviour:
   DoamageAnimationTrigger: Hit
   DogeAnimationTrigger: 
   DeathAnimationTrigger: Death
-  personality: {fileID: 0}
+  personality: {fileID: 11400000, guid: 1d2a935bcfe0025478a597d459479e4c, type: 2}
   movePool:
   - attack: {fileID: 11400000, guid: 24cfdb420733aee4fb0ed074efd96413, type: 2}
     levelLearned: 0
