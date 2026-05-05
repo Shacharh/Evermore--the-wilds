@@ -422,6 +422,7 @@ public class InputManager : MonoBehaviour
             case RadialActionType.Info:       HandleInfoAction(tile);      break;
             case RadialActionType.UseAttack0: HandleAttackSelected(0);     break;
             case RadialActionType.UseAttack1: HandleAttackSelected(1);     break;
+            case RadialActionType.UseAttack2: HandleAttackSelected(2);     break;
             default:
                 Debug.LogWarning($"[InputManager] Unknown action type: {type}");
                 break;

@@ -9,7 +9,8 @@ public enum RadialActionType
     Attack,
     Info,
     UseAttack0,   // Player selected the first attack in the sub-menu
-    UseAttack1    // Player selected the second attack in the sub-menu
+    UseAttack1,    // Player selected the second attack in the sub-menu
+    UseAttack2    // Player selected the third attack in the sub-menu
 }
 
 // This class defines the data structure for menu options in the radial menu.
