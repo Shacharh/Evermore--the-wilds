@@ -29,12 +29,12 @@ MonoBehaviour:
   DeathAnimationTrigger: Death
   personality: {fileID: 0}
   movePool:
+  - attack: {fileID: 11400000, guid: c5b3415f84764b84087e1b2dbef4c207, type: 2}
+    levelLearned: 0
+    AnimationTrigger: Ability_2
+  - attack: {fileID: 11400000, guid: 221c051516ad27a488250717a389b404, type: 2}
+    levelLearned: 0
+    AnimationTrigger: Ability_1
   - attack: {fileID: 11400000, guid: 6fc2546e00e09974ba02bd15cc3f4c2e, type: 2}
     levelLearned: 0
     AnimationTrigger: Ability_1
-  - attack: {fileID: 11400000, guid: 221c051516ad27a488250717a389b404, type: 2}
-    levelLearned: 1
-    AnimationTrigger: Ability_1
-  - attack: {fileID: 11400000, guid: c5b3415f84764b84087e1b2dbef4c207, type: 2}
-    levelLearned: 1
-    AnimationTrigger: Ability_2

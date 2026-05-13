@@ -227,6 +227,13 @@ public class EnemyTurnController : TurnController
         // consecutive block of X slots.
         ApplyGuaranteedWindowAppearances(turnQueue);
 
+        // ── Step 7: trim to actions the AI can actually afford ────────────────
+        // Simulates AP spending in queue order (tracking each monster's tile as
+        // moves commit) and removes every entry whose cost exceeds the AP that
+        // will remain when its slot is reached.  The result is exactly the set
+        // of actions that will execute this turn — nothing more.
+        TrimQueueByAP(turnQueue, CurrentAP);
+
         // ── Record first actor for fatigue tracking ───────────────────────────
         if (turnQueue.Count > 0)
         {
@@ -240,7 +247,7 @@ public class EnemyTurnController : TurnController
             }
         }
 
-        Debug.Log($"[EnemyAI] Turn queue built — {turnQueue.Count} actions across all monsters.");
+        Debug.Log($"[EnemyAI] Turn queue ready — {turnQueue.Count} affordable actions across all monsters.");
 
         // Show the full queue in the debug overlay.
         AITurnQueueDebug.ShowQueue(turnQueue);
@@ -482,6 +489,105 @@ public class EnemyTurnController : TurnController
 
                 windowStart += windowSize;
             }
+        }
+    }
+
+    // -- Turn Queue AP Trimming ────────────────────────────────────────────────
+
+    /// <summary>
+    /// Removes queue entries that cannot be executed with the AP that will remain
+    /// when their slot is reached. Walks the list in order, subtracting each kept
+    /// entry's cost from a running AP total; entries whose cost exceeds the
+    /// remaining total are removed outright.
+    ///
+    /// Monster tile positions are tracked across moves so that the cost of a
+    /// later move by the same monster is computed from its post-move location.
+    /// </summary>
+    private void TrimQueueByAP(List<(Monster monster, AIAction action)> queue, int availableAP)
+    {
+        var simulatedTile = new Dictionary<Monster, Tile>();
+        foreach (var m in monsters)
+            if (m != null && m.CurrentTile != null)
+                simulatedTile[m] = m.CurrentTile;
+
+        int simAP = availableAP;
+        int i     = 0;
+        while (i < queue.Count)
+        {
+            var (monster, action) = queue[i];
+
+            if (monster == null || !monster.IsAlive)
+            {
+                queue.RemoveAt(i);
+                continue;
+            }
+
+            simulatedTile.TryGetValue(monster, out Tile fromTile);
+            int cost = ComputeActionAPCost(monster, action, fromTile ?? monster.CurrentTile);
+
+            if (cost > simAP)
+            {
+                queue.RemoveAt(i);
+                continue;
+            }
+
+            simAP -= cost;
+
+            if (action is MoveAction mv && mv.Destination != null)
+                simulatedTile[monster] = mv.Destination;
+            else if (action is MoveAndAttackAction mva && mva.MoveTo != null)
+                simulatedTile[monster] = mva.MoveTo;
+
+            i++;
+        }
+    }
+
+    /// <summary>
+    /// Returns the AP cost of <paramref name="action"/> without executing it.
+    /// <paramref name="fromTile"/> is the monster's simulated current tile, which
+    /// may differ from <c>monster.CurrentTile</c> when earlier moves have already
+    /// been committed during the same trim pass.
+    /// </summary>
+    private int ComputeActionAPCost(Monster monster, AIAction action, Tile fromTile)
+    {
+        int shock      = monster.ShockAPCostIncrease;
+        int tilesPerAP = Mathf.Max(1, monster.TilesPerAP);
+
+        switch (action)
+        {
+            case AttackAction atk:
+            {
+                var attacks = monster.GetAttacks();
+                if (atk.AttackIndex < 0 || atk.AttackIndex >= attacks.Count) return int.MaxValue;
+                var data = attacks[atk.AttackIndex]?.data;
+                if (data == null) return int.MaxValue;
+                return data.ConsumeActionPoints + shock;
+            }
+
+            case MoveAction mv:
+            {
+                if (fromTile == null || mv.Destination == null) return int.MaxValue;
+                int dist = gridManager.GetDistanceBetweenTiles(fromTile, mv.Destination);
+                return Mathf.Max(1, Mathf.CeilToInt((float)dist / tilesPerAP) + shock);
+            }
+
+            case MoveAndAttackAction mva:
+            {
+                if (fromTile == null || mva.MoveTo == null) return int.MaxValue;
+                int dist     = gridManager.GetDistanceBetweenTiles(fromTile, mva.MoveTo);
+                int moveCost = Mathf.Max(1, Mathf.CeilToInt((float)dist / tilesPerAP) + shock);
+                var attacks  = monster.GetAttacks();
+                if (mva.AttackIndex < 0 || mva.AttackIndex >= attacks.Count) return int.MaxValue;
+                var data     = attacks[mva.AttackIndex]?.data;
+                if (data == null) return int.MaxValue;
+                return moveCost + data.ConsumeActionPoints + shock;
+            }
+
+            case PassAction _:
+                return 0;
+
+            default:
+                return int.MaxValue;
         }
     }
 
