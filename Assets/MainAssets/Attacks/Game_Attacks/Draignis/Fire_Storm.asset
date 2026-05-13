@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5bec574241e95d64f874367ce5a4cc34, type: 3}
-  m_Name: Fire_Strom
+  m_Name: Fire_Storm
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
-  id: Fire_Strom
-  displayName: Fire strom
+  id: Fire_Storm
+  displayName: Fire storm
   description: Scratch an enemy
   element: 0
   effects:
@@ -42,7 +42,7 @@ MonoBehaviour:
   guaranteedHit: 0
   accuracy: 100
   range: 3
-  target: 0
+  targetTeam: 0
   targetShape: 0
   rangeTargetShapeSize: 3
   isDirect: 1
