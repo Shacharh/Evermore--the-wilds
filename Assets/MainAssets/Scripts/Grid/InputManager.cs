@@ -763,7 +763,7 @@ public class InputManager : MonoBehaviour
                 return;
             }
 
-            attackingMonster.ExecuteAttack(attackingMonster, selectedAttackIndex, selectedAttackData.IsDirect);
+            attackingMonster.ExecuteAttack(new List<Monster> { attackingMonster }, selectedAttackIndex, selectedAttackData.IsDirect);
             Debug.Log($"[InputManager] {attackingMonster.name} used '{selectedAttackData.DisplayName}' on itself.");
 
             AttackInfoPanel.Hide();
@@ -910,11 +910,8 @@ public class InputManager : MonoBehaviour
             if (aoeDir != Vector3.zero)
                 attackingMonster.transform.root.rotation = Quaternion.LookRotation(aoeDir);
 
-            foreach (Monster t in targets)
-            {
-                attackingMonster.ExecuteAttack(t, selectedAttackIndex, selectedAttackData.IsDirect);
-                Debug.Log($"[InputManager] AOE '{selectedAttackData.DisplayName}' hit {t.name}.");
-            }
+            attackingMonster.ExecuteAttack(targets, selectedAttackIndex, selectedAttackData.IsDirect);
+            Debug.Log($"[InputManager] AOE '{selectedAttackData.DisplayName}' hitting {targets.Count} target(s).");
         }
         else
         {
@@ -941,7 +938,7 @@ public class InputManager : MonoBehaviour
             if (attackDir != Vector3.zero)
                 attackingMonster.transform.root.rotation = Quaternion.LookRotation(attackDir);
 
-            attackingMonster.ExecuteAttack(target, selectedAttackIndex, selectedAttackData.IsDirect);
+            attackingMonster.ExecuteAttack(new List<Monster> { target }, selectedAttackIndex, selectedAttackData.IsDirect);
             Debug.Log($"[InputManager] {attackingMonster.name} used '{selectedAttackData.DisplayName}' " +
                       $"on {target.name}.");
         }

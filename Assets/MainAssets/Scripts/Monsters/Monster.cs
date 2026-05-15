@@ -58,6 +58,13 @@ public class Monster : MonoBehaviour
     private int ivDodge;
     #endregion
 
+    #region Pending Attack State
+    private List<Monster> _pendingTargets;
+    private int _pendingAttackIndex;
+    private bool _pendingIsDirect;
+    private bool _awaitingAnimationHit;
+    #endregion
+
     #region Active Effects & Statuses
     private List<ActiveEffect> activeEffects = new List<ActiveEffect>();
     private List<ActiveStatus> activeStatuses = new List<ActiveStatus>();
@@ -283,14 +290,19 @@ public class Monster : MonoBehaviour
     #endregion
 
     #region Attack Execution
-    public void ExecuteAttack(Monster target, int attackIndex, bool isDirect)
+    public void ExecuteAttack(List<Monster> targets, int attackIndex, bool isDirect)
     {
         if (attackIndex < 0 || attackIndex >= learnedAttacks.Count)
             throw new System.ArgumentException("Invalid attack index");
 
+        if (targets == null || targets.Count == 0)
+        {
+            Debug.LogWarning($"[{gameObject.name}] ExecuteAttack called with no targets.");
+            return;
+        }
+
         AttackData attackData = learnedAttacks[attackIndex].data;
 
-        // Guard: AttackData not assigned in the Inspector
         if (attackData == null)
         {
             Debug.LogError($"[{gameObject.name}] Attack slot {attackIndex} has no AttackData " +
@@ -300,39 +312,83 @@ public class Monster : MonoBehaviour
             return;
         }
 
+        // PP consumed at attack initiation, not at hit
+        learnedAttacks[attackIndex].UsePP();
+
         AttackEntry entry = System.Array.Find(data.movePool, e => e.attack == attackData);
 
-        // ── Always apply effects immediately ────────────────────────────────────
-        // Damage/heal/buff/status is ALWAYS applied right here, unconditionally.
-        // We do NOT rely on animation events calling TriggerAttackEffect() because:
-        //   1. Animations may not be configured yet.
-        //   2. Animation events may not be set up on the clip.
-        //   3. This keeps damage deterministic and independent of the animator.
-
-        if (attackData.Effects.Count == 0)
-        {
-            Debug.LogWarning($"[{gameObject.name}] '{attackData.DisplayName}' has no effects " +
-                             "configured! Add at least one Effect entry in the AttackData asset.");
-            BattleMessage.Show($"'{attackData.DisplayName}' has no effects!\nOpen the AttackData asset and add a Damage effect.", 3f);
-        }
-        else
-        {
-            for (int i = 0; i < attackData.Effects.Count; i++)
-                UseAttackEffect(this, target, attackIndex, i, isDirect);
-        }
-
-        // ── Trigger animation for visual feedback (purely cosmetic) ─────────────
-        // AttackCommandManager is NOT set up — damage is already done above.
-        // If an animation event fires TriggerAttackEffect(), AttackCommandManager
-        // will find null attacker and return harmlessly without double-applying.
         if (entry != null && !string.IsNullOrEmpty(entry.AnimationTrigger) && anim != null)
         {
+            // Store context; effects + VFX fire from OnAttackAnimationHit() via animation event
+            _pendingTargets      = new List<Monster>(targets);
+            _pendingAttackIndex  = attackIndex;
+            _pendingIsDirect     = isDirect;
+            _awaitingAnimationHit = true;
             Debug.Log($"[{gameObject.name}] Playing attack animation '{entry.AnimationTrigger}'.");
             anim.SetTrigger(entry.AnimationTrigger);
         }
         else
         {
-            Debug.Log($"[{gameObject.name}] No animation configured for '{attackData.DisplayName}'.");
+            // No animation configured — apply effects immediately as fallback
+            Debug.Log($"[{gameObject.name}] No animation for '{attackData.DisplayName}'. Applying effects immediately.");
+            ApplyAttackToTargets(targets, attackIndex, isDirect);
+            SpawnAttackVFX(targets, attackIndex);
+        }
+    }
+
+    // Called by an Animation Event on the attack clip at the moment of impact.
+    public void OnAttackAnimationHit()
+    {
+        if (!_awaitingAnimationHit) return;
+        _awaitingAnimationHit = false;
+
+        ApplyAttackToTargets(_pendingTargets, _pendingAttackIndex, _pendingIsDirect);
+        SpawnAttackVFX(_pendingTargets, _pendingAttackIndex);
+        _pendingTargets = null;
+    }
+
+    private void ApplyAttackToTargets(List<Monster> targets, int attackIndex, bool isDirect)
+    {
+        AttackData attackData = learnedAttacks[attackIndex].data;
+
+        if (attackData.Effects.Count == 0)
+        {
+            Debug.LogWarning($"[{gameObject.name}] '{attackData.DisplayName}' has no effects configured!");
+            BattleMessage.Show($"'{attackData.DisplayName}' has no effects!\nOpen the AttackData asset and add a Damage effect.", 3f);
+            return;
+        }
+
+        foreach (Monster target in targets)
+        {
+            for (int i = 0; i < attackData.Effects.Count; i++)
+                UseAttackEffect(this, target, attackIndex, i, isDirect);
+        }
+    }
+
+    private void SpawnAttackVFX(List<Monster> targets, int attackIndex)
+    {
+        AttackData attackData = learnedAttacks[attackIndex].data;
+        if (attackData.VFXPrefab == null) return;
+
+        AttackEntry entry = System.Array.Find(data.movePool, e => e.attack == attackData);
+
+        Vector3 offset = entry != null ? entry.vfxSpawnOffset : Vector3.zero;
+
+        if (attackData.VFXTarget == AttackVFXTarget.AttackerSpawnPoint)
+        {
+            Vector3 pos    = transform.position;
+            Quaternion rot = Quaternion.identity;
+            if (entry?.vfxSpawnPoint != null)
+            {
+                pos = entry.vfxSpawnPoint.position;
+                rot = entry.vfxSpawnPoint.rotation;
+            }
+            Instantiate(attackData.VFXPrefab, pos + offset, rot);
+        }
+        else
+        {
+            foreach (Monster target in targets)
+                Instantiate(attackData.VFXPrefab, target.transform.position + offset, Quaternion.identity);
         }
     }
 
@@ -357,8 +413,6 @@ public class Monster : MonoBehaviour
 
         AttackEffect effect = attackData.Effects[effectIndex];
         Debug.Log($"{attacker.customeName} triggers {attackData.DisplayName} effect {effect.category}");
-
-        if (effectIndex == 0) monsterAttack.UsePP();
 
         Monster effectTarget = effect.selfInflicted ? attacker : target;
 
