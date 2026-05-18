@@ -4939,7 +4939,7 @@ GameObject:
   - component: {fileID: 5647586090030735863}
   - component: {fileID: 811259877465519136}
   m_Layer: 0
-  m_Name: PS_Firebolt_Trail
+  m_Name: PS_Firebolt_Trail_ADD
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
