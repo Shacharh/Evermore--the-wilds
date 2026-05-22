@@ -85,6 +85,7 @@ MonoBehaviour:
   enemyMonster: 0
   level: 40
   learnedAttacks:
+  - data: {fileID: 11400000, guid: 221c051516ad27a488250717a389b404, type: 2}
   - data: {fileID: 11400000, guid: 6fc2546e00e09974ba02bd15cc3f4c2e, type: 2}
   - data: {fileID: 11400000, guid: c5b3415f84764b84087e1b2dbef4c207, type: 2}
   anim: {fileID: 958743763525050535}
@@ -92,6 +93,7 @@ MonoBehaviour:
   stageConfig: {fileID: 11400000, guid: 8ad1c409ab618f049986d2c0c7c1bda1, type: 2}
   dodgeEffectiveness: 0.5
   obstructionConfig: {fileID: 11400000, guid: f31d9c0d1c582fd4aa15ae27a1196141, type: 2}
+  MaxAttacks: 3
 --- !u!114 &735031748614082259
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -105,6 +107,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MonsterSetup
   startingAttackIds:
+  - Heal_Self
   - Heal
   - Gust_Of_Wind
   monster: {fileID: 8900255455746139478}
@@ -151,7 +154,7 @@ Light:
   m_Enabled: 1
   serializedVersion: 12
   m_Type: 0
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.5050285, g: 0.9150943, b: 0.89442563, a: 1}
   m_Intensity: 0.86591876
   m_Range: 9.13
   m_SpotAngle: 179
@@ -195,7 +198,7 @@ Light:
   m_LightShadowCasterMode: 2
   m_AreaSize: {x: 1, y: 1}
   m_BounceIntensity: 1
-  m_ColorTemperature: 12118
+  m_ColorTemperature: 8672
   m_UseColorTemperature: 1
   m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
   m_UseBoundingSphereOverride: 0
@@ -470,6 +473,34 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1291772032019624359}
     m_Modifications:
+    - target: {fileID: 4476133749988014731, guid: 8f41bbc315dbe224185686c52e012982, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.10071966
+      objectReference: {fileID: 0}
+    - target: {fileID: 4476133749988014731, guid: 8f41bbc315dbe224185686c52e012982, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.72619766
+      objectReference: {fileID: 0}
+    - target: {fileID: 4476133749988014731, guid: 8f41bbc315dbe224185686c52e012982, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.6799032
+      objectReference: {fileID: 0}
+    - target: {fileID: 4476133749988014731, guid: 8f41bbc315dbe224185686c52e012982, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.014975013
+      objectReference: {fileID: 0}
+    - target: {fileID: 4476133749988014731, guid: 8f41bbc315dbe224185686c52e012982, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -7.234
+      objectReference: {fileID: 0}
+    - target: {fileID: 4476133749988014731, guid: 8f41bbc315dbe224185686c52e012982, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: -170.794
+      objectReference: {fileID: 0}
+    - target: {fileID: 4476133749988014731, guid: 8f41bbc315dbe224185686c52e012982, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 93.188
+      objectReference: {fileID: 0}
     - target: {fileID: 4506510151132973733, guid: 8f41bbc315dbe224185686c52e012982, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -550,6 +581,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5299684576892288162, guid: 8f41bbc315dbe224185686c52e012982, type: 3}
+      propertyPath: m_PresetInfoIsWorld
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6842870400179317273, guid: 8f41bbc315dbe224185686c52e012982, type: 3}
       propertyPath: m_Name
       value: Unit_Identifier
@@ -567,8 +602,8 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8f41bbc315dbe224185686c52e012982, type: 3}
---- !u!224 &7811123144189902720 stripped
-RectTransform:
+--- !u!4 &7811123144189902720 stripped
+Transform:
   m_CorrespondingSourceObject: {fileID: 4506510151132973733, guid: 8f41bbc315dbe224185686c52e012982, type: 3}
   m_PrefabInstance: {fileID: 5975423511554716965}
   m_PrefabAsset: {fileID: 0}

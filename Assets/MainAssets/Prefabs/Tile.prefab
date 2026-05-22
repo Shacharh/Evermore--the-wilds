@@ -127,9 +127,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9d291e2a64cd384dae941ca1c46a0a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Tile
-  baseTileColor: {r: 0.7, g: 0.7, b: 0.7, a: 1}
+  baseTileColor: {r: 0.7, g: 0.7, b: 0.7, a: 0.25490198}
+  hoverColor: {r: 1, g: 0.9490196, b: 0.56078434, a: 0.70980394}
+  selectedColor: {r: 0.3, g: 1, b: 0.3, a: 0.7176471}
   checkerboardDarkenAmount: 0.85
   hoverHeightOffset: 0.05
+  transitionSpeed: 10
 --- !u!1 &4390144625004061574
 GameObject:
   m_ObjectHideFlags: 0
@@ -197,7 +200,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 73c176f402d2c2f4d929aa5da7585d17, type: 2}
+  - {fileID: 2100000, guid: 4b0cf86bbbd416c468c4623f7115682d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

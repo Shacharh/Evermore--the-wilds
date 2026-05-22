@@ -16,9 +16,9 @@ MonoBehaviour:
   displayName: "N\xEDdpettite"
   elementType: 0
   isFlying: 1
-  baseHP: 270
-  baseAttack: 270
-  baseDefense: 180
+  baseHP: 280
+  baseAttack: 280
+  baseDefense: 200
   baseSpeed: 50
   baseCritRate: 65
   baseCritMod: 50

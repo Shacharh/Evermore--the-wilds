@@ -86,6 +86,7 @@ MonoBehaviour:
   learnedAttacks:
   - data: {fileID: 11400000, guid: 09a9f660e36994e459ee07562aca7171, type: 2}
   - data: {fileID: 11400000, guid: fc09cddb95e4d244fbe0fe2521c30e4c, type: 2}
+  - data: {fileID: 11400000, guid: 54d0935b136a40445803ceb3ff519735, type: 2}
   anim: {fileID: 119398597672714227}
   gridManager: {fileID: 0}
   stageConfig: {fileID: 11400000, guid: 8ad1c409ab618f049986d2c0c7c1bda1, type: 2}
@@ -106,6 +107,7 @@ MonoBehaviour:
   startingAttackIds:
   - Poisoned_Strike
   - Heal_S
+  - Heal_S_Self
   monster: {fileID: 8900255455746139478}
 --- !u!1 &4091577350581406393
 GameObject:
@@ -150,7 +152,7 @@ Light:
   m_Enabled: 1
   serializedVersion: 12
   m_Type: 0
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.609414, g: 0.14578143, b: 0.7924528, a: 1}
   m_Intensity: 2.3271606
   m_Range: 9.13
   m_SpotAngle: 179
@@ -194,7 +196,7 @@ Light:
   m_LightShadowCasterMode: 2
   m_AreaSize: {x: 1, y: 1}
   m_BounceIntensity: 1
-  m_ColorTemperature: 2139
+  m_ColorTemperature: 6384
   m_UseColorTemperature: 1
   m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
   m_UseBoundingSphereOverride: 0

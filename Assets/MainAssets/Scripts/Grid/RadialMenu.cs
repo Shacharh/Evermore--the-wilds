@@ -153,9 +153,20 @@ public class RadialMenu : MonoBehaviour
 
         for (int i = 0; i < attacks.Count; i++)
         {
-            RadialActionType actionType = (i == 0)
-                ? RadialActionType.UseAttack0
-                : RadialActionType.UseAttack1;
+            RadialActionType actionType = RadialActionType.UseAttack0;  // default, will be overridden by the if-else below
+
+            if (i == 0)
+            {
+                actionType = RadialActionType.UseAttack0;
+            }
+            else if (i == 1)
+            {
+                actionType = RadialActionType.UseAttack1;
+            }
+            else if (i == 2)
+            {
+                actionType = RadialActionType.UseAttack2;
+            }
 
             float   angle  = i * angleStep * Mathf.Deg2Rad;
             Vector2 offset = new Vector2(Mathf.Cos(angle) * menuRadius,

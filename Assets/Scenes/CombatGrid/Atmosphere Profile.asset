@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da5ab44aadfb1804db5fd470983ac1b8, type: 3}
   m_Name: LiftGammaGain
   m_EditorClassIdentifier: Unity.RenderPipelines.HighDefinition.Runtime::UnityEngine.Rendering.HighDefinition.LiftGammaGain
-  active: 1
+  active: 0
   lift:
     m_OverrideState: 1
     m_Value: {x: 1, y: 0.96, z: 0.9853333, w: -0.032223415}
@@ -137,8 +137,8 @@ MonoBehaviour:
     m_OverrideState: 1
     m_Value: 2
   useFullACES:
-    m_OverrideState: 0
-    m_Value: 0
+    m_OverrideState: 1
+    m_Value: 1
   toeStrength:
     m_OverrideState: 0
     m_Value: 0
@@ -205,7 +205,7 @@ MonoBehaviour:
   active: 1
   postExposure:
     m_OverrideState: 1
-    m_Value: -0.29
+    m_Value: 0.3
   contrast:
     m_OverrideState: 1
     m_Value: 8.95
@@ -217,4 +217,4 @@ MonoBehaviour:
     m_Value: 3.27
   saturation:
     m_OverrideState: 1
-    m_Value: 34.66
+    m_Value: 12
