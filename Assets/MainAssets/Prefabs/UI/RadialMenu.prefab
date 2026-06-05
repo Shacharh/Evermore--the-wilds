@@ -51,7 +51,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RadialMenu
   menuRadius: 150
-  buttonPrefab: {fileID: 3521064110572353182, guid: 9d54899e02db7e6439450f71a2f7c501, type: 3}
   menuConfig: {fileID: 11400000, guid: fccb95885fe15f74582a091c3c6cffe6, type: 2}
 --- !u!223 &6224779510872774917
 Canvas:

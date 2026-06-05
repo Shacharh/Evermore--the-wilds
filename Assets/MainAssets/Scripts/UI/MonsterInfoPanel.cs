@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
@@ -6,17 +6,17 @@ using TMPro;
 /// Screen-space overlay panel showing a monster's stats + active stat stages.
 ///
 /// Layout (bottom-right corner):
-///   ┌─────────────────── Name  Lv.X  [Side] ───────────────────┐
-///   │  HP:  NNN / MMM                                           │
-///   │─────────────────────────────────────── STAGE ─────────────│  (divider)
-///   │  ATK       123                              +2 (green)    │
-///   │  DEF        80                               — (grey)     │
-///   │  SPD        95                               — (grey)     │
-///   │  DGE        15                              -1 (red)      │
-///   │  CRT Chance  29%                             —            │
-///   │  CRT Damage  ×8                              —            │
-///   │                    [ Close ]                              │
-///   └───────────────────────────────────────────────────────────┘
+///   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Name  Lv.X  [Side] â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+///   â”‚  HP:  NNN / MMM                                           â”‚
+///   â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ STAGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”‚  (divider)
+///   â”‚  ATK       123                              +2 (green)    â”‚
+///   â”‚  DEF        80                               â€” (grey)     â”‚
+///   â”‚  SPD        95                               â€” (grey)     â”‚
+///   â”‚  DGE        15                              -1 (red)      â”‚
+///   â”‚  CRT Chance  29%                             â€”            â”‚
+///   â”‚  CRT Damage  Ã—8                              â€”            â”‚
+///   â”‚                    [ Close ]                              â”‚
+///   â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ///
 /// The stage column updates every frame so buff/debuff changes appear instantly.
 ///
@@ -26,11 +26,11 @@ using TMPro;
 /// </summary>
 public class MonsterInfoPanel : MonoBehaviour
 {
-    // ── Singleton ─────────────────────────────────────────────────────────────
+    // â”€â”€ Singleton â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public static MonsterInfoPanel Instance { get; private set; }
 
-    /// <summary>Auto-spawned on scene load — no scene setup required.</summary>
+    /// <summary>Auto-spawned on scene load â€” no scene setup required.</summary>
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
     {
@@ -38,20 +38,20 @@ public class MonsterInfoPanel : MonoBehaviour
         new GameObject("MonsterInfoPanel").AddComponent<MonsterInfoPanel>();
     }
 
-    // ── UI References ─────────────────────────────────────────────────────────
+    // â”€â”€ UI References â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private GameObject      panelRoot;
     private TextMeshProUGUI titleText;
     private TextMeshProUGUI hpText;
     private TextMeshProUGUI statsText;
-    private TextMeshProUGUI stagesText;   // right column — live buff/debuff stages
+    private TextMeshProUGUI stagesText;   // right column â€” live buff/debuff stages
     private UnityEngine.UI.Image typeIconImage; // element type sprite (top-left of title bar)
 
-    // ── State ─────────────────────────────────────────────────────────────────
+    // â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private Monster currentMonster;
 
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
+    // â”€â”€ Lifecycle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private void Awake()
     {
@@ -77,7 +77,7 @@ public class MonsterInfoPanel : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
-    // ── Public API ────────────────────────────────────────────────────────────
+    // â”€â”€ Public API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public void Show(Monster monster)
     {
@@ -95,7 +95,7 @@ public class MonsterInfoPanel : MonoBehaviour
         UnsubscribeFromMonster();
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
+    // â”€â”€ Private helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private void UnsubscribeFromMonster()
     {
@@ -138,7 +138,7 @@ public class MonsterInfoPanel : MonoBehaviour
             $"SPD       {currentMonster.Speed}  ({currentMonster.TilesPerAP} tile(s)/AP)\n" +
             $"DGE       {currentMonster.Dodge}\n" +
             $"CRT Chance  {currentMonster.CritRate}%\n" +
-            $"CRT Damage  ×{currentMonster.CritMod}";
+            $"CRT Damage  Ã—{currentMonster.CritMod}";
 
         RefreshStages();
     }
@@ -169,22 +169,22 @@ public class MonsterInfoPanel : MonoBehaviour
 
     /// <summary>
     /// Returns a coloured rich-text string representing a stage value.
-    ///   positive  → green  "+N"
-    ///   negative  → red    "−N"
-    ///   zero      → grey   " —"
+    ///   positive  â†’ green  "+N"
+    ///   negative  â†’ red    "âˆ’N"
+    ///   zero      â†’ grey   " â€”"
     /// </summary>
     private static string StageTag(int stage)
     {
         if (stage > 0) return $"<color=#66FF44>+{stage}</color>";
         if (stage < 0) return $"<color=#FF6666>{stage}</color>";
-        return "<color=#444455> —</color>";
+        return "<color=#444455> â€”</color>";
     }
 
-    // ── UI Construction ───────────────────────────────────────────────────────
+    // â”€â”€ UI Construction â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private void BuildUI()
     {
-        // Root canvas — ScreenSpaceOverlay, sort 500 (same as AttackInfoPanel)
+        // Root canvas â€” ScreenSpaceOverlay, sort 500 (same as AttackInfoPanel)
         var canvasGO = new GameObject("InfoCanvas");
         canvasGO.transform.SetParent(transform);
 
@@ -199,7 +199,7 @@ public class MonsterInfoPanel : MonoBehaviour
 
         canvasGO.AddComponent<GraphicRaycaster>();
 
-        // ── Panel root — bottom-right, 420 × 370 px ──────────────────────────
+        // â”€â”€ Panel root â€” bottom-right, 420 Ã— 370 px â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         panelRoot = MakeChild(canvasGO, "Panel");
         var panelRT = panelRoot.GetComponent<RectTransform>();
         panelRT.anchorMin        = new Vector2(1f, 0f);
@@ -210,7 +210,7 @@ public class MonsterInfoPanel : MonoBehaviour
 
         panelRoot.AddComponent<Image>().color = new Color(0.07f, 0.07f, 0.11f, 0.95f);
 
-        // ── Top bar ───────────────────────────────────────────────────────────
+        // â”€â”€ Top bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var barGO = MakeChild(panelRoot, "TopBar");
         var barRT = barGO.GetComponent<RectTransform>();
         barRT.anchorMin = new Vector2(0f, 1f); barRT.anchorMax = new Vector2(1f, 1f);
@@ -219,7 +219,7 @@ public class MonsterInfoPanel : MonoBehaviour
         barRT.sizeDelta        = new Vector2(0f, 50f);
         barGO.AddComponent<Image>().color = new Color(0.15f, 0.15f, 0.25f, 1f);
 
-        // ── Type icon (inside top bar, left side) ────────────────────────────
+        // â”€â”€ Type icon (inside top bar, left side) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var iconGO = MakeChild(barGO, "TypeIcon");
         var iconRT = iconGO.GetComponent<RectTransform>();
         iconRT.anchorMin        = new Vector2(0f, 0.5f);
@@ -231,7 +231,7 @@ public class MonsterInfoPanel : MonoBehaviour
         typeIconImage.preserveAspect = true;
         typeIconImage.enabled   = false; // hidden until a sprite is assigned
 
-        // ── Title (inside top bar) ────────────────────────────────────────────
+        // â”€â”€ Title (inside top bar) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var titleGO = MakeChild(barGO, "Title");
         var titleRT = titleGO.GetComponent<RectTransform>();
         titleRT.anchorMin = Vector2.zero; titleRT.anchorMax = Vector2.one;
@@ -240,9 +240,9 @@ public class MonsterInfoPanel : MonoBehaviour
         titleText.fontSize           = 22f;
         titleText.color              = Color.white;
         titleText.alignment          = TextAlignmentOptions.Center;
-        titleText.enableWordWrapping = false;
+        titleText.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
 
-        // ── HP row ────────────────────────────────────────────────────────────
+        // â”€â”€ HP row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var hpGO = MakeChild(panelRoot, "HPRow");
         var hpRT = hpGO.GetComponent<RectTransform>();
         hpRT.anchorMin        = new Vector2(0f, 1f);
@@ -255,8 +255,8 @@ public class MonsterInfoPanel : MonoBehaviour
         hpText.color      = Color.white;
         hpText.alignment  = TextAlignmentOptions.Center;
 
-        // ── "STAGE" column header (right portion, above divider) ──────────────
-        // Occupies the gap between HP row bottom (−84) and the divider (−90).
+        // â”€â”€ "STAGE" column header (right portion, above divider) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // Occupies the gap between HP row bottom (âˆ’84) and the divider (âˆ’90).
         var stageHdrGO = MakeChild(panelRoot, "StageHeader");
         var stageHdrRT = stageHdrGO.GetComponent<RectTransform>();
         stageHdrRT.anchorMin        = new Vector2(1f, 1f);
@@ -270,9 +270,9 @@ public class MonsterInfoPanel : MonoBehaviour
         stageHdrTmp.color             = new Color(0.55f, 0.55f, 0.65f, 1f);
         stageHdrTmp.alignment         = TextAlignmentOptions.Right;
         stageHdrTmp.fontStyle         = FontStyles.Italic;
-        stageHdrTmp.enableWordWrapping = false;
+        stageHdrTmp.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
 
-        // ── Divider (full width) ──────────────────────────────────────────────
+        // â”€â”€ Divider (full width) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var divGO = MakeChild(panelRoot, "Divider");
         var divRT = divGO.GetComponent<RectTransform>();
         divRT.anchorMin        = new Vector2(0f, 1f);
@@ -282,7 +282,7 @@ public class MonsterInfoPanel : MonoBehaviour
         divRT.sizeDelta        = new Vector2(-28f, 2f);
         divGO.AddComponent<Image>().color = new Color(0.35f, 0.35f, 0.5f, 1f);
 
-        // ── Stats text — left column (stat name + value) ──────────────────────
+        // â”€â”€ Stats text â€” left column (stat name + value) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var statsGO = MakeChild(panelRoot, "Stats");
         var statsRT = statsGO.GetComponent<RectTransform>();
         statsRT.anchorMin        = new Vector2(0f, 1f);
@@ -295,9 +295,9 @@ public class MonsterInfoPanel : MonoBehaviour
         statsText.color              = new Color(0.88f, 0.88f, 0.88f, 1f);
         statsText.alignment          = TextAlignmentOptions.Left;
         statsText.lineSpacing        = 8f;
-        statsText.enableWordWrapping = false;
+        statsText.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
 
-        // ── Stages text — right column (live buff/debuff stage values) ─────────
+        // â”€â”€ Stages text â€” right column (live buff/debuff stage values) â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var stagesGO = MakeChild(panelRoot, "Stages");
         var stagesRT = stagesGO.GetComponent<RectTransform>();
         stagesRT.anchorMin        = new Vector2(1f, 1f);
@@ -310,10 +310,10 @@ public class MonsterInfoPanel : MonoBehaviour
         stagesText.color              = new Color(0.88f, 0.88f, 0.88f, 1f);
         stagesText.alignment          = TextAlignmentOptions.Right;
         stagesText.lineSpacing        = 8f;
-        stagesText.enableWordWrapping = false;
+        stagesText.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
         stagesText.richText           = true;
 
-        // ── Close button ──────────────────────────────────────────────────────
+        // â”€â”€ Close button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var closeGO = MakeChild(panelRoot, "Close");
         var closeRT = closeGO.GetComponent<RectTransform>();
         closeRT.anchorMin        = new Vector2(0.5f, 0f);
@@ -354,3 +354,4 @@ public class MonsterInfoPanel : MonoBehaviour
         return go;
     }
 }
+

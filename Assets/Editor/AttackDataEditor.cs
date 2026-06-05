@@ -20,6 +20,8 @@ public class AttackDataEditor : Editor
     private SerializedProperty rangeTargetShapeSize;
     private SerializedProperty isDirect;
     private SerializedProperty inDirectHitPrecent;
+    private SerializedProperty vfxPrefab;
+    private SerializedProperty vfxTarget;
 
     private ReorderableList effectsList;
 
@@ -40,6 +42,8 @@ public class AttackDataEditor : Editor
         rangeTargetShapeSize = serializedObject.FindProperty("rangeTargetShapeSize");
         isDirect = serializedObject.FindProperty("isDirect");
         inDirectHitPrecent = serializedObject.FindProperty("inDirectHitPrecent");
+        vfxPrefab = serializedObject.FindProperty("vfxPrefab");
+        vfxTarget = serializedObject.FindProperty("vfxTarget");
 
         // Create the ReorderableList
         effectsList = new ReorderableList(serializedObject, effects, true, true, true, true);
@@ -183,6 +187,11 @@ public class AttackDataEditor : Editor
         EditorGUILayout.PropertyField(isDirect);
         if (!isDirect.boolValue)
             EditorGUILayout.PropertyField(inDirectHitPrecent);
+
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("VFX", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(vfxPrefab);
+        EditorGUILayout.PropertyField(vfxTarget);
 
         serializedObject.ApplyModifiedProperties();
     }
