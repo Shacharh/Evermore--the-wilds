@@ -29,6 +29,11 @@ public class AttackInfoPanel : MonoBehaviour
         new GameObject("AttackInfoPanel").AddComponent<AttackInfoPanel>();
     }
 
+    // Style — loaded from UIStyleConfig in BuildUI()
+    private Sprite _panelSprite;
+    private Color  _panelColor;
+    private Color  _headerColor;
+
     // ── UI References ─────────────────────────────────────────────────────────
 
     private GameObject      panelRoot;
@@ -140,6 +145,11 @@ public class AttackInfoPanel : MonoBehaviour
 
     private void BuildUI()
     {
+        var s    = UIStyleConfig.Load();
+        _panelSprite  = s?.panelSprite;
+        _panelColor   = s?.attackPanelColor  ?? new Color(0.07f, 0.07f, 0.11f, 0.95f);
+        _headerColor  = s?.attackHeaderColor ?? new Color(0.10f, 0.15f, 0.25f, 1f);
+
         // Root canvas — ScreenSpaceOverlay, sort order 500 (same as MonsterInfoPanel)
         var canvasGO = new GameObject("AttackInfoCanvas");
         canvasGO.transform.SetParent(transform);
@@ -165,7 +175,7 @@ public class AttackInfoPanel : MonoBehaviour
         panelRT.sizeDelta        = new Vector2(420f, 300f);
 
         var bg = panelRoot.AddComponent<Image>();
-        bg.color = new Color(0.07f, 0.07f, 0.11f, 0.95f);
+        UIStyleConfig.ApplySprite(bg, _panelSprite, _panelColor);
 
         // ── Coloured top bar ──────────────────────────────────────────────────
         var barGO = MakeChild(panelRoot, "TopBar");
@@ -175,7 +185,10 @@ public class AttackInfoPanel : MonoBehaviour
         barRT.pivot            = new Vector2(0.5f, 1f);
         barRT.anchoredPosition = Vector2.zero;
         barRT.sizeDelta        = new Vector2(0f, 50f);
-        barGO.AddComponent<Image>().color = new Color(0.10f, 0.15f, 0.25f, 1f); // blue-tinted
+        // Only add a coloured bar when no panel sprite is set.
+        // When a sprite is used, the header area is already part of the sprite artwork.
+        if (_panelSprite == null)
+            barGO.AddComponent<Image>().color = _headerColor;
 
         // ── Title ─────────────────────────────────────────────────────────────
         var titleGO = MakeChild(barGO, "Title");

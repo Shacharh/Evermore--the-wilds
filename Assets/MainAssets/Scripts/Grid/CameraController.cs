@@ -12,7 +12,9 @@ public class CameraController : MonoBehaviour
 
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 20f;
-    [SerializeField] private float smoothTime = 0.2f;
+    [Tooltip("How quickly the camera accelerates/decelerates when using keyboard movement.\n" +
+             "Higher = snappier response. Lower = floatier feel.")]
+    [SerializeField] private float keyboardAcceleration = 8f;
 
     [Header("Zoom Settings")]
     [SerializeField] private float zoomSpeed = 5f;
@@ -44,10 +46,11 @@ public class CameraController : MonoBehaviour
     [SerializeField] private Transform boundsMinCorner;
     [SerializeField] private Transform boundsMaxCorner;
 
-    private InputAction moveAction;
     private InputAction zoomAction;
-    private Vector3 currentVelocity;
     private float targetZoom;
+
+    // Smoothed keyboard velocity (gives the natural acceleration/deceleration feel)
+    private Vector3 _keyboardVelocity;
 
     // Middle-mouse pan state
     private bool _isPanning;
@@ -64,7 +67,6 @@ public class CameraController : MonoBehaviour
             var map = inputActions.FindActionMap("Camera");
             if (map != null)
             {
-                moveAction = map.FindAction("KeyBoardMove");
                 zoomAction = map.FindAction("Zoom");
                 inputActions.Enable();
             }
@@ -140,13 +142,26 @@ public class CameraController : MonoBehaviour
 
     private void HandleMovement()
     {
-        if (moveAction == null) return;
+        var kb = Keyboard.current;
+        if (kb == null) return;
 
-        Vector2 input = moveAction.ReadValue<Vector2>();
-        if (input.sqrMagnitude > 0.01f)
+        // WASD primary, arrow keys as fallback
+        float h = 0f, v = 0f;
+        if (kb.aKey.isPressed     || kb.leftArrowKey.isPressed)  h -= 1f;
+        if (kb.dKey.isPressed     || kb.rightArrowKey.isPressed) h += 1f;
+        if (kb.sKey.isPressed     || kb.downArrowKey.isPressed)  v -= 1f;
+        if (kb.wKey.isPressed     || kb.upArrowKey.isPressed)    v += 1f;
+
+        Vector3 targetVelocity = new Vector3(h, 0f, v).normalized * moveSpeed;
+
+        // Smoothly ramp velocity up (when key held) and back to zero (when released)
+        _keyboardVelocity = Vector3.Lerp(
+            _keyboardVelocity, targetVelocity,
+            Time.deltaTime * keyboardAcceleration);
+
+        if (_keyboardVelocity.sqrMagnitude > 0.001f)
         {
-            Vector3 direction = new Vector3(input.x, 0, input.y);
-            cameraTarget.Translate(direction * moveSpeed * Time.deltaTime, Space.World);
+            cameraTarget.Translate(_keyboardVelocity * Time.deltaTime, Space.World);
             ApplyBoundsClamping();
         }
     }

@@ -46,10 +46,12 @@ public class AttackEnum : MonoBehaviour
 
     public enum AttackTargetShape
     {
-        cube,
-        sphere,
-        line,
-        column
+        cube,      // Chebyshev square   — max(|dx|,|dy|) ≤ range
+        sphere,    // Manhattan diamond  — |dx|+|dy| ≤ range
+        cross,     // Cardinal plus (+)  — same row OR same column  (was: old "line")
+        line,      // Directional ray    — fires along selected adjacent tile's direction (melee)
+        column,    // Perpendicular line — fires ⊥ to direction, centred on selected tile
+        cone       // Bowling-pin cone   — expands from selected tile along direction
     }
 
 

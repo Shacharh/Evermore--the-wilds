@@ -62,6 +62,18 @@ public class MonsterSpawner : MonoBehaviour
                 }
                 newMonster.layer = LayerMask.NameToLayer("Monster");
 
+                // Silhouette — shows a solid coloured fill when the monster is visually
+                // hidden behind terrain, obstructions, or other units (QuickOutline package).
+                // SilhouetteOnly: renders only when the object is occluded by geometry.
+                // [DisallowMultipleComponent] on Outline means we must not add a second one.
+                var outline = newMonster.GetComponent<Outline>();
+                if (outline == null) outline = newMonster.AddComponent<Outline>();
+                outline.OutlineMode  = Outline.Mode.SilhouetteOnly;
+                outline.OutlineColor = (monsterComp != null && monsterComp.IsEnemy)
+                    ? new Color(1f, 0.25f, 0.25f, 1f)   // red  — enemy
+                    : new Color(0.25f, 0.85f, 1f,  1f); // cyan — player
+                outline.OutlineWidth = 8f;
+
                 Debug.Log($"Spawned {newMonster.name} at {data.gridPosition}");
             }
         }

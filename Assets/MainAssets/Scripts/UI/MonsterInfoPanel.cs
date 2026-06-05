@@ -30,13 +30,21 @@ public class MonsterInfoPanel : MonoBehaviour
 
     public static MonsterInfoPanel Instance { get; private set; }
 
-    /// <summary>Auto-spawned on scene load — no scene setup required.</summary>
+    /// <summary>Auto-spawned on scene load — no scene setup required.
+    /// Place this script on a scene GameObject to expose sprite fields in the Inspector.</summary>
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
     {
         if (Instance != null) return;
         new GameObject("MonsterInfoPanel").AddComponent<MonsterInfoPanel>();
     }
+
+    // Style — loaded from UIStyleConfig in BuildUI()
+    private Sprite _panelSprite;
+    private Sprite _buttonSprite;
+    private Color  _panelColor;
+    private Color  _headerColor;
+    private Color  _closeColor;
 
     // ── UI References ─────────────────────────────────────────────────────────
 
@@ -184,6 +192,13 @@ public class MonsterInfoPanel : MonoBehaviour
 
     private void BuildUI()
     {
+        var s      = UIStyleConfig.Load();
+        _panelSprite  = s?.panelSprite;
+        _buttonSprite = s?.buttonSprite;
+        _panelColor   = s?.infoPanelColor  ?? new Color(0.07f, 0.07f, 0.11f, 0.95f);
+        _headerColor  = s?.infoHeaderColor ?? new Color(0.15f, 0.15f, 0.25f, 1f);
+        _closeColor   = s?.closeButtonColor ?? new Color(0.65f, 0.15f, 0.15f, 1f);
+
         // Root canvas — ScreenSpaceOverlay, sort 500 (same as AttackInfoPanel)
         var canvasGO = new GameObject("InfoCanvas");
         canvasGO.transform.SetParent(transform);
@@ -208,7 +223,7 @@ public class MonsterInfoPanel : MonoBehaviour
         panelRT.anchoredPosition = new Vector2(-24f, 24f);
         panelRT.sizeDelta        = new Vector2(420f, 370f);
 
-        panelRoot.AddComponent<Image>().color = new Color(0.07f, 0.07f, 0.11f, 0.95f);
+        UIStyleConfig.ApplySprite(panelRoot.AddComponent<Image>(), _panelSprite, _panelColor);
 
         // ── Top bar ───────────────────────────────────────────────────────────
         var barGO = MakeChild(panelRoot, "TopBar");
@@ -217,7 +232,10 @@ public class MonsterInfoPanel : MonoBehaviour
         barRT.pivot     = new Vector2(0.5f, 1f);
         barRT.anchoredPosition = Vector2.zero;
         barRT.sizeDelta        = new Vector2(0f, 50f);
-        barGO.AddComponent<Image>().color = new Color(0.15f, 0.15f, 0.25f, 1f);
+        // Only add a coloured bar when no panel sprite is set.
+        // When a sprite is used, the header area is already part of the sprite artwork.
+        if (_panelSprite == null)
+            barGO.AddComponent<Image>().color = _headerColor;
 
         // ── Type icon (inside top bar, left side) ────────────────────────────
         var iconGO = MakeChild(barGO, "TypeIcon");
@@ -273,6 +291,8 @@ public class MonsterInfoPanel : MonoBehaviour
         stageHdrTmp.enableWordWrapping = false;
 
         // ── Divider (full width) ──────────────────────────────────────────────
+        // Only draw the code divider when no panel sprite is set.
+        // When a sprite is used its artwork already provides the visual separator.
         var divGO = MakeChild(panelRoot, "Divider");
         var divRT = divGO.GetComponent<RectTransform>();
         divRT.anchorMin        = new Vector2(0f, 1f);
@@ -280,7 +300,8 @@ public class MonsterInfoPanel : MonoBehaviour
         divRT.pivot            = new Vector2(0.5f, 1f);
         divRT.anchoredPosition = new Vector2(0f, -100f);
         divRT.sizeDelta        = new Vector2(-28f, 2f);
-        divGO.AddComponent<Image>().color = new Color(0.35f, 0.35f, 0.5f, 1f);
+        if (_panelSprite == null)
+            divGO.AddComponent<Image>().color = new Color(0.35f, 0.35f, 0.5f, 1f);
 
         // ── Stats text — left column (stat name + value) ──────────────────────
         var statsGO = MakeChild(panelRoot, "Stats");
@@ -323,7 +344,7 @@ public class MonsterInfoPanel : MonoBehaviour
         closeRT.sizeDelta        = new Vector2(160f, 36f);
 
         var closeBg = closeGO.AddComponent<Image>();
-        closeBg.color = new Color(0.65f, 0.15f, 0.15f, 1f);
+        UIStyleConfig.ApplySprite(closeBg, _buttonSprite, _closeColor);
 
         var closeBtn = closeGO.AddComponent<Button>();
         closeBtn.targetGraphic = closeBg;
