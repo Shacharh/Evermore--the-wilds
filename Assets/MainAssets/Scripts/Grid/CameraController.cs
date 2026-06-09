@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.Controls;
 using Unity.Cinemachine;
 
 public class CameraController : MonoBehaviour
@@ -12,7 +11,6 @@ public class CameraController : MonoBehaviour
 
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 20f;
-    [SerializeField] private float smoothTime = 0.2f;
 
     [Header("Zoom Settings")]
     [SerializeField] private float zoomSpeed = 5f;
@@ -44,16 +42,38 @@ public class CameraController : MonoBehaviour
     [SerializeField] private Transform boundsMinCorner;
     [SerializeField] private Transform boundsMaxCorner;
 
+    [Header("Monster Focus")]
+    [Tooltip("Zoom level when focused on a monster.")]
+    [SerializeField] private float focusZoom = 9f;
+    [Tooltip("Camera pitch angle (degrees) when focused — lower = more cinematic.")]
+    [Range(10f, 80f)]
+    [SerializeField] private float focusAngle = 28f;
+    [Tooltip("Lateral offset applied to the camera target when focusing, giving a slight diagonal view.")]
+    [SerializeField] private Vector3 focusOffset = new Vector3(2f, 0f, 0.5f);
+    [Tooltip("Speed of the focus-in and focus-out transitions.")]
+    [SerializeField] private float focusSpeed = 6f;
+
     private InputAction moveAction;
     private InputAction zoomAction;
-    private Vector3 currentVelocity;
-    private float targetZoom;
+    private Vector3     currentVelocity;
+    private float       targetZoom;
 
     // Middle-mouse pan state
     private bool _isPanning;
 
     // Edge-scroll current speed (smoothly ramped)
     private Vector3 _edgeScrollVelocity;
+
+    // ── Focus state ────────────────────────────────────────────────────────────
+
+    private bool    _isLocked;       // true while focused on a monster
+    private bool    _isRestoring;    // true while smoothly returning to saved state
+    private Vector3 _focusWorldPos;  // the monster's world position
+    private Vector3 _savedPos;
+    private float   _savedZoom;
+    private float   _savedAngle;
+
+    // ── Lifecycle ──────────────────────────────────────────────────────────────
 
     void Awake()
     {
@@ -75,14 +95,92 @@ public class CameraController : MonoBehaviour
     {
         if (cameraTarget == null || cinemachineCamera == null) return;
 
-        HandleMiddleMousePan();
-        HandleEdgeScroll();
-        HandleMovement();
-        HandleZoom();
+        if (_isLocked)
+        {
+            SmoothToFocus();
+        }
+        else if (_isRestoring)
+        {
+            SmoothToSaved();
+        }
+        else
+        {
+            HandleMiddleMousePan();
+            HandleEdgeScroll();
+            HandleMovement();
+            HandleZoom();
+        }
+
+        // Always lerp currentZoom toward targetZoom regardless of lock state
+        currentZoom = Mathf.Lerp(currentZoom, targetZoom, Time.deltaTime * 10f);
         ApplyCameraPosition();
     }
 
-    // ── Middle-mouse pan ──────────────────────────────────────────────────────
+    // ── Monster Focus API ──────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Smoothly zooms in on <paramref name="worldPos"/> at a cinematic angle
+    /// and locks all camera movement until <see cref="ReleaseFocus"/> is called.
+    /// Safe to call while already focused (updates the target without re-saving).
+    /// </summary>
+    public void FocusOnMonster(Vector3 worldPos)
+    {
+        // Save the original camera state on first entry only.
+        // If we're mid-restore, _savedPos already holds the original — keep it.
+        if (!_isLocked && !_isRestoring)
+        {
+            _savedPos   = cameraTarget.position;
+            _savedZoom  = targetZoom;
+            _savedAngle = cameraAngle;
+        }
+
+        _isRestoring   = false;
+        _isLocked      = true;
+        _focusWorldPos = worldPos;
+    }
+
+    /// <summary>
+    /// Unlocks camera movement and smoothly returns to the pre-focus state.
+    /// </summary>
+    public void ReleaseFocus()
+    {
+        if (!_isLocked) return;
+        _isLocked    = false;
+        _isRestoring = true;
+    }
+
+    // ── Focus helpers ──────────────────────────────────────────────────────────
+
+    private void SmoothToFocus()
+    {
+        float t = Time.deltaTime * focusSpeed;
+
+        Vector3 dest = _focusWorldPos + focusOffset;
+        cameraTarget.position = Vector3.Lerp(cameraTarget.position, dest,  t);
+        targetZoom            = Mathf.Lerp(targetZoom,  focusZoom,  t);
+        cameraAngle           = Mathf.Lerp(cameraAngle, focusAngle, t);
+    }
+
+    private void SmoothToSaved()
+    {
+        float t = Time.deltaTime * focusSpeed;
+
+        cameraTarget.position = Vector3.Lerp(cameraTarget.position, _savedPos,  t);
+        targetZoom            = Mathf.Lerp(targetZoom,  _savedZoom,  t);
+        cameraAngle           = Mathf.Lerp(cameraAngle, _savedAngle, t);
+
+        // Snap once close enough so we don't lerp forever
+        if (Vector3.Distance(cameraTarget.position, _savedPos) < 0.05f &&
+            Mathf.Abs(targetZoom - _savedZoom) < 0.1f)
+        {
+            cameraTarget.position = _savedPos;
+            targetZoom            = _savedZoom;
+            cameraAngle           = _savedAngle;
+            _isRestoring          = false;
+        }
+    }
+
+    // ── Middle-mouse pan ───────────────────────────────────────────────────────
 
     private void HandleMiddleMousePan()
     {
@@ -94,16 +192,13 @@ public class CameraController : MonoBehaviour
 
         if (!_isPanning) return;
 
-        // delta is the pixel movement since last frame — already computed by the Input System
         Vector2 delta = mouse.delta.ReadValue();
-
-        // Invert so dragging right pans the world rightward
-        Vector3 move = new Vector3(-delta.x, 0f, -delta.y) * panSpeed;
+        Vector3 move  = new Vector3(-delta.x, 0f, -delta.y) * panSpeed;
         cameraTarget.Translate(move, Space.World);
         ApplyBoundsClamping();
     }
 
-    // ── Edge scrolling ────────────────────────────────────────────────────────
+    // ── Edge scrolling ─────────────────────────────────────────────────────────
 
     private void HandleEdgeScroll()
     {
@@ -151,12 +246,6 @@ public class CameraController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Clamps the camera target's XZ position to stay within the rectangle
-    /// defined by <see cref="boundsMinCorner"/> and <see cref="boundsMaxCorner"/>.
-    /// Y is never clamped — the pivot stays at ground level.
-    /// Does nothing if either corner Transform is unassigned.
-    /// </summary>
     private void ApplyBoundsClamping()
     {
         if (boundsMinCorner == null || boundsMaxCorner == null) return;
@@ -176,32 +265,24 @@ public class CameraController : MonoBehaviour
     {
         if (zoomAction == null) return;
 
-        // Read scroll delta (usually Y is +/- 120 or similar)
         float scrollDelta = zoomAction.ReadValue<float>();
-
         if (Mathf.Abs(scrollDelta) > 0.1f)
         {
-            // Normalize scroll and update target zoom
             targetZoom -= (scrollDelta / 120f) * zoomSpeed;
-            targetZoom = Mathf.Clamp(targetZoom, minZoom, maxZoom);
+            targetZoom  = Mathf.Clamp(targetZoom, minZoom, maxZoom);
         }
-
-        // Smoothly interpolate the zoom for a "premium" feel
-        currentZoom = Mathf.Lerp(currentZoom, targetZoom, Time.deltaTime * 10f);
+        // currentZoom lerp is handled in Update() so it runs during focus/restore too
     }
 
     private void ApplyCameraPosition()
     {
         float rad = cameraAngle * Mathf.Deg2Rad;
 
-        // Trigonometry to find the camera offset
-        // y = Height, z = Depth
         float yOffset = currentZoom * Mathf.Sin(rad);
         float zOffset = currentZoom * Mathf.Cos(rad);
 
         Vector3 desiredPosition = cameraTarget.position + new Vector3(0, yOffset, -zOffset);
 
-        // Update the Virtual Camera Transform
         cinemachineCamera.transform.position = desiredPosition;
         cinemachineCamera.transform.LookAt(cameraTarget.position);
     }
