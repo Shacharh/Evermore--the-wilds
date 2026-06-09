@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
@@ -7,18 +7,18 @@ using TMPro;
 /// hovered tile while the player is in movement mode.
 ///
 /// Appears in the top-left corner (away from the monster info panel which sits
-/// bottom-right). Instantly shows/hides — no fade animation — because it must
+/// bottom-right). Instantly shows/hides â€” no fade animation â€” because it must
 /// update every frame as the player hovers different tiles.
 ///
 /// Usage (from InputManager):
 ///   MoveCostHint.Show("Move cost: 2 AP");
 ///   MoveCostHint.Hide();
 ///
-/// Auto-created singleton — no prefab or scene setup needed.
+/// Auto-created singleton â€” no prefab or scene setup needed.
 /// </summary>
 public class MoveCostHint : MonoBehaviour
 {
-    // ── Singleton ─────────────────────────────────────────────────────────────
+    // â”€â”€ Singleton â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public static MoveCostHint Instance { get; private set; }
 
@@ -29,12 +29,12 @@ public class MoveCostHint : MonoBehaviour
         new GameObject("MoveCostHint").AddComponent<MoveCostHint>();
     }
 
-    // ── UI References ─────────────────────────────────────────────────────────
+    // â”€â”€ UI References â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private GameObject      panelRoot;
     private TextMeshProUGUI hintText;
 
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
+    // â”€â”€ Lifecycle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private void Awake()
     {
@@ -50,7 +50,7 @@ public class MoveCostHint : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
-    // ── Public API ────────────────────────────────────────────────────────────
+    // â”€â”€ Public API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /// <summary>Shows the hint panel with the given text. Safe to call every frame.</summary>
     public static void Show(string text)
@@ -67,11 +67,11 @@ public class MoveCostHint : MonoBehaviour
         Instance.panelRoot.SetActive(false);
     }
 
-    // ── UI Construction ───────────────────────────────────────────────────────
+    // â”€â”€ UI Construction â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private void BuildUI()
     {
-        // Root canvas — ScreenSpaceOverlay, sort order 600 (above game world, below battle messages)
+        // Root canvas â€” ScreenSpaceOverlay, sort order 600 (above game world, below battle messages)
         var canvasGO = new GameObject("MoveCostCanvas");
         canvasGO.transform.SetParent(transform);
 
@@ -84,12 +84,12 @@ public class MoveCostHint : MonoBehaviour
         scaler.referenceResolution = new Vector2(1920f, 1080f);
         scaler.matchWidthOrHeight  = 0.5f;
 
-        // Non-interactive — just a display label
+        // Non-interactive â€” just a display label
         var cg = canvasGO.AddComponent<CanvasGroup>();
         cg.interactable   = false;
         cg.blocksRaycasts = false;
 
-        // ── Panel — top-left corner, 260 × 52 px in 1920×1080 reference space ─
+        // â”€â”€ Panel â€” top-left corner, 260 Ã— 52 px in 1920Ã—1080 reference space â”€
         panelRoot = MakeChild(canvasGO, "HintPanel");
         var rt = panelRoot.GetComponent<RectTransform>();
         rt.anchorMin        = new Vector2(0f, 1f);
@@ -101,7 +101,7 @@ public class MoveCostHint : MonoBehaviour
         var bg = panelRoot.AddComponent<Image>();
         bg.color = new Color(0.04f, 0.10f, 0.04f, 0.92f);   // dark green tint
 
-        // ── Text ──────────────────────────────────────────────────────────────
+        // â”€â”€ Text â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var textGO = MakeChild(panelRoot, "Text");
         var textRT = textGO.GetComponent<RectTransform>();
         textRT.anchorMin = Vector2.zero;
@@ -114,7 +114,7 @@ public class MoveCostHint : MonoBehaviour
         hintText.color                  = new Color(0.6f, 1f, 0.6f, 1f);  // light green
         hintText.alignment              = TextAlignmentOptions.Center;
         hintText.fontStyle              = FontStyles.Bold;
-        hintText.enableWordWrapping     = false;
+        hintText.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
     }
 
     private static GameObject MakeChild(GameObject parent, string name)
@@ -125,3 +125,4 @@ public class MoveCostHint : MonoBehaviour
         return go;
     }
 }
+

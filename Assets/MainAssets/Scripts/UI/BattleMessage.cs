@@ -70,7 +70,6 @@ public class BattleMessage : MonoBehaviour
         const float fadeInTime  = 0.25f;
         const float fadeOutTime = 0.4f;
 
-        // Fade in
         float t = 0f;
         while (t < fadeInTime)
         {
@@ -80,10 +79,8 @@ public class BattleMessage : MonoBehaviour
         }
         canvasGroup.alpha = 1f;
 
-        // Hold
         yield return new WaitForSeconds(displayDuration);
 
-        // Fade out
         t = 0f;
         while (t < fadeOutTime)
         {
@@ -98,12 +95,11 @@ public class BattleMessage : MonoBehaviour
 
     private void BuildUI()
     {
-        // Root canvas — ScreenSpaceOverlay at sort order 700 (above game, below radial menu)
         var canvasGO = new GameObject("MessageCanvas");
         canvasGO.transform.SetParent(transform);
 
         var canvas = canvasGO.AddComponent<Canvas>();
-        canvas.renderMode  = RenderMode.ScreenSpaceOverlay;
+        canvas.renderMode   = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 700;
 
         var scaler = canvasGO.AddComponent<CanvasScaler>();
@@ -113,12 +109,10 @@ public class BattleMessage : MonoBehaviour
 
         canvasGO.AddComponent<GraphicRaycaster>();
 
-        // CanvasGroup on the canvas root for alpha fade (non-interactive)
         canvasGroup = canvasGO.AddComponent<CanvasGroup>();
         canvasGroup.interactable   = false;
         canvasGroup.blocksRaycasts = false;
 
-        // Message panel — upper-centre of the screen
         var panelGO = new GameObject("Panel");
         panelGO.transform.SetParent(canvasGO.transform, false);
 
@@ -129,10 +123,8 @@ public class BattleMessage : MonoBehaviour
         panelRT.anchoredPosition = Vector2.zero;
         panelRT.sizeDelta        = new Vector2(680f, 72f);
 
-        var bg = panelGO.AddComponent<Image>();
-        bg.color = new Color(0.04f, 0.04f, 0.10f, 0.90f);
+        panelGO.AddComponent<Image>().color = new Color(0.04f, 0.04f, 0.10f, 0.90f);
 
-        // Text
         var textGO = new GameObject("Text");
         textGO.transform.SetParent(panelGO.transform, false);
 
@@ -142,11 +134,11 @@ public class BattleMessage : MonoBehaviour
         textRT.offsetMin = new Vector2(14f, 6f);
         textRT.offsetMax = new Vector2(-14f, -6f);
 
-        messageText             = textGO.AddComponent<TextMeshProUGUI>();
-        messageText.fontSize    = 26f;
-        messageText.color       = new Color(1f, 0.85f, 0.2f, 1f);  // golden yellow
-        messageText.alignment   = TextAlignmentOptions.Center;
-        messageText.fontStyle   = FontStyles.Bold;
-        messageText.enableWordWrapping = false;
+        messageText                   = textGO.AddComponent<TextMeshProUGUI>();
+        messageText.fontSize          = 26f;
+        messageText.color             = new Color(1f, 0.85f, 0.2f, 1f);
+        messageText.alignment         = TextAlignmentOptions.Center;
+        messageText.fontStyle         = FontStyles.Bold;
+        messageText.textWrappingMode  = TMPro.TextWrappingModes.NoWrap;
     }
 }

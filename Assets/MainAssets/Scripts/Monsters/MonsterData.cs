@@ -60,4 +60,10 @@ public class AttackEntry
     /// </summary>
     
     public string AnimationTrigger;
+
+    [Tooltip("Spawn point on this monster's model for the VFX.\n" +
+             "Drag a child Transform from the monster prefab here.\n" +
+             "Leave empty to fall back to the monster's root position.")]
+    public Transform vfxSpawnPoint;
+    public Vector3 vfxSpawnOffset;
 }

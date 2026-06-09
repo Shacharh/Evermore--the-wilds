@@ -1,0 +1,7 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UIDocuments/RadialMenu/RadialMenu.uss?fileID=7433441132597879392&amp;guid=ca46d2661f01a32488b15fd8de8b9309&amp;type=3#RadialMenu"/>
+    <ui:VisualElement class="menu-card" style="background-image: none; rotate: 0 0 0 5deg;">
+        <ui:VisualElement class="menu-card-dot"/>
+        <ui:Label name="card-label" text="ACTION NAME" class="menu-card-label"/>
+    </ui:VisualElement>
+</ui:UXML>
