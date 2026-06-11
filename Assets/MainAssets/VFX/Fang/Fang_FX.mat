@@ -7,13 +7,13 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Fang
-  m_Shader: {fileID: 4800000, guid: c4edd00ff2db5b24391a4fcb1762e459, type: 3}
+  m_Name: Fang_FX
+  m_Shader: {fileID: -6465566751694194690, guid: c3cb5cd25cc7ad849a13b34847bdd887, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
-  - _ALPHATEST_ON
+  m_ValidKeywords: []
   m_InvalidKeywords:
+  - _ALPHATEST_ON
   - _DISABLE_SSR_TRANSPARENT
   - _DOUBLESIDED_ON
   - _NORMALMAP_TANGENT_SPACE
@@ -25,8 +25,10 @@ Material:
     MotionVector: User
     RenderType: TransparentCutout
   disabledShaderPasses:
-  - DistortionVectors
   - MOTIONVECTORS
+  - TransparentDepthPrepass
+  - TransparentDepthPostpass
+  - TransparentBackface
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
@@ -232,7 +234,7 @@ Material:
     - _RefractionModel: 0
     - _RenderQueueType: 1
     - _RippleDensity: 10.2
-    - _RippleStreangth: 2
+    - _RippleStreangth: 4.12
     - _Smoothness: 0.5
     - _SmoothnessRemapMax: 1
     - _SmoothnessRemapMin: 0
@@ -265,20 +267,20 @@ Material:
     - _TransparentSortPriority: 0
     - _TransparentWritingMotionVec: 0
     - _TransparentZWrite: 0
-    - _Transperancy: 0
+    - _Transperancy: 1
     - _UVBase: 0
     - _UVDetail: 0
     - _UVEmissive: 0
     - _UseEmissiveIntensity: 1
     - _UseShadowThreshold: 0
-    - _VertexOffset: 0.07
-    - _VoronoiSpeed: 2
+    - _VertexOffset: 0.05
+    - _VoronoiSpeed: 0.58
     - _ZTestDepthEqualForOpaque: 3
     - _ZTestGBuffer: 3
     - _ZTestModeDistortion: 4
     - _ZTestTransparent: 4
     - _ZWrite: 1
-    - _foamStreangth: 8
+    - _foamStreangth: 3
     m_Colors:
     - _BaseColor: {r: 0.6603774, g: 0.12148453, b: 0.55837494, a: 1}
     - _Color: {r: 0, g: 0, b: 0, a: 1}
@@ -289,7 +291,7 @@ Material:
     - _EmissiveColorLDR: {r: 0.6605762, g: 0.2272161, b: 0.6981132, a: 1}
     - _InvPrimScale: {r: 1, g: 1, b: 0, a: 0}
     - _IridescenceThicknessRemap: {r: 0, g: 1, b: 0, a: 0}
-    - _RippleColor: {r: 1, g: 1, b: 1, a: 1}
+    - _RippleColor: {r: 0.4276413, g: 0.08232466, b: 0.6981132, a: 1}
     - _RippleSpeed: {r: 0, g: 0.2, b: 0, a: 0}
     - _SpecularColor: {r: 1, g: 1, b: 1, a: 1}
     - _ThicknessRemap: {r: 0, g: 1, b: 0, a: 0}
@@ -298,7 +300,7 @@ Material:
     - _UVMappingMask: {r: 1, g: 0, b: 0, a: 0}
     - _UVMappingMaskEmissive: {r: 1, g: 0, b: 0, a: 0}
     - _UnlitColor: {r: 0, g: 0, b: 0, a: 1}
-    - _Water_Color: {r: 0.09019607, g: 0.7035464, b: 0.7647059, a: 1}
+    - _Water_Color: {r: 0.37970868, g: 0.09019607, b: 0.7647059, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &5805377301799751635
