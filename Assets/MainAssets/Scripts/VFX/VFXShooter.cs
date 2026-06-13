@@ -16,30 +16,40 @@ public class VFXShooter : MonoBehaviour
     [Tooltip("Projectile: rotate the object to face its direction of travel.")]
     [SerializeField] private bool faceDirection = true;
 
-    private Vector3 _targetPos;
-    private bool    _ready;
+    private Vector3    _targetPos;
+    private bool       _ready;
+    private bool       _targetSet;
     private GameObject _sourcePrefab;
 
     // Fired when the shooter reaches its target or times out.
-    // Monster subscribes to this so it can remove the instance from its tracking list.
     public System.Action OnComplete;
+
+    // Called by Monster before SetActive(true) so OnEnable has a target ready.
+    public void SetTarget(Vector3 position)
+    {
+        _targetPos = position;
+        _targetSet = true;
+    }
 
     public void SetPoolSource(GameObject prefab) => _sourcePrefab = prefab;
 
-    // OnEnable fires synchronously when VFXPool.Get calls SetActive(true),
-    // so AttackCommandManager.Target is guaranteed still set on the same frame.
     private void OnEnable()
     {
-        Monster target = AttackCommandManager.Instance?.Target;
-        if (target == null)
+        if (!_targetSet)
         {
-            Debug.LogWarning("[VFXShooter] No target found in AttackCommandManager.");
-            ReturnToPool();
-            return;
+            // Fallback for any path that doesn't call SetTarget first.
+            Monster fallback = AttackCommandManager.Instance?.Target;
+            if (fallback == null)
+            {
+                Debug.LogWarning("[VFXShooter] No target — SetTarget() was not called before SetActive(true).");
+                ReturnToPool();
+                return;
+            }
+            _targetPos = fallback.transform.position;
         }
+        _targetSet = false; // reset for next pool reuse
 
-        _targetPos = target.transform.position;
-        _ready     = true;
+        _ready = true;
 
         if (mode == Mode.Beam)
         {
@@ -51,7 +61,8 @@ public class VFXShooter : MonoBehaviour
     private void OnDisable()
     {
         StopAllCoroutines();
-        _ready = false;
+        _ready     = false;
+        _targetSet = false;
     }
 
     private void Update()

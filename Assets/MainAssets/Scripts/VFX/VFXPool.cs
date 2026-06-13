@@ -34,12 +34,13 @@ public class VFXPool : MonoBehaviour
         if (_instance == this) _instance = null;
     }
 
-    // Position and rotation are applied before SetActive so OnEnable sees correct values.
+    // Returns the instance INACTIVE with position applied.
+    // Caller must call SetActive(true) after any additional per-instance setup (e.g. SetTarget on VFXShooter).
+    // This prevents OnEnable from firing before the instance is fully configured.
     public GameObject Get(GameObject prefab, Vector3 position, Quaternion rotation)
     {
         var instance = GetOrCreatePool(prefab).Get();
         instance.transform.SetPositionAndRotation(position, rotation);
-        instance.SetActive(true);
         return instance;
     }
 
@@ -52,13 +53,24 @@ public class VFXPool : MonoBehaviour
             Destroy(instance);
     }
 
-    private ObjectPool<GameObject> GetOrCreatePool(GameObject prefab) =>
-        _pools.TryGetValue(prefab, out var pool) ? pool : (_pools[prefab] = new ObjectPool<GameObject>(
-            createFunc:      () => Instantiate(prefab),
-            actionOnGet:     _ => { },                      // SetActive done after position is set
+    private ObjectPool<GameObject> GetOrCreatePool(GameObject prefab)
+    {
+        if (_pools.TryGetValue(prefab, out var pool)) return pool;
+
+        pool = new ObjectPool<GameObject>(
+            createFunc: () =>
+            {
+                var obj = Instantiate(prefab);
+                obj.SetActive(false); // always start inactive so OnEnable fires under our control
+                return obj;
+            },
+            actionOnGet:     _ => { },
             actionOnRelease: obj => obj.SetActive(false),
             actionOnDestroy: obj => Destroy(obj),
             defaultCapacity: 4,
             maxSize:         20
-        ));
+        );
+        _pools[prefab] = pool;
+        return pool;
+    }
 }

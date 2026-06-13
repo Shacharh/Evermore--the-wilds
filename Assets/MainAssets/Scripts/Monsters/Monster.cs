@@ -33,6 +33,11 @@ public class Monster : MonoBehaviour
              "Create one via: Assets → Create → Evermore → ObstructionConfig\n" +
              "If left empty the system falls back to hardcoded defaults (50 % damage, −10 % acc).")]
     [SerializeField] private ObstructionConfig obstructionConfig;
+
+    [Header("VFX")]
+    [Tooltip("Safety net: if OnAttackAnimationEnd is never called (e.g. MonsterAnimationEventHelper not wired), " +
+             "all active VFX are returned to the pool after this many seconds.")]
+    [SerializeField] private float vfxFallbackTimeout = 5f;
     #endregion
 
     #region Constants
@@ -373,11 +378,12 @@ public class Monster : MonoBehaviour
 
     private void SpawnAttackVFX(List<Monster> targets, int attackIndex)
     {
-        AttackData attackData = learnedAttacks[attackIndex].data;
+        AttackData attackData  = learnedAttacks[attackIndex].data;
         if (attackData.VFXPrefab == null) return;
 
-        AttackEntry entry  = System.Array.Find(data.movePool, e => e.attack == attackData);
-        Vector3     offset = entry != null ? entry.vfxSpawnOffset : Vector3.zero;
+        AttackEntry entry       = System.Array.Find(data.movePool, e => e.attack == attackData);
+        Vector3     offset      = entry != null ? entry.vfxSpawnOffset : Vector3.zero;
+        Monster     firstTarget = targets.Count > 0 ? targets[0] : null;
 
         if (attackData.VFXTarget == AttackVFXTarget.AttackerSpawnPoint)
         {
@@ -388,16 +394,21 @@ public class Monster : MonoBehaviour
                 Transform spawnPoint = transform.Find(entry.vfxSpawnPointPath);
                 if (spawnPoint != null) { pos = spawnPoint.position; rot = spawnPoint.rotation; }
             }
-            SpawnAndTrackVFX(attackData.VFXPrefab, pos + offset, rot);
+            SpawnAndTrackVFX(attackData.VFXPrefab, pos + offset, rot, firstTarget);
         }
         else
         {
             foreach (Monster target in targets)
-                SpawnAndTrackVFX(attackData.VFXPrefab, target.transform.position + offset, Quaternion.identity);
+                SpawnAndTrackVFX(attackData.VFXPrefab, target.transform.position + offset, Quaternion.identity, target);
         }
+
+        StopCoroutine(nameof(VFXFallbackCoroutine));
+        StartCoroutine(VFXFallbackCoroutine());
     }
 
-    private void SpawnAndTrackVFX(GameObject prefab, Vector3 pos, Quaternion rot)
+    // Get() returns the instance INACTIVE with position set.
+    // We configure it fully here, then activate — so OnEnable fires with everything ready.
+    private void SpawnAndTrackVFX(GameObject prefab, Vector3 pos, Quaternion rot, Monster primaryTarget)
     {
         GameObject instance = VFXPool.Instance.Get(prefab, pos, rot);
         _activeVFX.Add((prefab, instance));
@@ -405,9 +416,13 @@ public class Monster : MonoBehaviour
         if (instance.TryGetComponent<VFXShooter>(out var shooter))
         {
             shooter.SetPoolSource(prefab);
-            var entry = (prefab, instance);
-            shooter.OnComplete = () => _activeVFX.Remove(entry);
+            if (primaryTarget != null)
+                shooter.SetTarget(primaryTarget.transform.position);
+            var tracked = (prefab, instance);
+            shooter.OnComplete = () => _activeVFX.Remove(tracked);
         }
+
+        instance.SetActive(true); // OnEnable fires here — position and target already set
     }
 
     // Called by MonsterAnimationEventHelper.OnAnimationEnd via UnityEvent.
@@ -415,10 +430,24 @@ public class Monster : MonoBehaviour
 
     private void ReturnAllVFX()
     {
+        StopCoroutine(nameof(VFXFallbackCoroutine));
         foreach (var (prefab, instance) in _activeVFX)
             if (instance != null && instance.activeSelf)
                 VFXPool.Instance.Return(prefab, instance);
         _activeVFX.Clear();
+    }
+
+    private System.Collections.IEnumerator VFXFallbackCoroutine()
+    {
+        yield return new WaitForSeconds(vfxFallbackTimeout);
+        if (_activeVFX.Count > 0)
+        {
+            Debug.LogWarning($"[{gameObject.name}] VFX fallback timeout fired. " +
+                "If this keeps appearing, wire MonsterAnimationEventHelper.onAnimationEnd " +
+                "→ Monster.OnAttackAnimationEnd() and add an OnAnimationEnd event at the last " +
+                "frame of the attack clip.");
+            ReturnAllVFX();
+        }
     }
 
     public void TriggerAttackEffect(int effectIndex)
