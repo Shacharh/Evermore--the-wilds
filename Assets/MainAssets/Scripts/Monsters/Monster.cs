@@ -440,14 +440,16 @@ public class Monster : MonoBehaviour
 
         if (attackData.VFXTarget == AttackVFXTarget.AttackerSpawnPoint)
         {
-            Vector3    pos = transform.position;
-            Quaternion rot = Quaternion.identity;
+            Vector3    pos        = transform.position;
+            Quaternion rot        = Quaternion.identity;
+            Transform  spawnPoint = null;
             if (entry != null && !string.IsNullOrEmpty(entry.vfxSpawnPointPath))
             {
-                Transform spawnPoint = transform.Find(entry.vfxSpawnPointPath);
+                spawnPoint = transform.Find(entry.vfxSpawnPointPath);
                 if (spawnPoint != null) { pos = spawnPoint.position; rot = spawnPoint.rotation; }
             }
-            SpawnAndTrackVFX(attackData.VFXPrefab, pos + offset, rot, firstTarget);
+            SpawnAndTrackVFX(attackData.VFXPrefab, pos + offset, rot, firstTarget,
+                             followTransform: spawnPoint);
         }
         else
         {
@@ -465,25 +467,33 @@ public class Monster : MonoBehaviour
     private void SpawnAttackVFXAtPosition(Vector3 worldPos, int attackIndex)
     {
         AttackData attackData = learnedAttacks[attackIndex].data;
+        Debug.Log($"[Monster] SpawnAttackVFXAtPosition: attacker={gameObject.name}, prefab={attackData.VFXPrefab?.name ?? "NULL"}, worldPos={worldPos}");
         if (attackData.VFXPrefab == null) return;
 
         AttackEntry entry  = System.Array.Find(data.movePool, e => e.attack == attackData);
         Vector3     offset = entry != null ? entry.vfxSpawnOffset : Vector3.zero;
 
-        if (attackData.VFXPrefab.TryGetComponent<VFXShooter>(out _))
+        bool hasShooter = attackData.VFXPrefab.GetComponentInChildren<VFXShooter>(true) != null;
+        Debug.Log($"[Monster] VFX prefab '{attackData.VFXPrefab.name}' hasShooter={hasShooter}, offset={offset}");
+
+        if (hasShooter)
         {
             // Shooter: originate at the attacker's configured spawn point, aim at AoE cell.
-            Vector3    spawnPos = transform.position;
-            Quaternion spawnRot = Quaternion.identity;
+            Vector3    spawnPos   = transform.position;
+            Quaternion spawnRot   = Quaternion.identity;
+            Transform  spawnPoint = null;
             if (entry != null && !string.IsNullOrEmpty(entry.vfxSpawnPointPath))
             {
-                Transform sp = transform.Find(entry.vfxSpawnPointPath);
-                if (sp != null) { spawnPos = sp.position; spawnRot = sp.rotation; }
+                spawnPoint = transform.Find(entry.vfxSpawnPointPath);
+                if (spawnPoint != null) { spawnPos = spawnPoint.position; spawnRot = spawnPoint.rotation; }
             }
-            SpawnAndTrackVFX(attackData.VFXPrefab, spawnPos + offset, spawnRot, null, worldPos);
+            Debug.Log($"[Monster] Has shooter → spawning at {spawnPos + offset}, aiming at {worldPos}");
+            SpawnAndTrackVFX(attackData.VFXPrefab, spawnPos + offset, spawnRot, null, worldPos,
+                             followTransform: spawnPoint);
         }
         else
         {
+            Debug.Log($"[Monster] No shooter → spawning directly at {worldPos + offset}");
             // No shooter: spawn directly at the AoE cell.
             SpawnAndTrackVFX(attackData.VFXPrefab, worldPos + offset, Quaternion.identity, null);
         }
@@ -496,21 +506,29 @@ public class Monster : MonoBehaviour
     // We configure it fully here, then activate — so OnEnable fires with everything ready.
     // shooterTarget overrides where the VFXShooter aims (used for AoE: spawn at attacker, aim at AoE cell).
     private void SpawnAndTrackVFX(GameObject prefab, Vector3 pos, Quaternion rot,
-                                   Monster primaryTarget, Vector3? shooterTarget = null)
+                                   Monster primaryTarget, Vector3? shooterTarget = null,
+                                   Transform followTransform = null)
     {
         GameObject instance = VFXPool.Instance.Get(prefab, pos, rot);
         _activeVFX.Add((prefab, instance));
 
-        if (instance.TryGetComponent<VFXShooter>(out var shooter))
+        var shooter = instance.GetComponentInChildren<VFXShooter>(true);
+        Debug.Log($"[Monster] SpawnAndTrackVFX: prefab='{prefab.name}', instance='{instance.name}', shooter={(shooter != null ? shooter.gameObject.name : "NONE")}, pos={pos}, shooterTarget={shooterTarget}, primaryTarget={primaryTarget?.name ?? "null"}");
+
+        if (shooter != null)
         {
             shooter.SetPoolSource(prefab);
             Vector3 target = shooterTarget
                              ?? (primaryTarget != null ? primaryTarget.transform.position : pos);
+            Debug.Log($"[Monster] Calling SetTarget({target}) on '{shooter.gameObject.name}'");
             shooter.SetTarget(target);
+            if (followTransform != null)
+                shooter.SetFollowTransform(followTransform);
             var tracked = (prefab, instance);
             shooter.OnComplete = () => _activeVFX.Remove(tracked);
         }
 
+        Debug.Log($"[Monster] Calling SetActive(true) on '{instance.name}'");
         instance.SetActive(true); // OnEnable fires here — position and target already set
     }
 

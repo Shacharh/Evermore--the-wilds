@@ -906,13 +906,6 @@ public class InputManager : MonoBehaviour
                 if (validTeam) targets.Add(m);
             }
 
-            if (targets.Count == 0)
-            {
-                Debug.Log("[InputManager] AOE clicked but no targets in footprint.");
-                ExitTargetSelection();
-                return;
-            }
-
             if (playerTurnController != null &&
                 !playerTurnController.TrySpendAPForAttack(attackingMonster, selectedAttackData))
             {
@@ -922,13 +915,14 @@ public class InputManager : MonoBehaviour
             }
 
             // Face the click point
+            Vector3 aoeCenter = targetTile.transform.position;
             Vector3 aoeDir = new Vector3(
-                targetTile.transform.position.x - attackingMonster.transform.position.x, 0f,
-                targetTile.transform.position.z - attackingMonster.transform.position.z);
+                aoeCenter.x - attackingMonster.transform.position.x, 0f,
+                aoeCenter.z - attackingMonster.transform.position.z);
             if (aoeDir != Vector3.zero)
                 attackingMonster.transform.root.rotation = Quaternion.LookRotation(aoeDir);
 
-            attackingMonster.ExecuteAttack(targets, selectedAttackIndex, selectedAttackData.IsDirect);
+            attackingMonster.ExecuteAoEAttack(aoeCenter, targets, selectedAttackIndex, selectedAttackData.IsDirect);
             Debug.Log($"[InputManager] AOE '{selectedAttackData.DisplayName}' hitting {targets.Count} target(s).");
         }
         else

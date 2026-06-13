@@ -59,6 +59,7 @@ public class AttackDataEditor : Editor
 
             SerializedProperty categoryProp = elementProp.FindPropertyRelative("category");
             SerializedProperty valueProp = elementProp.FindPropertyRelative("value");
+            SerializedProperty stageCountProp = elementProp.FindPropertyRelative("stageCount");
             SerializedProperty buffTypeProp = elementProp.FindPropertyRelative("buffType");
             SerializedProperty isDebuffProp = elementProp.FindPropertyRelative("isDebuff");
             SerializedProperty durationProp = elementProp.FindPropertyRelative("duration");
@@ -89,19 +90,24 @@ public class AttackDataEditor : Editor
             // Show buffType, duration, chance only if category is buff/debuff
             if (categoryProp.enumValueIndex == (int)AttackEnum.AttackCategory.buff)
             {
-                EditorGUI.PropertyField(new Rect(rect.x, y, rect.width, lineHeight), valueProp);
+                EditorGUI.PropertyField(new Rect(rect.x, y, rect.width, lineHeight), isDebuffProp);
                 y += lineHeight + spacing;
 
                 EditorGUI.PropertyField(new Rect(rect.x, y, rect.width, lineHeight), buffTypeProp);
                 y += lineHeight + spacing;
 
+                string pickerLabel = isDebuffProp.boolValue ? "Debuff Strength" : "Buff Strength";
+                EditorGUI.LabelField(new Rect(rect.x, y, rect.width, lineHeight), pickerLabel, EditorStyles.boldLabel);
+                y += lineHeight + spacing;
+
+                float pickerH = lineHeight * 2f;
+                DrawStagePicker(new Rect(rect.x, y, rect.width, pickerH), stageCountProp, isDebuffProp.boolValue);
+                y += pickerH + spacing;
+
                 EditorGUI.PropertyField(new Rect(rect.x, y, rect.width, lineHeight), durationProp);
                 y += lineHeight + spacing;
 
                 EditorGUI.PropertyField(new Rect(rect.x, y, rect.width, lineHeight), chanceProp);
-                y += lineHeight + spacing;
-
-                EditorGUI.PropertyField(new Rect(rect.x, y, rect.width, lineHeight), isDebuffProp);
                 y += lineHeight + spacing;
             }
 
@@ -143,7 +149,8 @@ public class AttackDataEditor : Editor
 
             if (categoryProp.enumValueIndex == (int)AttackEnum.AttackCategory.buff)
             {
-                height += lineHeight * 5 + spacing * 5; // buffType + duration + chance
+                // isDebuff + buffType + label + picker(2×) + duration + chance
+                height += lineHeight * 7 + spacing * 6;
             }
 
             if (categoryProp.enumValueIndex == (int)AttackEnum.AttackCategory.heal)
@@ -158,6 +165,69 @@ public class AttackDataEditor : Editor
 
             return height;
         };
+    }
+
+    private static void DrawStagePicker(Rect rect, SerializedProperty stageCountProp, bool isDebuff)
+    {
+        // Multipliers match Universal_StatStageConfig stages +1 → +6 (and mirror for debuff)
+        float[] buffMults   = { 1.25f, 1.50f, 1.75f, 2.00f, 2.25f, 2.50f };
+        float[] debuffMults = { 0.90f, 0.75f, 0.65f, 0.50f, 0.35f, 0.20f };
+
+        Color[] buffColors = {
+            new Color(0.60f, 0.90f, 0.60f),
+            new Color(0.40f, 0.85f, 0.40f),
+            new Color(0.20f, 0.80f, 0.20f),
+            new Color(0.05f, 0.75f, 0.05f),
+            new Color(0.00f, 0.65f, 0.00f),
+            new Color(0.00f, 0.55f, 0.00f),
+        };
+        Color[] debuffColors = {
+            new Color(1.00f, 0.80f, 0.55f),
+            new Color(1.00f, 0.65f, 0.40f),
+            new Color(1.00f, 0.50f, 0.25f),
+            new Color(1.00f, 0.30f, 0.15f),
+            new Color(0.95f, 0.15f, 0.05f),
+            new Color(0.85f, 0.00f, 0.00f),
+        };
+
+        float[] mults  = isDebuff ? debuffMults : buffMults;
+        Color[] colors = isDebuff ? debuffColors : buffColors;
+        int     current = stageCountProp.intValue;
+
+        float    btnW    = rect.width / 6f;
+        GUIStyle style   = new GUIStyle(GUI.skin.button) { fontSize = 10, alignment = TextAnchor.MiddleCenter };
+
+        Color borderColor = isDebuff ? new Color(1f, 0.85f, 0f) : new Color(0f, 1f, 0.4f);
+
+        for (int i = 1; i <= 6; i++)
+        {
+            Rect btnRect = new Rect(rect.x + (i - 1) * btnW, rect.y, btnW - 2f, rect.height);
+
+            bool selected = (i == current);
+
+            // Bright border rect drawn behind the button for the selected stage
+            if (selected)
+            {
+                EditorGUI.DrawRect(new Rect(btnRect.x - 2, btnRect.y - 2, btnRect.width + 4, btnRect.height + 4), borderColor);
+                EditorGUI.DrawRect(new Rect(btnRect.x - 1, btnRect.y - 1, btnRect.width + 2, btnRect.height + 2), Color.black);
+            }
+
+            Color c = colors[i - 1];
+            if (!selected)
+                c = Color.Lerp(c, new Color(0.35f, 0.35f, 0.35f), 0.72f);
+
+            Color prev = GUI.backgroundColor;
+            GUI.backgroundColor = c;
+            style.fontStyle = selected ? FontStyle.Bold : FontStyle.Normal;
+
+            string sign  = isDebuff ? "−" : "+";
+            string label = $"{sign}{i}\n×{mults[i - 1]:F2}";
+
+            if (GUI.Button(btnRect, label, style))
+                stageCountProp.intValue = i;
+
+            GUI.backgroundColor = prev;
+        }
     }
 
     public override void OnInspectorGUI()

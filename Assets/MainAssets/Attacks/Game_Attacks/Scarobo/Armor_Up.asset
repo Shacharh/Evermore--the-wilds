@@ -19,7 +19,7 @@ MonoBehaviour:
   effects:
   - category: 2
     value: 0
-    stageCount: 0
+    stageCount: 5
     selfInflicted: 1
     buffType: 2
     chance: 100
@@ -37,3 +37,5 @@ MonoBehaviour:
   rangeTargetShapeSize: 1
   isDirect: 1
   inDirectHitPrecent: 0
+  vfxPrefab: {fileID: 0}
+  vfxTarget: 0
