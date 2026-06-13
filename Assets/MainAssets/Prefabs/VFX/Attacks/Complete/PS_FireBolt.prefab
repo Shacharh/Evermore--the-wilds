@@ -4942,8 +4942,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VFXShooter
   mode: 0
-  speed: 10
-  beamDuration: 0.4
+  speed: 15
+  beamDuration: 0.5
   faceDirection: 1
 --- !u!1 &8206297050178505580
 GameObject:
