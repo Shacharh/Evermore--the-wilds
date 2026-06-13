@@ -60,9 +60,12 @@ public class VFXPool : MonoBehaviour
         pool = new ObjectPool<GameObject>(
             createFunc: () =>
             {
-                var obj = Instantiate(prefab);
-                obj.SetActive(false); // always start inactive so OnEnable fires under our control
-                return obj;
+                // Ensure the prefab is inactive before cloning so the clone is also born
+                // inactive and OnEnable never fires until we call SetActive(true) after
+                // SetTarget.  We leave the prefab inactive for the session — it is a
+                // template and should never run its own components at runtime.
+                if (prefab.activeSelf) prefab.SetActive(false);
+                return Instantiate(prefab);
             },
             actionOnGet:     _ => { },
             actionOnRelease: obj => obj.SetActive(false),
