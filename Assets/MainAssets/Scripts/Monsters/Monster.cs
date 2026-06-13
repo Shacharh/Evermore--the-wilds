@@ -68,6 +68,8 @@ public class Monster : MonoBehaviour
     private int _pendingAttackIndex;
     private bool _pendingIsDirect;
     private bool _awaitingAnimationHit;
+    private Vector3 _pendingAoeCenter;
+    private bool    _pendingIsAoe;
     #endregion
 
     #region Active VFX Tracking
@@ -347,14 +349,65 @@ public class Monster : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Execute an attack that targets a world position rather than a specific monster.
+    /// Effects are applied to any monsters provided in <paramref name="targets"/> (may be empty for pure-visual AoE).
+    /// VFX always spawns at <paramref name="aoeCenter"/> regardless of how many targets there are.
+    /// </summary>
+    public void ExecuteAoEAttack(Vector3 aoeCenter, List<Monster> targets, int attackIndex, bool isDirect = false)
+    {
+        if (attackIndex < 0 || attackIndex >= learnedAttacks.Count)
+            throw new System.ArgumentException("Invalid attack index");
+
+        AttackData attackData = learnedAttacks[attackIndex].data;
+        if (attackData == null)
+        {
+            Debug.LogError($"[{gameObject.name}] Attack slot {attackIndex} has no AttackData assigned.");
+            BattleMessage.Show("Attack not configured!", 2.5f);
+            return;
+        }
+
+        learnedAttacks[attackIndex].UsePP();
+
+        AttackEntry entry = System.Array.Find(data.movePool, e => e.attack == attackData);
+
+        if (entry != null && !string.IsNullOrEmpty(entry.AnimationTrigger) && anim != null)
+        {
+            _pendingTargets      = targets != null ? new List<Monster>(targets) : new List<Monster>();
+            _pendingAttackIndex  = attackIndex;
+            _pendingIsDirect     = isDirect;
+            _pendingAoeCenter    = aoeCenter;
+            _pendingIsAoe        = true;
+            _awaitingAnimationHit = true;
+            anim.SetTrigger(entry.AnimationTrigger);
+        }
+        else
+        {
+            if (targets != null && targets.Count > 0)
+                ApplyAttackToTargets(targets, attackIndex, isDirect);
+            SpawnAttackVFXAtPosition(aoeCenter, attackIndex);
+        }
+    }
+
     // Called by an Animation Event on the attack clip at the moment of impact.
     public void OnAttackAnimationHit()
     {
         if (!_awaitingAnimationHit) return;
         _awaitingAnimationHit = false;
 
-        ApplyAttackToTargets(_pendingTargets, _pendingAttackIndex, _pendingIsDirect);
-        SpawnAttackVFX(_pendingTargets, _pendingAttackIndex);
+        if (_pendingIsAoe)
+        {
+            _pendingIsAoe = false;
+            if (_pendingTargets != null && _pendingTargets.Count > 0)
+                ApplyAttackToTargets(_pendingTargets, _pendingAttackIndex, _pendingIsDirect);
+            SpawnAttackVFXAtPosition(_pendingAoeCenter, _pendingAttackIndex);
+        }
+        else
+        {
+            ApplyAttackToTargets(_pendingTargets, _pendingAttackIndex, _pendingIsDirect);
+            SpawnAttackVFX(_pendingTargets, _pendingAttackIndex);
+        }
+
         _pendingTargets = null;
     }
 
@@ -406,9 +459,44 @@ public class Monster : MonoBehaviour
         StartCoroutine(VFXFallbackCoroutine());
     }
 
+    // Spawns VFX at a world position with no monster target — used by AoE attacks.
+    // If the prefab has a VFXShooter it launches from the attacker's spawn point and
+    // travels to worldPos.  Without a VFXShooter the effect spawns directly at worldPos.
+    private void SpawnAttackVFXAtPosition(Vector3 worldPos, int attackIndex)
+    {
+        AttackData attackData = learnedAttacks[attackIndex].data;
+        if (attackData.VFXPrefab == null) return;
+
+        AttackEntry entry  = System.Array.Find(data.movePool, e => e.attack == attackData);
+        Vector3     offset = entry != null ? entry.vfxSpawnOffset : Vector3.zero;
+
+        if (attackData.VFXPrefab.TryGetComponent<VFXShooter>(out _))
+        {
+            // Shooter: originate at the attacker's configured spawn point, aim at AoE cell.
+            Vector3    spawnPos = transform.position;
+            Quaternion spawnRot = Quaternion.identity;
+            if (entry != null && !string.IsNullOrEmpty(entry.vfxSpawnPointPath))
+            {
+                Transform sp = transform.Find(entry.vfxSpawnPointPath);
+                if (sp != null) { spawnPos = sp.position; spawnRot = sp.rotation; }
+            }
+            SpawnAndTrackVFX(attackData.VFXPrefab, spawnPos + offset, spawnRot, null, worldPos);
+        }
+        else
+        {
+            // No shooter: spawn directly at the AoE cell.
+            SpawnAndTrackVFX(attackData.VFXPrefab, worldPos + offset, Quaternion.identity, null);
+        }
+
+        StopCoroutine(nameof(VFXFallbackCoroutine));
+        StartCoroutine(VFXFallbackCoroutine());
+    }
+
     // Get() returns the instance INACTIVE with position set.
     // We configure it fully here, then activate — so OnEnable fires with everything ready.
-    private void SpawnAndTrackVFX(GameObject prefab, Vector3 pos, Quaternion rot, Monster primaryTarget)
+    // shooterTarget overrides where the VFXShooter aims (used for AoE: spawn at attacker, aim at AoE cell).
+    private void SpawnAndTrackVFX(GameObject prefab, Vector3 pos, Quaternion rot,
+                                   Monster primaryTarget, Vector3? shooterTarget = null)
     {
         GameObject instance = VFXPool.Instance.Get(prefab, pos, rot);
         _activeVFX.Add((prefab, instance));
@@ -416,8 +504,9 @@ public class Monster : MonoBehaviour
         if (instance.TryGetComponent<VFXShooter>(out var shooter))
         {
             shooter.SetPoolSource(prefab);
-            if (primaryTarget != null)
-                shooter.SetTarget(primaryTarget.transform.position);
+            Vector3 target = shooterTarget
+                             ?? (primaryTarget != null ? primaryTarget.transform.position : pos);
+            shooter.SetTarget(target);
             var tracked = (prefab, instance);
             shooter.OnComplete = () => _activeVFX.Remove(tracked);
         }
