@@ -317,6 +317,8 @@ public class Monster : MonoBehaviour
 
         AttackEntry entry = System.Array.Find(data.movePool, e => e.attack == attackData);
 
+        AttackCommandManager.Instance?.SetupAttack(this, targets[0], attackIndex, isDirect);
+
         if (entry != null && !string.IsNullOrEmpty(entry.AnimationTrigger) && anim != null)
         {
             // Store context; effects + VFX fire from OnAttackAnimationHit() via animation event
@@ -378,10 +380,14 @@ public class Monster : MonoBehaviour
         {
             Vector3 pos    = transform.position;
             Quaternion rot = Quaternion.identity;
-            if (entry?.vfxSpawnPoint != null)
+            if (entry != null && !string.IsNullOrEmpty(entry.vfxSpawnPointPath))
             {
-                pos = entry.vfxSpawnPoint.position;
-                rot = entry.vfxSpawnPoint.rotation;
+                Transform spawnPoint = transform.Find(entry.vfxSpawnPointPath);
+                if (spawnPoint != null)
+                {
+                    pos = spawnPoint.position;
+                    rot = spawnPoint.rotation;
+                }
             }
             Instantiate(attackData.VFXPrefab, pos + offset, rot);
         }

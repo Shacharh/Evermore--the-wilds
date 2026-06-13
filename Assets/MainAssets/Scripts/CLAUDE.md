@@ -46,6 +46,7 @@ Every documentation `.md` file (setup guides, system guides, feature docs) MUST 
 | `Editor/TypeMatchupTableEditor.cs` | `Attacks/TypeMatchupTable.cs` | Custom property drawer for the NxN grid |
 | `Editor/TypeMatchupTableGUI.cs` | `Attacks/TypeMatchupTable.cs` | Shared GUI drawing helper used by editor and window |
 | `Editor/TypeMatchupTableWindow.cs` | `Attacks/TypeMatchupTable.cs` | Standalone window: Window > Type Matchup Editor |
+| `Editor/AttackEntryDrawer.cs` | `Monsters/MonsterData.cs` | PropertyDrawer for AttackEntry — VFX spawn point picker (drag root → choose child) |
 
 ---
 

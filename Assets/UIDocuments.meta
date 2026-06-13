@@ -1,12 +1,8 @@
 fileFormatVersion: 2
-<<<<<<<< HEAD:Assets/UIDocuments.meta
 guid: be36ce18f154c5c439a5979e627a816b
 folderAsset: yes
-========
-guid: 5b99e1d1fb5994a4cbd3bcd80d140fd2
->>>>>>>> main:Assets/Holotna/Mountain/_URP/URP.unitypackage.meta
 DefaultImporter:
   externalObjects: {}
-  userData: 
-  assetBundleName: 
-  assetBundleVariant: 
+  userData:
+  assetBundleName:
+  assetBundleVariant:
