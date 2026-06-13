@@ -65,6 +65,10 @@ public class Monster : MonoBehaviour
     private bool _awaitingAnimationHit;
     #endregion
 
+    #region Active VFX Tracking
+    private readonly List<(GameObject prefab, GameObject instance)> _activeVFX = new();
+    #endregion
+
     #region Active Effects & Statuses
     private List<ActiveEffect> activeEffects = new List<ActiveEffect>();
     private List<ActiveStatus> activeStatuses = new List<ActiveStatus>();
@@ -372,30 +376,49 @@ public class Monster : MonoBehaviour
         AttackData attackData = learnedAttacks[attackIndex].data;
         if (attackData.VFXPrefab == null) return;
 
-        AttackEntry entry = System.Array.Find(data.movePool, e => e.attack == attackData);
-
-        Vector3 offset = entry != null ? entry.vfxSpawnOffset : Vector3.zero;
+        AttackEntry entry  = System.Array.Find(data.movePool, e => e.attack == attackData);
+        Vector3     offset = entry != null ? entry.vfxSpawnOffset : Vector3.zero;
 
         if (attackData.VFXTarget == AttackVFXTarget.AttackerSpawnPoint)
         {
-            Vector3 pos    = transform.position;
+            Vector3    pos = transform.position;
             Quaternion rot = Quaternion.identity;
             if (entry != null && !string.IsNullOrEmpty(entry.vfxSpawnPointPath))
             {
                 Transform spawnPoint = transform.Find(entry.vfxSpawnPointPath);
-                if (spawnPoint != null)
-                {
-                    pos = spawnPoint.position;
-                    rot = spawnPoint.rotation;
-                }
+                if (spawnPoint != null) { pos = spawnPoint.position; rot = spawnPoint.rotation; }
             }
-            Instantiate(attackData.VFXPrefab, pos + offset, rot);
+            SpawnAndTrackVFX(attackData.VFXPrefab, pos + offset, rot);
         }
         else
         {
             foreach (Monster target in targets)
-                Instantiate(attackData.VFXPrefab, target.transform.position + offset, Quaternion.identity);
+                SpawnAndTrackVFX(attackData.VFXPrefab, target.transform.position + offset, Quaternion.identity);
         }
+    }
+
+    private void SpawnAndTrackVFX(GameObject prefab, Vector3 pos, Quaternion rot)
+    {
+        GameObject instance = VFXPool.Instance.Get(prefab, pos, rot);
+        _activeVFX.Add((prefab, instance));
+
+        if (instance.TryGetComponent<VFXShooter>(out var shooter))
+        {
+            shooter.SetPoolSource(prefab);
+            var entry = (prefab, instance);
+            shooter.OnComplete = () => _activeVFX.Remove(entry);
+        }
+    }
+
+    // Called by MonsterAnimationEventHelper.OnAnimationEnd via UnityEvent.
+    public void OnAttackAnimationEnd() => ReturnAllVFX();
+
+    private void ReturnAllVFX()
+    {
+        foreach (var (prefab, instance) in _activeVFX)
+            if (instance != null && instance.activeSelf)
+                VFXPool.Instance.Return(prefab, instance);
+        _activeVFX.Clear();
     }
 
     public void TriggerAttackEffect(int effectIndex)
@@ -498,6 +521,7 @@ public class Monster : MonoBehaviour
     private void HandleDeath()
     {
         currentHP = 0;
+        ReturnAllVFX();
         OnDied?.Invoke(this);
         StartCoroutine(DieCoroutine());
     }
