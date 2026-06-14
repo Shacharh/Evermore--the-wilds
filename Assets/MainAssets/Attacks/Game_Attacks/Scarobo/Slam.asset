@@ -47,3 +47,5 @@ MonoBehaviour:
   rangeTargetShapeSize: 1
   isDirect: 1
   inDirectHitPrecent: 0
+  vfxPrefab: {fileID: 8497002439072069948, guid: 9921640b2caffb34cbf0d47776cdae12, type: 3}
+  vfxTarget: 0
