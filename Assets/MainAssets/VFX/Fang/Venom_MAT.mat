@@ -67,8 +67,8 @@ Material:
     - _RenderQueueType: 1
     - _RippleDensity: 11.2
     - _RippleSpeed: 0.092
-    - _RippleStreangth: 5.22
-    - _ShimmerStreangth: 0.687
+    - _RippleStreangth: 7.56
+    - _ShimmerStreangth: 0.468
     - _SrcBlend: 1
     - _StencilRef: 0
     - _StencilRefDepth: 1
@@ -79,7 +79,7 @@ Material:
     - _StencilWriteMaskDistortionVec: 4
     - _StencilWriteMaskMV: 43
     - _SurfaceType: 0
-    - _TransparencyThreshold: 0.507
+    - _TransparencyThreshold: 0.403
     - _TransparentBackfaceEnable: 0
     - _TransparentCullMode: 2
     - _TransparentDepthPostpassEnable: 0
@@ -97,9 +97,9 @@ Material:
     - _Color: {r: 0.29703766, g: 0.04685829, b: 0.36792448, a: 1}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
-    - _RippleColor: {r: 1.009313, g: 0.18048236, b: 2.9432495, a: 1}
+    - _RippleColor: {r: 2.2574277, g: 0.1849162, b: 2.9432492, a: 1}
     - _TransparencyMod: {r: 0, g: 1.4, b: 0, a: 0}
-    - _VenomColor: {r: 0.4158078, g: 0.110674135, b: 0.499211, a: 1}
+    - _VenomColor: {r: 0.735849, g: 0.08677464, b: 0.19596568, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &1603479551911267132
