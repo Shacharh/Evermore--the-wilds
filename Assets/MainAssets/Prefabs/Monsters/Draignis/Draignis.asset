@@ -37,5 +37,5 @@ MonoBehaviour:
   - attack: {fileID: 11400000, guid: bc673b17201210d4a9331bb96f396b83, type: 2}
     levelLearned: 1
     AnimationTrigger: Ability_2
-    vfxSpawnPointPath: 
+    vfxSpawnPointPath: Mesh/(DO_NOT_DELETE)Dragon_Inferno_23_03/Armature/RigTail7.002
     vfxSpawnOffset: {x: 0, y: 0, z: 0}
