@@ -4920,7 +4920,7 @@ Transform:
   m_GameObject: {fileID: 7049980993641778751}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.917, y: 1.59, z: 3.899}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -4943,8 +4943,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::VFXShooter
   mode: 0
   speed: 15
-  beamDuration: 0.5
   faceDirection: 1
+  beamDuration: 0.5
+  stretchBeam: 0
+  follow: 0
 --- !u!1 &8206297050178505580
 GameObject:
   m_ObjectHideFlags: 0
