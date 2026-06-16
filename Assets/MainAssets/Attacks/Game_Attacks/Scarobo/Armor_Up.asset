@@ -19,7 +19,7 @@ MonoBehaviour:
   effects:
   - category: 2
     value: 0
-    stageCount: 5
+    stageCount: 4
     selfInflicted: 1
     buffType: 2
     chance: 100

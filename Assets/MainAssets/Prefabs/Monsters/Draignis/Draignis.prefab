@@ -42,7 +42,6 @@ GameObject:
   - component: {fileID: 1291772032019624359}
   - component: {fileID: 8900255455746139478}
   - component: {fileID: 735031748614082259}
-  - component: {fileID: 6286466905899450146}
   m_Layer: 7
   m_Name: Draignis
   m_TagString: Untagged
@@ -111,48 +110,6 @@ MonoBehaviour:
   - Fire_Storm
   - Tail_Swipe
   monster: {fileID: 8900255455746139478}
---- !u!114 &6286466905899450146
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3818083866190774472}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d2479f49b316ae24a8d702c7db4a58c7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MonsterAnimationEventHelper
-  onAnimationEvent:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 8900255455746139478}
-        m_TargetAssemblyTypeName: 
-        m_MethodName: 
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: 
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  onAnimationEnd:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 8900255455746139478}
-        m_TargetAssemblyTypeName: 
-        m_MethodName: 
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: 
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
 --- !u!1 &4520182552474242076
 GameObject:
   m_ObjectHideFlags: 0
