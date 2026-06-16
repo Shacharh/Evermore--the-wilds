@@ -16,7 +16,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &4500693231264432053
 Transform:
   m_ObjectHideFlags: 0
@@ -47,8 +47,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::VFXShooter
   mode: 0
   speed: 10
-  beamDuration: 0.4
   faceDirection: 1
+  beamDuration: 0.4
+  stretchBeam: 0
+  follow: 0
 --- !u!1001 &7623263805409391759
 PrefabInstance:
   m_ObjectHideFlags: 0
