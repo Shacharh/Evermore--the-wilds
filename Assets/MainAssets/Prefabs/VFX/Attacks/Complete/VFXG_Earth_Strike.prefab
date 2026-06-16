@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 4440176879223871918}
   - component: {fileID: 5930505511082310415}
   - component: {fileID: 2211875358663972218}
+  - component: {fileID: 5613109449180519671}
   m_Layer: 0
   m_Name: VFXG_Earth_Strike
   m_TagString: Untagged
@@ -118,3 +119,21 @@ VFXRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
+--- !u!114 &5613109449180519671
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3186458340908545284}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cbf2c9116c01ae6438b090e4410490f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VFXShooter
+  mode: 1
+  speed: 10
+  faceDirection: 1
+  beamDuration: 0.4
+  stretchBeam: 0
+  follow: 0

@@ -45,10 +45,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbf2c9116c01ae6438b090e4410490f2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VFXShooter
-  mode: 0
+  mode: 1
   speed: 10
-  beamDuration: 0.4
   faceDirection: 1
+  beamDuration: 1
+  stretchBeam: 0
+  follow: 0
 --- !u!1 &9033737627281544012
 GameObject:
   m_ObjectHideFlags: 0

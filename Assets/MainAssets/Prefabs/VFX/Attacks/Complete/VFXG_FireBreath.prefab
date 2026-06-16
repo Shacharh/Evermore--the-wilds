@@ -212,4 +212,4 @@ MonoBehaviour:
   faceDirection: 1
   beamDuration: 10
   stretchBeam: 0
-  follow: 0
+  follow: 1
