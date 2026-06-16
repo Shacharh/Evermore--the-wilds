@@ -32,7 +32,7 @@ MonoBehaviour:
   - attack: {fileID: 11400000, guid: 252e20731444d2541a5b85575d6bd6e4, type: 2}
     levelLearned: 0
     AnimationTrigger: Ability_1
-    vfxSpawnPointPath: RigLArmPalm.002_end
+    vfxSpawnPointPath: RigLArmPalm.002
     vfxSpawnOffset: {x: 0, y: 0, z: 0}
   - attack: {fileID: 11400000, guid: 819202d1ced208e42b62f68416a8aef2, type: 2}
     levelLearned: 1

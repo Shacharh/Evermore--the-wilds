@@ -19364,7 +19364,7 @@ MonoBehaviour:
   mode: 1
   speed: 1
   faceDirection: 1
-  beamDuration: 10
+  beamDuration: 3
   stretchBeam: 0
   follow: 0
 --- !u!1 &8091666088818419837
