@@ -332,6 +332,7 @@ MonoBehaviour:
   stageConfig: {fileID: 11400000, guid: 8ad1c409ab618f049986d2c0c7c1bda1, type: 2}
   dodgeEffectiveness: 0.4
   obstructionConfig: {fileID: 11400000, guid: f31d9c0d1c582fd4aa15ae27a1196141, type: 2}
+  vfxFallbackTimeout: 5
 --- !u!114 &735031748614082259
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1105,7 +1106,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 6607e9143d15fa54e8b9c9b283e8c2a3, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 643435371023926943}
   m_SourcePrefab: {fileID: 100100000, guid: 6607e9143d15fa54e8b9c9b283e8c2a3, type: 3}
 --- !u!95 &2648511698983056934 stripped
 Animator:
@@ -1117,6 +1121,53 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6607e9143d15fa54e8b9c9b283e8c2a3, type: 3}
   m_PrefabInstance: {fileID: 8479137846305311671}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &8748975803004647142 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 6607e9143d15fa54e8b9c9b283e8c2a3, type: 3}
+  m_PrefabInstance: {fileID: 8479137846305311671}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &643435371023926943
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8748975803004647142}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2479f49b316ae24a8d702c7db4a58c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterAnimationEventHelper
+  onAnimationEvent:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 8900255455746139478}
+        m_TargetAssemblyTypeName: Monster, Assembly-CSharp
+        m_MethodName: OnAttackAnimationHit
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  onAnimationEnd:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 8900255455746139478}
+        m_TargetAssemblyTypeName: Monster, Assembly-CSharp
+        m_MethodName: OnAttackAnimationEnd
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1001 &9017786993467421111
 PrefabInstance:
   m_ObjectHideFlags: 0

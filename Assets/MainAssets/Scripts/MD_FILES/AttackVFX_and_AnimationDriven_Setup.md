@@ -23,7 +23,11 @@ ExecuteAttack:
        ↓
 Animation plays
        ↓
-Animation Event calls monster.OnAttackAnimationHit()
+Animation Event calls OnAnimationEvent() on MonsterAnimationEventHelper
+       ↓
+MonsterAnimationEventHelper invokes its UnityEvent
+       ↓
+UnityEvent calls Monster.OnAttackAnimationHit()
        ↓
 OnAttackAnimationHit:
   - applies all effects to all targets
@@ -34,7 +38,7 @@ If no animation trigger is configured on the `AttackEntry`, effects apply immedi
 
 ---
 
-## ScriptableObject Fields Added
+## ScriptableObject Fields
 
 ### AttackData (per-attack, shared across all monsters)
 
@@ -44,53 +48,70 @@ If no animation trigger is configured on the `AttackEntry`, effects apply immedi
 | `vfxTarget` | `AttackVFXTarget` (enum) | Where to spawn: `AttackerSpawnPoint` or `EnemyGridCell` |
 
 `AttackVFXTarget` enum values:
-- `AttackerSpawnPoint` — spawns once at the attacker's spawn point (with offset). Uses the spawn point Transform from the monster's `AttackEntry`.
+- `AttackerSpawnPoint` — spawns once at the attacker's spawn point (with offset). Resolved from `vfxSpawnPointPath` on the `AttackEntry` at runtime.
 - `EnemyGridCell` — spawns one instance per target at each target's world position (with offset).
 
 ### MonsterData → AttackEntry (per-monster, per-attack)
 
 | Field | Type | Description |
 |---|---|---|
-| `vfxSpawnPoint` | `Transform` | Bone child on this monster's prefab used as the spawn origin |
+| `AnimationTrigger` | `string` | Animator trigger name that plays this attack |
+| `vfxSpawnPointPath` | `string` | Relative path to the spawn point child on the monster prefab (set via the custom picker, not typed manually) |
 | `vfxSpawnOffset` | `Vector3` | World-space offset applied on top of the spawn point position |
 
-The offset and spawn point are on `AttackEntry` (not `AttackData`) because different monsters using the same attack will have different body proportions and different bone positions.
+The path and offset live on `AttackEntry` (not `AttackData`) because different monsters using the same attack have different body proportions and different bone positions.
+
+At runtime, `Monster.SpawnAttackVFX` resolves the path by calling `transform.Find(entry.vfxSpawnPointPath)` on the live monster instance, so the position correctly reflects the animated pose at the moment the event fires.
 
 ---
 
 ## How to Wire the Animation Event
 
-1. In Unity, open the **Animation** window (`Window > Animation > Animation`)
-2. Select the monster's attack animation clip
-3. Scrub to the frame where the hit should land (e.g. the moment the claw connects or the fireball leaves the mouth)
-4. Click **Add Event** (the flag icon on the timeline)
-5. In the Inspector for the event, set **Function** to `OnAttackAnimationHit`
-6. No parameters are needed
+Animation events cannot call `Monster.OnAttackAnimationHit()` directly if the `Animator` lives on a child object (the model root) while `Monster` is on the parent. Unity only dispatches animation events to components on the **same GameObject as the Animator**.
 
-The `Monster` component on the same GameObject receives the call automatically.
+The fix is `MonsterAnimationEventHelper` — a relay script that sits on the Animator's GameObject and forwards the event via a `UnityEvent`.
+
+### Setup steps
+
+1. Select the monster prefab and find the child GameObject that has the `Animator` component (usually the model root).
+2. Add the **`MonsterAnimationEventHelper`** component to that same GameObject.
+3. In the Inspector, expand **On Animation Event** and click **+**.
+4. Drag the **parent** GameObject (the one with `Monster`) into the object slot.
+5. Set the function to **`Monster → OnAttackAnimationHit()`**.
+6. Open the **Animation** window (`Window > Animation > Animation`), select the attack clip, and scrub to the frame where the hit should land.
+7. Click **Add Event** (flag icon on the timeline).
+8. Set **Function** to `OnAnimationEvent` — this is the method on `MonsterAnimationEventHelper`.
+9. No parameters needed.
 
 ---
 
-## How to Set Up the VFX Spawn Point (Bone Child Method)
+## How to Set Up the VFX Spawn Point
 
-This is the standard Unity approach for effects that should follow a moving body part (e.g. a fireball spawning from an open dragon mouth).
+### Why a path string instead of a Transform reference
 
-### Why it works
-A rigged 3D model has a bone hierarchy. Each bone is a Transform in the prefab's hierarchy. Child Transforms of a bone automatically follow that bone's position and rotation during every animation — including mid-animation poses like an open jaw.
+`AttackEntry` lives inside `MonsterData`, which is a ScriptableObject (an asset file). Unity does not allow ScriptableObject assets to hold references to components (like `Transform`) that live inside a prefab's hierarchy. Attempting to drag a child Transform into such a field shows **"type mismatch"** in the Inspector.
 
-### Steps
-1. Open the monster's prefab
-2. In the **Hierarchy** panel, expand the skeleton until you find the relevant bone (e.g. `Jaw`, `Mouth`, `Head_Lower`, `Muzzle`)
-3. Right-click the bone → **Create Empty** — name it `VFX_MouthSpawnPoint` (or similar)
-4. In **Scene** view (with the prefab open), position the empty at the tip of the mouth opening
-5. Open the monster's `MonsterData` asset
-6. Find the relevant `AttackEntry` in the Move Pool
-7. Drag the `VFX_MouthSpawnPoint` Transform into the `vfxSpawnPoint` slot
+The solution is to store the **relative path** as a string (e.g. `Body/Jaw/VFX_MouthSpawnPoint`) and resolve it at runtime with `transform.Find(path)`.
 
-At runtime, `entry.vfxSpawnPoint.position` returns the world-space position of that empty at whatever frame `OnAttackAnimationHit()` fires — which is already the animated (open-mouth) position.
+### Using the custom spawn point picker
 
-### Vertex tracking (NOT used here)
-It is technically possible to sample a vertex position directly from a `SkinnedMeshRenderer` each frame, but this requires knowing a specific vertex index and is significantly more complex. The bone-child empty approach is the Unity standard and has zero runtime cost.
+`AttackEntryDrawer` provides a GUI so the path is set by clicking, not typed manually:
+
+1. Open the monster's `MonsterData` asset.
+2. Expand the relevant entry in **Move Pool**.
+3. Click the **`▶  VFX Spawn Point`** button to open the picker. The button shows the current path in parentheses when one is already set, e.g. `▶  VFX Spawn Point  (Body/Jaw/VFXPoint)`.
+4. In **Monster Root**, drag the monster's prefab root GameObject (from the Project window or the Hierarchy while in Prefab Mode).
+5. Use the **Spawn Point** dropdown to pick the child Transform to use as the origin. The list shows every child in the prefab hierarchy.
+6. The **Path (read-only)** field confirms the string that will be stored and used at runtime.
+7. Click the button again to collapse and hide the picker. The path is saved; the picker fields reset on collapse and also reset automatically when you click away to a different asset.
+
+### Creating the spawn point child
+
+1. Open the monster prefab (double-click it in the Project window).
+2. In the Hierarchy, expand the skeleton until you find the relevant bone (e.g. `Jaw`, `Mouth`, `Muzzle`).
+3. Right-click the bone → **Create Empty** — name it `VFX_MouthSpawnPoint` (or similar).
+4. In Scene view, position the empty at the desired origin (e.g. the tip of the open mouth).
+5. Follow the picker steps above to set `vfxSpawnPointPath` to this new object.
 
 ---
 
@@ -101,15 +122,17 @@ For each monster + attack combination:
 - [ ] `AttackData.vfxPrefab` — drag the VFX prefab
 - [ ] `AttackData.vfxTarget` — choose `AttackerSpawnPoint` or `EnemyGridCell`
 - [ ] `MonsterData.AttackEntry.AnimationTrigger` — the Animator trigger string for this attack
-- [ ] `MonsterData.AttackEntry.vfxSpawnPoint` — drag the bone-child empty from the monster prefab
+- [ ] `MonsterData.AttackEntry` → click **VFX Spawn Point** button → set Monster Root → pick child from dropdown
 - [ ] `MonsterData.AttackEntry.vfxSpawnOffset` — fine-tune position if needed
-- [ ] Animation clip — add an `OnAttackAnimationHit` event at the impact frame
+- [ ] Monster prefab (Animator child) — add `MonsterAnimationEventHelper`, wire `OnAnimationEvent` → `Monster.OnAttackAnimationHit()`
+- [ ] Animation clip — add an event at the impact frame calling `OnAnimationEvent`
 
 ---
 
 ## Gotchas
 
-- **PP is consumed when the attack starts**, not when the hit lands. If the animation is interrupted before `OnAttackAnimationHit` fires, effects will never apply but PP is already spent. This is acceptable for the current design.
-- **Pending state is per-monster** — `_pendingTargets`, `_pendingAttackIndex`, `_pendingIsDirect`, and `_awaitingAnimationHit` are stored on `Monster`. If two attacks are somehow queued on the same monster before the first animation event fires, the second call will overwrite the first. Avoid overlapping attack initiations on the same monster.
-- **AOE**: `ExecuteAttack` takes a `List<Monster>` so all targets are stored and processed together in one `OnAttackAnimationHit` call. The animation fires once regardless of how many targets are in the list.
-- **ScriptableObject Transform references**: `vfxSpawnPoint` in `AttackEntry` must reference a Transform from a **prefab asset**, not a scene object. Scene-object references in ScriptableObjects are not serialized and will be lost.
+- **PP is consumed when the attack starts**, not when the hit lands. If the animation is interrupted before `OnAttackAnimationHit` fires, effects will never apply but PP is already spent.
+- **Pending state is per-monster** — `_pendingTargets`, `_pendingAttackIndex`, `_pendingIsDirect`, and `_awaitingAnimationHit` are stored on `Monster`. If two attacks are queued on the same monster before the first event fires, the second overwrites the first. Avoid overlapping attack initiations on the same monster.
+- **AOE**: `ExecuteAttack` takes a `List<Monster>` so all targets are processed together in one `OnAttackAnimationHit` call. The animation fires once regardless of target count.
+- **Animator must be on the same GameObject as `MonsterAnimationEventHelper`** — the relay script and the Animator must share a GameObject. `Monster` can be on the parent.
+- **Spawn point path is case-sensitive** — `transform.Find()` matches by exact name. If a bone is renamed in the prefab after the path is set, update the path via the picker.

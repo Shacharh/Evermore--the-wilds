@@ -74,8 +74,9 @@ public class AttackData : ScriptableObject
                 continue;
             }
 
-            effects[i].value = Mathf.Max(0, effects[i].value);
-            effects[i].duration = Mathf.Max(1, effects[i].duration);
+            effects[i].value      = Mathf.Max(0, effects[i].value);
+            effects[i].stageCount = Mathf.Max(1, effects[i].stageCount);
+            effects[i].duration   = Mathf.Max(1, effects[i].duration);
         }
 
     }
