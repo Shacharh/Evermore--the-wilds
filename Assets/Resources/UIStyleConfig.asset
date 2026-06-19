@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 802511eb0bad38d488eb9bd25f0dbc31, type: 3}
   m_Name: UIStyleConfig
   m_EditorClassIdentifier: Assembly-CSharp::UIStyleConfig
-  panelSprite: {fileID: 0}
-  buttonSprite: {fileID: 0}
+  panelSprite: {fileID: 606878106, guid: 3b59132296905274eada64dd71c311f1, type: 3}
+  buttonSprite: {fileID: 1982730354, guid: 4f019f0e389a4df4dbe041373a58851e, type: 3}
   pausePanelColor: {r: 0.07, g: 0.07, b: 0.12, a: 0.98}
   resumeButtonColor: {r: 0.15, g: 0.5, b: 0.2, a: 1}
   keyBindButtonColor: {r: 0.2, g: 0.2, b: 0.38, a: 1}

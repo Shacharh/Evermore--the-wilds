@@ -149,6 +149,7 @@ public class AttackInfoPanel : MonoBehaviour
         _panelSprite  = s?.panelSprite;
         _panelColor   = s?.attackPanelColor  ?? new Color(0.07f, 0.07f, 0.11f, 0.95f);
         _headerColor  = s?.attackHeaderColor ?? new Color(0.10f, 0.15f, 0.25f, 1f);
+        float h       = s?.panelHeaderHeight ?? 50f;   // header height drives all body offsets
 
         // Root canvas — ScreenSpaceOverlay, sort order 500 (same as MonsterInfoPanel)
         var canvasGO = new GameObject("AttackInfoCanvas");
@@ -184,7 +185,7 @@ public class AttackInfoPanel : MonoBehaviour
         barRT.anchorMax        = new Vector2(1f, 1f);
         barRT.pivot            = new Vector2(0.5f, 1f);
         barRT.anchoredPosition = Vector2.zero;
-        barRT.sizeDelta        = new Vector2(0f, 50f);
+        barRT.sizeDelta        = new Vector2(0f, h);
         // Only add a coloured bar when no panel sprite is set.
         // When a sprite is used, the header area is already part of the sprite artwork.
         if (_panelSprite == null)
@@ -207,7 +208,7 @@ public class AttackInfoPanel : MonoBehaviour
         descRT.anchorMin        = new Vector2(0f, 1f);
         descRT.anchorMax        = new Vector2(1f, 1f);
         descRT.pivot            = new Vector2(0.5f, 1f);
-        descRT.anchoredPosition = new Vector2(0f, -54f);
+        descRT.anchoredPosition = new Vector2(0f, -(h + 4f));
         descRT.sizeDelta        = new Vector2(-28f, 48f);
         descText = descGO.AddComponent<TextMeshProUGUI>();
         descText.fontSize        = 16f;
@@ -221,9 +222,12 @@ public class AttackInfoPanel : MonoBehaviour
         divRT.anchorMin        = new Vector2(0f, 1f);
         divRT.anchorMax        = new Vector2(1f, 1f);
         divRT.pivot            = new Vector2(0.5f, 1f);
-        divRT.anchoredPosition = new Vector2(0f, -106f);
+        divRT.anchoredPosition = new Vector2(0f, -(h + 56f));
         divRT.sizeDelta        = new Vector2(-28f, 2f);
-        divGO.AddComponent<Image>().color = new Color(0.25f, 0.35f, 0.5f, 1f);
+        // Only draw the code divider when no panel sprite is set.
+        // When a sprite is used its artwork already provides the visual separator.
+        if (_panelSprite == null)
+            divGO.AddComponent<Image>().color = new Color(0.25f, 0.35f, 0.5f, 1f);
 
         // ── Stats block ───────────────────────────────────────────────────────
         var statsGO = MakeChild(panelRoot, "Stats");
@@ -231,7 +235,7 @@ public class AttackInfoPanel : MonoBehaviour
         statsRT.anchorMin        = new Vector2(0f, 1f);
         statsRT.anchorMax        = new Vector2(1f, 1f);
         statsRT.pivot            = new Vector2(0.5f, 1f);
-        statsRT.anchoredPosition = new Vector2(0f, -114f);
+        statsRT.anchoredPosition = new Vector2(0f, -(h + 64f));
         statsRT.sizeDelta        = new Vector2(-28f, 160f);
         statsText = statsGO.AddComponent<TextMeshProUGUI>();
         statsText.fontSize        = 18f;

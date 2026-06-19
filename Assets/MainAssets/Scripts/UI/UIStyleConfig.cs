@@ -28,6 +28,14 @@ public class UIStyleConfig : ScriptableObject
     [Tooltip("Sprite for every button. Leave empty for a solid colour.")]
     public Sprite buttonSprite;
 
+    // ── Panel layout ──────────────────────────────────────────────────────────
+
+    [Header("Panel layout")]
+    [Tooltip("Height in pixels of the coloured header bar inside info panels.\n" +
+             "Increase this if your panel sprite's header art is taller than the default 50 px,\n" +
+             "so the body text (HP, stats, description) starts below the header art.")]
+    public float panelHeaderHeight = 50f;
+
     // ── Pause Menu ────────────────────────────────────────────────────────────
 
     [Header("Pause Menu colours")]

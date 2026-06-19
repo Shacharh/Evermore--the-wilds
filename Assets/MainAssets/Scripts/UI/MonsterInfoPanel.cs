@@ -195,9 +195,10 @@ public class MonsterInfoPanel : MonoBehaviour
         var s      = UIStyleConfig.Load();
         _panelSprite  = s?.panelSprite;
         _buttonSprite = s?.buttonSprite;
-        _panelColor   = s?.infoPanelColor  ?? new Color(0.07f, 0.07f, 0.11f, 0.95f);
-        _headerColor  = s?.infoHeaderColor ?? new Color(0.15f, 0.15f, 0.25f, 1f);
+        _panelColor   = s?.infoPanelColor   ?? new Color(0.07f, 0.07f, 0.11f, 0.95f);
+        _headerColor  = s?.infoHeaderColor  ?? new Color(0.15f, 0.15f, 0.25f, 1f);
         _closeColor   = s?.closeButtonColor ?? new Color(0.65f, 0.15f, 0.15f, 1f);
+        float h       = s?.panelHeaderHeight ?? 50f;   // header height drives all body offsets
 
         // Root canvas — ScreenSpaceOverlay, sort 500 (same as AttackInfoPanel)
         var canvasGO = new GameObject("InfoCanvas");
@@ -231,7 +232,7 @@ public class MonsterInfoPanel : MonoBehaviour
         barRT.anchorMin = new Vector2(0f, 1f); barRT.anchorMax = new Vector2(1f, 1f);
         barRT.pivot     = new Vector2(0.5f, 1f);
         barRT.anchoredPosition = Vector2.zero;
-        barRT.sizeDelta        = new Vector2(0f, 50f);
+        barRT.sizeDelta        = new Vector2(0f, h);
         // Only add a coloured bar when no panel sprite is set.
         // When a sprite is used, the header area is already part of the sprite artwork.
         if (_panelSprite == null)
@@ -266,7 +267,7 @@ public class MonsterInfoPanel : MonoBehaviour
         hpRT.anchorMin        = new Vector2(0f, 1f);
         hpRT.anchorMax        = new Vector2(1f, 1f);
         hpRT.pivot            = new Vector2(0.5f, 1f);
-        hpRT.anchoredPosition = new Vector2(0f, -54f);
+        hpRT.anchoredPosition = new Vector2(0f, -(h + 4f));
         hpRT.sizeDelta        = new Vector2(-28f, 30f);   // 30 px tall
         hpText = hpGO.AddComponent<TextMeshProUGUI>();
         hpText.fontSize   = 20f;
@@ -280,7 +281,7 @@ public class MonsterInfoPanel : MonoBehaviour
         stageHdrRT.anchorMin        = new Vector2(1f, 1f);
         stageHdrRT.anchorMax        = new Vector2(1f, 1f);
         stageHdrRT.pivot            = new Vector2(1f, 1f);
-        stageHdrRT.anchoredPosition = new Vector2(-14f, -84f);
+        stageHdrRT.anchoredPosition = new Vector2(-14f, -(h + 34f));
         stageHdrRT.sizeDelta        = new Vector2(120f, 14f);
         var stageHdrTmp = stageHdrGO.AddComponent<TextMeshProUGUI>();
         stageHdrTmp.text              = "STAGE";
@@ -298,7 +299,7 @@ public class MonsterInfoPanel : MonoBehaviour
         divRT.anchorMin        = new Vector2(0f, 1f);
         divRT.anchorMax        = new Vector2(1f, 1f);
         divRT.pivot            = new Vector2(0.5f, 1f);
-        divRT.anchoredPosition = new Vector2(0f, -100f);
+        divRT.anchoredPosition = new Vector2(0f, -(h + 50f));
         divRT.sizeDelta        = new Vector2(-28f, 2f);
         if (_panelSprite == null)
             divGO.AddComponent<Image>().color = new Color(0.35f, 0.35f, 0.5f, 1f);
@@ -309,7 +310,7 @@ public class MonsterInfoPanel : MonoBehaviour
         statsRT.anchorMin        = new Vector2(0f, 1f);
         statsRT.anchorMax        = new Vector2(0f, 1f);
         statsRT.pivot            = new Vector2(0f, 1f);
-        statsRT.anchoredPosition = new Vector2(14f, -106f);
+        statsRT.anchoredPosition = new Vector2(14f, -(h + 56f));
         statsRT.sizeDelta        = new Vector2(270f, 200f);
         statsText = statsGO.AddComponent<TextMeshProUGUI>();
         statsText.fontSize           = 18f;
@@ -324,7 +325,7 @@ public class MonsterInfoPanel : MonoBehaviour
         stagesRT.anchorMin        = new Vector2(1f, 1f);
         stagesRT.anchorMax        = new Vector2(1f, 1f);
         stagesRT.pivot            = new Vector2(1f, 1f);
-        stagesRT.anchoredPosition = new Vector2(-14f, -106f);  // same Y as statsText
+        stagesRT.anchoredPosition = new Vector2(-14f, -(h + 56f));  // same Y as statsText
         stagesRT.sizeDelta        = new Vector2(120f, 200f);
         stagesText = stagesGO.AddComponent<TextMeshProUGUI>();
         stagesText.fontSize           = 18f;
