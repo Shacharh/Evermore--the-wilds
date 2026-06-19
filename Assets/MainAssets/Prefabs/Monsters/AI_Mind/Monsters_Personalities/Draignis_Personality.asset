@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: Draignis_Personality
   m_EditorClassIdentifier: Assembly-CSharp::MonsterPersonality
   killShotBonus: 20
-  damageEfficiencyMultiplier: 15
+  damageEfficiencyMultiplier: 10
   focusFireBonus: 10
   freezeBonus: 0
   dotBonus: 15
   shockBonus: 10
-  aggressionBonus: 10
+  aggressionBonus: 15
   multiTargetBonus: 30
   obstructionPenalty: 10
   lowHPCautionPenalty: 60

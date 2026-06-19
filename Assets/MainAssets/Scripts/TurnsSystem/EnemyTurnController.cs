@@ -325,7 +325,7 @@ public class EnemyTurnController : TurnController
         if (dir != Vector3.zero)
             monster.transform.root.rotation = Quaternion.LookRotation(dir);
 
-        monster.ExecuteAttack(target, attackIndex, attackData.IsDirect);
+        monster.ExecuteAttack(new List<Monster> { target }, attackIndex, attackData.IsDirect);
 
         Debug.Log($"[EnemyAI] {monster.name} used '{attackData.DisplayName}' " +
                   $"on {target.name}! (cost {apCost} AP)");

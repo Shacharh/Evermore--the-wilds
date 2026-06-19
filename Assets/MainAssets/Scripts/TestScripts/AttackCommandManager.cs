@@ -15,6 +15,9 @@ public class AttackCommandManager : MonoBehaviour
 
     private Monster currentAttacker;
     private Monster currentTarget;
+
+    public Monster Attacker => currentAttacker;
+    public Monster Target   => currentTarget;
     private int currentAttackIndex;
     private bool currentIsDirect;
 

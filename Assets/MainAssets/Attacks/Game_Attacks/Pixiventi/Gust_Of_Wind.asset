@@ -32,8 +32,10 @@ MonoBehaviour:
   guaranteedHit: 0
   accuracy: 100
   range: 6
-  target: 0
+  targetTeam: 0
   targetShape: 0
   rangeTargetShapeSize: 1
   isDirect: 1
   inDirectHitPrecent: 0
+  vfxPrefab: {fileID: 9117635389512780594, guid: 9110883417758be4a99046c153905b2c, type: 3}
+  vfxTarget: 0

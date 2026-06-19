@@ -32,9 +32,15 @@ MonoBehaviour:
   - attack: {fileID: 11400000, guid: 09a9f660e36994e459ee07562aca7171, type: 2}
     levelLearned: 0
     AnimationTrigger: Ability_1
+    vfxSpawnPointPath: RigJaw_end
+    vfxSpawnOffset: {x: 0, y: 0, z: 0}
   - attack: {fileID: 11400000, guid: fc09cddb95e4d244fbe0fe2521c30e4c, type: 2}
     levelLearned: 0
     AnimationTrigger: Ability_2
+    vfxSpawnPointPath: 
+    vfxSpawnOffset: {x: 0, y: 0, z: 0}
   - attack: {fileID: 11400000, guid: 54d0935b136a40445803ceb3ff519735, type: 2}
     levelLearned: 0
     AnimationTrigger: Ability_2
+    vfxSpawnPointPath: 
+    vfxSpawnOffset: {x: 0, y: 0, z: 0}

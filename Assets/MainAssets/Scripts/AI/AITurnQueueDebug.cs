@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -11,7 +11,7 @@ using TMPro;
 /// Visibility is controlled by the "Show Turn Debug Panel" checkbox on EnemyTurnController.
 /// When enabled the panel is always visible and refreshes each enemy turn.
 ///
-/// Auto-creates itself — no prefab or scene setup required.
+/// Auto-creates itself â€” no prefab or scene setup required.
 ///
 /// Called by EnemyTurnController:
 ///   AITurnQueueDebug.SetEnabled(bool);
@@ -21,7 +21,7 @@ using TMPro;
 /// </summary>
 public class AITurnQueueDebug : MonoBehaviour
 {
-    // ── Singleton ─────────────────────────────────────────────────────────────
+    // â”€â”€ Singleton â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public static AITurnQueueDebug Instance { get; private set; }
 
@@ -32,7 +32,7 @@ public class AITurnQueueDebug : MonoBehaviour
         new GameObject("AITurnQueueDebug").AddComponent<AITurnQueueDebug>();
     }
 
-    // ── Internal state ────────────────────────────────────────────────────────
+    // â”€â”€ Internal state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private GameObject      _panelRoot;
     private TextMeshProUGUI _titleText;
@@ -41,7 +41,7 @@ public class AITurnQueueDebug : MonoBehaviour
     private List<string> _lines       = new List<string>();
     private int          _activeIndex = -1;
 
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
+    // â”€â”€ Lifecycle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private void Awake()
     {
@@ -57,12 +57,12 @@ public class AITurnQueueDebug : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
-    // ── Public API ────────────────────────────────────────────────────────────
+    // â”€â”€ Public API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /// <summary>
     /// Shows or hides the panel and sets its height.
     /// Driven by the Inspector fields on EnemyTurnController.
-    /// Safe to call from Awake() — creates the singleton on demand if it does not exist yet.
+    /// Safe to call from Awake() â€” creates the singleton on demand if it does not exist yet.
     /// </summary>
     public static void SetEnabled(bool enabled, float panelHeight = 800f)
     {
@@ -86,7 +86,7 @@ public class AITurnQueueDebug : MonoBehaviour
     public static void ClearActiveIndex()
         => Instance?.DoSetActiveIndex(-1);
 
-    // ── Implementation ────────────────────────────────────────────────────────
+    // â”€â”€ Implementation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private void DoSetEnabled(bool enabled, float panelHeight = 800f)
     {
@@ -108,7 +108,7 @@ public class AITurnQueueDebug : MonoBehaviour
             string monsterName = monster.Data?.displayName ?? monster.gameObject.name;
             string actionDesc  = FormatAction(monster, action);
             string scorePart   = $"<color=#aaaaaa>[{action.Score:F1}]</color>";
-            _lines.Add($"<color=#666666>#{i + 1:D2}</color>  {monsterName}  →  {actionDesc}  {scorePart}");
+            _lines.Add($"<color=#666666>#{i + 1:D2}</color>  {monsterName}  â†’  {actionDesc}  {scorePart}");
         }
 
         Redraw();
@@ -120,7 +120,7 @@ public class AITurnQueueDebug : MonoBehaviour
         Redraw();
     }
 
-    // ── Text Rebuild ──────────────────────────────────────────────────────────
+    // â”€â”€ Text Rebuild â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private void Redraw()
     {
@@ -135,12 +135,12 @@ public class AITurnQueueDebug : MonoBehaviour
             if (isActive)
             {
                 // Gold + arrow for the action currently executing
-                sb.AppendLine($"<color=#FFD700><b>► {StripColorTags(_lines[i])}</b></color>");
+                sb.AppendLine($"<color=#FFD700><b>â–º {StripColorTags(_lines[i])}</b></color>");
             }
             else if (isDone)
             {
-                // Dim out completed entries (no strikethrough — TMP bug with long lines)
-                sb.AppendLine($"<color=#3a3a3a>✓  {StripColorTags(_lines[i])}</color>");
+                // Dim out completed entries (no strikethrough â€” TMP bug with long lines)
+                sb.AppendLine($"<color=#3a3a3a>âœ“  {StripColorTags(_lines[i])}</color>");
             }
             else
             {
@@ -150,7 +150,7 @@ public class AITurnQueueDebug : MonoBehaviour
         _queueText.text = sb.ToString();
     }
 
-    // ── Action Formatting ─────────────────────────────────────────────────────
+    // â”€â”€ Action Formatting â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private string FormatAction(Monster monster, AIAction action)
     {
@@ -168,7 +168,7 @@ public class AITurnQueueDebug : MonoBehaviour
                 string atkName  = GetAttackName(monster, mva.AttackIndex);
                 string tgtName  = mva.Target?.Data?.displayName ?? mva.Target?.gameObject.name ?? "?";
                 string dest     = mva.MoveTo != null ? mva.MoveTo.GridPosition.ToString() : "?";
-                return $"<color=#6BB5FF>Move</color> to {dest} → <color=#FF6B6B>Attack</color> <b>{atkName}</b> on <b>{tgtName}</b>";
+                return $"<color=#6BB5FF>Move</color> to {dest} â†’ <color=#FF6B6B>Attack</color> <b>{atkName}</b> on <b>{tgtName}</b>";
             }
 
             case MoveAction mv:
@@ -192,7 +192,7 @@ public class AITurnQueueDebug : MonoBehaviour
         return attacks[index]?.data?.DisplayName ?? "?";
     }
 
-    // Very simple tag stripper — removes <color=...> and </color> wrappers
+    // Very simple tag stripper â€” removes <color=...> and </color> wrappers
     // so we can re-wrap the whole line in a different colour.
     private string StripColorTags(string s)
     {
@@ -201,7 +201,7 @@ public class AITurnQueueDebug : MonoBehaviour
         return System.Text.RegularExpressions.Regex.Replace(s, "<.*?>", "");
     }
 
-    // ── UI Construction ───────────────────────────────────────────────────────
+    // â”€â”€ UI Construction â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private void BuildUI()
     {
@@ -220,13 +220,13 @@ public class AITurnQueueDebug : MonoBehaviour
 
         canvasGO.AddComponent<GraphicRaycaster>();
 
-        // Panel — stretches the full screen height on the right edge.
+        // Panel â€” stretches the full screen height on the right edge.
         // RectMask2D clips anything that overflows the panel bounds.
         _panelRoot = new GameObject("QueuePanel");
         _panelRoot.transform.SetParent(canvasGO.transform, false);
 
         var panelRT = _panelRoot.AddComponent<RectTransform>();
-        panelRT.anchorMin        = new Vector2(1f, 1f); // top-right corner — grows downward
+        panelRT.anchorMin        = new Vector2(1f, 1f); // top-right corner â€” grows downward
         panelRT.anchorMax        = new Vector2(1f, 1f);
         panelRT.pivot            = new Vector2(1f, 1f); // pivot at top-right so height expands downward
         panelRT.anchoredPosition = new Vector2(-10f, -10f);
@@ -237,7 +237,7 @@ public class AITurnQueueDebug : MonoBehaviour
 
         _panelRoot.AddComponent<RectMask2D>(); // clips child text at panel edges
 
-        // Title — pinned to top of panel
+        // Title â€” pinned to top of panel
         var titleGO = new GameObject("Title");
         titleGO.transform.SetParent(_panelRoot.transform, false);
 
@@ -253,7 +253,7 @@ public class AITurnQueueDebug : MonoBehaviour
         _titleText.color              = new Color(1f, 0.85f, 0.2f);
         _titleText.alignment          = TextAlignmentOptions.Center;
         _titleText.fontStyle          = FontStyles.Bold;
-        _titleText.enableWordWrapping = false;
+        _titleText.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
         _titleText.overflowMode       = TextOverflowModes.Truncate;
 
         // Separator line under the title
@@ -269,7 +269,7 @@ public class AITurnQueueDebug : MonoBehaviour
 
         sepGO.AddComponent<Image>().color = new Color(1f, 0.85f, 0.2f, 0.35f);
 
-        // Queue text — fills the rest of the panel below the title.
+        // Queue text â€” fills the rest of the panel below the title.
         // Uses Truncate overflow so TMP never tries to draw outside its rect.
         var textGO = new GameObject("QueueText");
         textGO.transform.SetParent(_panelRoot.transform, false);
@@ -284,9 +284,10 @@ public class AITurnQueueDebug : MonoBehaviour
         _queueText.fontSize           = 13f;
         _queueText.color              = new Color(0.85f, 0.85f, 0.85f);
         _queueText.alignment          = TextAlignmentOptions.TopLeft;
-        _queueText.enableWordWrapping = false;
+        _queueText.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
         _queueText.richText           = true;
         _queueText.lineSpacing        = 2f;
         _queueText.overflowMode       = TextOverflowModes.Truncate;
     }
 }
+

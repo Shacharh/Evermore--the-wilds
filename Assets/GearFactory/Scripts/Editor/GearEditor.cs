@@ -207,7 +207,7 @@ namespace GearFactory
             //mesh and it's material need to be saved too
             SaveMeshToFile(gearMesh.C_MF.sharedMesh, gearMesh.C_MR.sharedMaterial, name + "'mesh");
 
-            PrefabUtility.CreatePrefab("Assets/GearFactory/Saved prefabs/" + name + ".prefab", gearMesh.gameObject);
+            PrefabUtility.SaveAsPrefabAsset(gearMesh.gameObject, "Assets/GearFactory/Saved prefabs/" + name + ".prefab");
 
             Debug.Log("Prefab \"" + name + ".prefab\" saved succesfully at GearFactory/Saved prefabs");
         }

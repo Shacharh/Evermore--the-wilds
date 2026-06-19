@@ -28,6 +28,10 @@ public class Obstruction : MonoBehaviour
              "E.g. (0,0) + (1,0) makes a 2-tile-wide wall going right.")]
     [SerializeField] private Vector2Int[] tileOffsets = { Vector2Int.zero };
 
+    [Tooltip("Tick this for decorative props that sit outside the playable grid on purpose. " +
+             "Suppresses the 'not positioned above any grid tile' warning.")]
+    [SerializeField] private bool decorativeOnly = false;
+
     private GridManager    gridManager;
     private List<Tile>     coveredTiles = new List<Tile>();
 
@@ -64,8 +68,9 @@ public class Obstruction : MonoBehaviour
         Tile root = gridManager.GetTileAtWorldPosition(transform.position);
         if (root == null)
         {
-            Debug.LogWarning($"[Obstruction] '{name}' is not positioned above any grid tile. " +
-                             "Make sure the object sits on the grid plane.");
+            if (!decorativeOnly)
+                Debug.LogWarning($"[Obstruction] '{name}' is not positioned above any grid tile. " +
+                                 "Make sure the object sits on the grid plane.");
             return;
         }
 

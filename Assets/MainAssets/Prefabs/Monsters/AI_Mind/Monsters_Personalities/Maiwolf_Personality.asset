@@ -18,12 +18,12 @@ MonoBehaviour:
   freezeBonus: 10
   dotBonus: 10
   shockBonus: 10
-  aggressionBonus: 15
+  aggressionBonus: 20
   multiTargetBonus: 10
   obstructionPenalty: 10
   lowHPCautionPenalty: -15
   survivalInstinctBonus: -5
-  enemyCloseBonus: 15
+  enemyCloseBonus: 30
   attackFrozenBonus: 15
   allyHealBonus: 0
   guaranteedAppearanceEnabled: 0

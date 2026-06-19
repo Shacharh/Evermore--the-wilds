@@ -1,0 +1,19 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+
+    <!--
+        RadialMenu.uxml  —  full menu skeleton.
+        #radial-pivot is repositioned each frame in C# to follow the target.
+        #menu-list is a flex-column container; C# clones RadialMenuCard.uxml
+        into it once per action, sets the label, and wires events.
+        No card content lives here — edit RadialMenuCard.uxml instead.
+    -->
+
+    <Style src="RadialMenu.uss" />
+
+    <ui:VisualElement name="radial-root" class="radial-root" picking-mode="Ignore">
+        <ui:VisualElement name="radial-pivot" class="radial-pivot" picking-mode="Ignore">
+            <ui:VisualElement name="menu-list" class="menu-list" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+
+</ui:UXML>

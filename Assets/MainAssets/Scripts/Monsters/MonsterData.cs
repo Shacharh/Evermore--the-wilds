@@ -60,4 +60,10 @@ public class AttackEntry
     /// </summary>
     
     public string AnimationTrigger;
+
+    [Tooltip("Relative path to the VFX spawn point child on the monster prefab.\n" +
+             "Set via the picker in the Inspector — drag the monster root and select a child.\n" +
+             "Leave empty to spawn at the monster's root position.")]
+    public string vfxSpawnPointPath;
+    public Vector3 vfxSpawnOffset;
 }

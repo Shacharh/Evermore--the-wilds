@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
@@ -7,18 +7,18 @@ using TMPro;
 /// hovers over an attack button in the radial (attack sub-)menu.
 ///
 /// Appears at the bottom-LEFT of the screen, mirroring the MonsterInfoPanel
-/// which sits bottom-right.  Instantly shows/hides — no fade — so it tracks
+/// which sits bottom-right.  Instantly shows/hides â€” no fade â€” so it tracks
 /// hover state frame-accurately.
 ///
 /// Usage (from RadialMenuButton):
 ///   AttackInfoPanel.Show(attackData);
 ///   AttackInfoPanel.Hide();
 ///
-/// Auto-created singleton — no prefab or scene setup needed.
+/// Auto-created singleton â€” no prefab or scene setup needed.
 /// </summary>
 public class AttackInfoPanel : MonoBehaviour
 {
-    // ── Singleton ─────────────────────────────────────────────────────────────
+    // â”€â”€ Singleton â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public static AttackInfoPanel Instance { get; private set; }
 
@@ -41,7 +41,7 @@ public class AttackInfoPanel : MonoBehaviour
     private TextMeshProUGUI descText;
     private TextMeshProUGUI statsText;
 
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
+    // â”€â”€ Lifecycle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private void Awake()
     {
@@ -57,7 +57,7 @@ public class AttackInfoPanel : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
-    // ── Public API ────────────────────────────────────────────────────────────
+    // â”€â”€ Public API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /// <summary>Shows the panel populated with <paramref name="attack"/>'s data.</summary>
     public static void Show(AttackData attack)
@@ -74,19 +74,19 @@ public class AttackInfoPanel : MonoBehaviour
         Instance.panelRoot.SetActive(false);
     }
 
-    // ── Refresh ───────────────────────────────────────────────────────────────
+    // â”€â”€ Refresh â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private void Refresh(AttackData attack)
     {
-        // ── Title ─────────────────────────────────────────────────────────────
+        // â”€â”€ Title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         titleText.text = $"<b>{attack.DisplayName}</b>";
 
-        // ── Description ───────────────────────────────────────────────────────
+        // â”€â”€ Description â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         descText.text = string.IsNullOrWhiteSpace(attack.Description)
             ? "<i>No description.</i>"
             : attack.Description;
 
-        // ── Stat block — content depends on the primary effect's category ─────
+        // â”€â”€ Stat block â€” content depends on the primary effect's category â”€â”€â”€â”€â”€
         string accStr   = attack.GuaranteedHit ? "Always hits" : $"{attack.Accuracy}%";
         string shapeStr = attack.TargetShape.ToString();
 
@@ -110,7 +110,7 @@ public class AttackInfoPanel : MonoBehaviour
                     break;
 
                 case AttackEnum.AttackCategory.buff:
-                    string buffSign = primary.isDebuff ? "−" : "+";
+                    string buffSign = primary.isDebuff ? "âˆ’" : "+";
                     sb.AppendLine($"STAT   {primary.buffType}");
                     sb.AppendLine($"STAGES {buffSign}{primary.stageCount}");
                     if (primary.chance < 100)
@@ -141,7 +141,7 @@ public class AttackInfoPanel : MonoBehaviour
         statsText.text = sb.ToString();
     }
 
-    // ── UI Construction ───────────────────────────────────────────────────────
+    // â”€â”€ UI Construction â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private void BuildUI()
     {
@@ -166,7 +166,7 @@ public class AttackInfoPanel : MonoBehaviour
 
         canvasGO.AddComponent<GraphicRaycaster>();
 
-        // ── Panel root — bottom-LEFT, 420 × 300 px ───────────────────────────
+        // â”€â”€ Panel root â€” bottom-LEFT, 420 Ã— 300 px â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         panelRoot = MakeChild(canvasGO, "Panel");
         var panelRT = panelRoot.GetComponent<RectTransform>();
         panelRT.anchorMin        = new Vector2(0f, 0f);
@@ -178,7 +178,7 @@ public class AttackInfoPanel : MonoBehaviour
         var bg = panelRoot.AddComponent<Image>();
         UIStyleConfig.ApplySprite(bg, _panelSprite, _panelColor);
 
-        // ── Coloured top bar ──────────────────────────────────────────────────
+        // â”€â”€ Coloured top bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var barGO = MakeChild(panelRoot, "TopBar");
         var barRT = barGO.GetComponent<RectTransform>();
         barRT.anchorMin        = new Vector2(0f, 1f);
@@ -191,7 +191,7 @@ public class AttackInfoPanel : MonoBehaviour
         if (_panelSprite == null)
             barGO.AddComponent<Image>().color = _headerColor;
 
-        // ── Title ─────────────────────────────────────────────────────────────
+        // â”€â”€ Title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var titleGO = MakeChild(barGO, "Title");
         var titleRT = titleGO.GetComponent<RectTransform>();
         titleRT.anchorMin = Vector2.zero; titleRT.anchorMax = Vector2.one;
@@ -200,9 +200,9 @@ public class AttackInfoPanel : MonoBehaviour
         titleText.fontSize           = 22f;
         titleText.color              = new Color(0.85f, 0.95f, 1f, 1f);   // pale blue-white
         titleText.alignment          = TextAlignmentOptions.Center;
-        titleText.enableWordWrapping = false;
+        titleText.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
 
-        // ── Description text ──────────────────────────────────────────────────
+        // â”€â”€ Description text â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var descGO = MakeChild(panelRoot, "Desc");
         var descRT = descGO.GetComponent<RectTransform>();
         descRT.anchorMin        = new Vector2(0f, 1f);
@@ -214,9 +214,9 @@ public class AttackInfoPanel : MonoBehaviour
         descText.fontSize        = 16f;
         descText.color           = new Color(0.78f, 0.78f, 0.78f, 1f);
         descText.alignment       = TextAlignmentOptions.Center;
-        descText.enableWordWrapping = true;
+        descText.textWrappingMode = TMPro.TextWrappingModes.Normal;
 
-        // ── Divider ───────────────────────────────────────────────────────────
+        // â”€â”€ Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var divGO = MakeChild(panelRoot, "Divider");
         var divRT = divGO.GetComponent<RectTransform>();
         divRT.anchorMin        = new Vector2(0f, 1f);
@@ -229,7 +229,7 @@ public class AttackInfoPanel : MonoBehaviour
         if (_panelSprite == null)
             divGO.AddComponent<Image>().color = new Color(0.25f, 0.35f, 0.5f, 1f);
 
-        // ── Stats block ───────────────────────────────────────────────────────
+        // â”€â”€ Stats block â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var statsGO = MakeChild(panelRoot, "Stats");
         var statsRT = statsGO.GetComponent<RectTransform>();
         statsRT.anchorMin        = new Vector2(0f, 1f);
@@ -242,7 +242,7 @@ public class AttackInfoPanel : MonoBehaviour
         statsText.color           = new Color(0.88f, 0.88f, 0.88f, 1f);
         statsText.alignment       = TextAlignmentOptions.Left;
         statsText.lineSpacing     = 8f;
-        statsText.enableWordWrapping = false;
+        statsText.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
     }
 
     private static GameObject MakeChild(GameObject parent, string name)
@@ -253,3 +253,4 @@ public class AttackInfoPanel : MonoBehaviour
         return go;
     }
 }
+

@@ -14,6 +14,7 @@ public class InputManager : MonoBehaviour
     [SerializeField] private RadialMenu           radialMenuPrefab;
     [SerializeField] private Camera               mainCamera;
     [SerializeField] private PlayerTurnController playerTurnController;
+    [SerializeField] private CameraController     cameraController;
 
     [Header("Input Settings")]
     [SerializeField] private InputActionAsset inputActions;
@@ -322,7 +323,7 @@ public class InputManager : MonoBehaviour
                 break;
 
             case InputState.AttackSelection:
-                // Attack sub-menu handles its own clicks via RadialMenuButton.
+                // Attack sub-menu handles its own clicks via VisualElement PointerUpEvent callbacks.
                 break;
 
             case InputState.TargetSelection:
@@ -333,6 +334,11 @@ public class InputManager : MonoBehaviour
 
     private bool IsPointerOverUIElement()
     {
+        // UI Toolkit radial menus don't go through EventSystem — check hover state directly.
+        if (activeMenu       != null && activeMenu.IsHoveringButton)       return true;
+        if (activeAttackMenu != null && activeAttackMenu.IsHoveringButton) return true;
+
+        // Legacy uGUI elements (MonsterInfoPanel, AttackInfoPanel, HUD, etc.)
         if (UnityEngine.EventSystems.EventSystem.current == null) return false;
 
         var pointerData = new UnityEngine.EventSystems.PointerEventData(
@@ -415,6 +421,7 @@ public class InputManager : MonoBehaviour
             case InputState.Normal:
                 if (activeMenu != null) CloseRadialMenu();
                 if (selectedTile != null) { selectedTile.SetSelected(false); selectedTile = null; }
+                cameraController?.ReleaseFocus();
                 break;
 
             case InputState.MovementMode:
@@ -473,6 +480,10 @@ public class InputManager : MonoBehaviour
         activeMenu.Initialize(tile, this);
         menuOpenTime = Time.time;
 
+        Monster menuMonster = tile.GetMonster();
+        if (menuMonster != null)
+            cameraController?.FocusOnMonster(menuMonster.transform.position);
+
         Debug.Log($"[InputManager] Opened radial menu on tile {tile.GridPosition}");
     }
 
@@ -528,6 +539,7 @@ public class InputManager : MonoBehaviour
 
     void EnterMovementMode(Tile originTile, Monster monster)
     {
+        cameraController?.ReleaseFocus();
         currentState       = InputState.MovementMode;
         movingMonster      = monster;
         movementOriginTile = originTile;
@@ -557,6 +569,7 @@ public class InputManager : MonoBehaviour
         movementOriginTile      = null;
         validMovementTiles      = null;
         movingMonsterTilesPerAP = 1;
+        cameraController?.ReleaseFocus();
     }
 
     // -- Path Preview Helpers --------------------------------------------------
@@ -793,6 +806,9 @@ public class InputManager : MonoBehaviour
         activeAttackMenu = Instantiate(radialMenuPrefab, menuPos, Quaternion.identity);
         activeAttackMenu.InitializeAsAttackMenu(monster, this);
 
+        // Keep (or re-establish) focus on the attacking monster
+        cameraController?.FocusOnMonster(monster.transform.position);
+
         currentState = InputState.AttackSelection;
         menuOpenTime = Time.time;
         Debug.Log($"[InputManager] Attack sub-menu opened for {monster.name}.");
@@ -865,7 +881,7 @@ public class InputManager : MonoBehaviour
                 return;
             }
 
-            attackingMonster.ExecuteAttack(attackingMonster, selectedAttackIndex, selectedAttackData.IsDirect);
+            attackingMonster.ExecuteAttack(new List<Monster> { attackingMonster }, selectedAttackIndex, selectedAttackData.IsDirect);
             Debug.Log($"[InputManager] {attackingMonster.name} used '{selectedAttackData.DisplayName}' on itself.");
 
             AttackInfoPanel.Hide();
@@ -953,6 +969,7 @@ public class InputManager : MonoBehaviour
             }
         }
 
+        cameraController?.ReleaseFocus();
         currentState = InputState.TargetSelection;
         Debug.Log($"[InputManager] Targeting '{selectedAttackData.DisplayName}' " +
                   $"({(isDirectional ? "directional" : isAOE ? "AOE" : "single")}) — " +
@@ -1075,6 +1092,7 @@ public class InputManager : MonoBehaviour
         }
 
         AttackInfoPanel.Hide();
+        cameraController?.ReleaseFocus();
         ExitTargetSelection();
         playerTurnController?.CheckAutoEndTurn();
     }
@@ -1127,6 +1145,7 @@ public class InputManager : MonoBehaviour
         // Null the reference now so HandleNormalClick doesn't try to destroy it a second time.
         activeMenu = null;
 
+        cameraController?.ReleaseFocus();
         Debug.Log($"[InputManager] Info for {monster.name} — " +
                   $"HP {monster.CurrentHP}/{monster.MaxHP}");
     }
@@ -1167,6 +1186,7 @@ public class InputManager : MonoBehaviour
         }
 
         CloseRadialMenu();   // safe even when activeMenu is null
+        cameraController?.ReleaseFocus();
         Debug.Log("[InputManager] Player turn ended — all menus closed.");
     }
 }

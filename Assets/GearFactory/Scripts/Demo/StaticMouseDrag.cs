@@ -19,18 +19,18 @@ namespace GearFactory
                     if (hit.collider.GetComponent<Rigidbody2D>())
                     {
                         connectedBody = hit.collider.GetComponent<Rigidbody2D>();
-						connectedBody.isKinematic = true;
+						connectedBody.bodyType = RigidbodyType2D.Kinematic;
                     }
                 }
 				
 				connectedBody = body;
-				connectedBody.isKinematic = true;
+				connectedBody.bodyType = RigidbodyType2D.Kinematic;
             }
             if (Input.GetMouseButtonUp(0))
             {
                 if (connectedBody != null)
                 {
-					connectedBody.isKinematic = false;
+					connectedBody.bodyType = RigidbodyType2D.Dynamic;
                     connectedBody = null;
                 }
             }

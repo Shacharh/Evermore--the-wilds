@@ -15,7 +15,7 @@ MonoBehaviour:
   monsterId: Pixiventi
   displayName: Pixiventi
   elementType: 2
-  isFlying: 0
+  isFlying: 1
   baseHP: 250
   baseAttack: 170
   baseDefense: 100
@@ -32,9 +32,15 @@ MonoBehaviour:
   - attack: {fileID: 11400000, guid: c5b3415f84764b84087e1b2dbef4c207, type: 2}
     levelLearned: 0
     AnimationTrigger: Ability_2
+    vfxSpawnPointPath: RigLArmFinger1.001_end
+    vfxSpawnOffset: {x: 0, y: 0, z: 0}
   - attack: {fileID: 11400000, guid: 221c051516ad27a488250717a389b404, type: 2}
     levelLearned: 0
     AnimationTrigger: Ability_1
+    vfxSpawnPointPath: Mesh
+    vfxSpawnOffset: {x: 0, y: 0, z: 0}
   - attack: {fileID: 11400000, guid: 6fc2546e00e09974ba02bd15cc3f4c2e, type: 2}
     levelLearned: 0
     AnimationTrigger: Ability_1
+    vfxSpawnPointPath: Mesh
+    vfxSpawnOffset: {x: 0, y: 0, z: 0}

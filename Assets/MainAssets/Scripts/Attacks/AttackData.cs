@@ -34,6 +34,10 @@ public class AttackData : ScriptableObject
     [SerializeField, ShowIf("!isDirect")]
     [Range(0f, 0.99f)] private float inDirectHitPrecent = 0;
 
+    [Header("VFX")]
+    [SerializeField] private GameObject vfxPrefab;
+    [SerializeField] private AttackVFXTarget vfxTarget = AttackVFXTarget.AttackerSpawnPoint;
+
     #region Getters
     public string ID => id;
     public string DisplayName => displayName;
@@ -50,6 +54,8 @@ public class AttackData : ScriptableObject
     public int RangeTargetShapeSize => rangeTargetShapeSize;
     public bool IsDirect => isDirect;
     public float InDirectHitPercent => inDirectHitPrecent;
+    public GameObject VFXPrefab => vfxPrefab;
+    public AttackVFXTarget VFXTarget => vfxTarget;
     #endregion
 
     private void OnValidate()
@@ -68,9 +74,16 @@ public class AttackData : ScriptableObject
                 continue;
             }
 
-            effects[i].value = Mathf.Max(0, effects[i].value);
-            effects[i].duration = Mathf.Max(1, effects[i].duration);
+            effects[i].value      = Mathf.Max(0, effects[i].value);
+            effects[i].stageCount = Mathf.Max(1, effects[i].stageCount);
+            effects[i].duration   = Mathf.Max(1, effects[i].duration);
         }
 
     }
+}
+
+public enum AttackVFXTarget
+{
+    AttackerSpawnPoint,
+    EnemyGridCell
 }
