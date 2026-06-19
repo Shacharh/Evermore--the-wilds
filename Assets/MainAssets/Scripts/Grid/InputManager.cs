@@ -1084,11 +1084,8 @@ public class InputManager : MonoBehaviour
         }
         else
         {
-            foreach (Monster t in targets)
-            {
-                attackingMonster.ExecuteAttack(t, selectedAttackIndex, selectedAttackData.IsDirect);
-                Debug.Log($"[InputManager] '{selectedAttackData.DisplayName}' hit {t.name}.");
-            }
+            attackingMonster.ExecuteAttack(targets, selectedAttackIndex, selectedAttackData.IsDirect);
+            Debug.Log($"[InputManager] '{selectedAttackData.DisplayName}' hit {targets.Count} target(s).");
         }
 
         AttackInfoPanel.Hide();

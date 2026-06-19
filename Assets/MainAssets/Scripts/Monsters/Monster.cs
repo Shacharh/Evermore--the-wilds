@@ -41,7 +41,7 @@ public class Monster : MonoBehaviour
     #endregion
 
     #region Constants
-    private const int MaxAttacks = 2;
+    private const int MaxAttacks = 3;
     private const int MaxIV = 24;
     private const float XpMultiplier = 25f;
     #endregion
