@@ -1,0 +1,89 @@
+/*  AttackInfoPanel.uss — Evermore: The Wilds
+    Bottom-left corner. Transparent header so the panel sprite's dark section shows.
+    AP cost sits at the top-right of the header row. */
+
+.aip-screen {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+}
+
+/* ── Panel root ──────────────────────────────────────────────────────────── */
+.aip-panel {
+    position: absolute;
+    left:   24px;
+    bottom: 24px;
+    width:  360px;
+
+    flex-direction: column;
+    border-radius: 8px;
+    overflow: hidden;
+
+    background-color: rgba(18, 18, 28, 242);   /* fallback only */
+}
+
+/* ── Header — transparent, sprite provides the dark header look ──────────── */
+.aip-top-bar {
+    width: 100%;
+    height: 50px;       /* kept via C# panelHeaderHeight; matches sprite header */
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-left:  14px;
+    padding-right: 12px;
+    overflow: hidden;
+
+    background-color: rgba(0, 0, 0, 0);        /* transparent */
+}
+
+/* Attack name */
+.aip-title {
+    flex-grow: 1;
+    font-size: 20px;
+    -unity-font-style: bold;
+    color: rgba(217, 242, 255, 255);
+    -unity-text-align: middle-center;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+/* AP cost — top-right of the header */
+.aip-ap {
+    font-size: 15px;
+    -unity-font-style: bold;
+    color: rgba(40, 70, 160, 255);   /* dark navy — visible against grey without standing out */
+    -unity-text-align: middle-right;
+    white-space: nowrap;
+    min-width: 40px;
+}
+
+/* ── Description — subtle dark box separates it from the stat block ──────── */
+.aip-desc {
+    margin-top:   10px;
+    margin-left:  10px;
+    margin-right: 10px;
+    padding-top:   5px;
+    padding-bottom: 5px;
+    padding-left:  8px;
+    padding-right: 8px;
+    height: 44px;
+    font-size: 15px;
+    color: rgba(199, 199, 199, 255);
+    -unity-text-align: upper-left;
+    white-space: normal;
+    overflow: hidden;
+
+    background-color: rgba(0, 0, 0, 28);   /* very subtle dark tint */
+    border-radius: 4px;
+}
+
+/* ── Stats block ─────────────────────────────────────────────────────────── */
+.aip-stats {
+    margin-top:    6px;
+    margin-left:   28px;
+    margin-right:  14px;
+    margin-bottom: 14px;
+    font-size: 17px;
+    color: rgba(224, 224, 224, 255);
+    -unity-text-align: upper-left;
+    white-space: normal;
+}

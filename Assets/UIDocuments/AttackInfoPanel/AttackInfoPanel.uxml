@@ -1,0 +1,25 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+
+    <Style src="AttackInfoPanel.uss" />
+
+    <ui:VisualElement class="aip-screen" picking-mode="Ignore">
+
+        <ui:VisualElement name="panel-root" class="aip-panel" picking-mode="Ignore">
+
+            <!-- Header: attack name left, AP cost top-right -->
+            <ui:VisualElement name="top-bar" class="aip-top-bar" picking-mode="Ignore">
+                <ui:Label name="title-label" class="aip-title" picking-mode="Ignore" />
+                <ui:Label name="ap-label"    class="aip-ap"    picking-mode="Ignore" />
+            </ui:VisualElement>
+
+            <!-- Description -->
+            <ui:Label name="desc-label" class="aip-desc" enable-rich-text="true" picking-mode="Ignore" />
+
+            <!-- Stats: DMG / ACC / RNG / SHAPE etc. (AP removed — shown in header) -->
+            <ui:Label name="stats-label" class="aip-stats" picking-mode="Ignore" />
+
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+
+</ui:UXML>

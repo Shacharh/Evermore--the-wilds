@@ -1,0 +1,166 @@
+/*  MonsterInfoPanel.uss — Evermore: The Wilds
+    The panel sprite provides its own dark header and lighter body.
+    The top-bar is transparent so the sprite's header shows through. */
+
+.mip-screen {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+}
+
+/* ── Panel root — sprite applied at runtime ──────────────────────────────── */
+.mip-panel {
+    position: absolute;
+    right:  24px;
+    bottom: 24px;
+    width:  420px;
+
+    flex-direction: column;
+    border-radius: 8px;
+    overflow: hidden;
+
+    background-color: rgba(18, 18, 28, 242);   /* fallback only */
+}
+
+/* ── Header — transparent so the sprite's own dark header shows ──────────── */
+.mip-top-bar {
+    width: 100%;
+    flex-direction: column;
+    padding-top: 24px;     /* push icon + title down into the middle of the sprite header */
+    padding-bottom: 6px;
+
+    background-color: rgba(0, 0, 0, 0);        /* transparent */
+}
+
+/* Row: icon on the left, title group takes the rest and centres itself */
+.mip-header-row {
+    flex-direction: row;
+    align-items: center;
+    height: 46px;          /* slightly taller to contain icon with its margin-top offset */
+    padding-left: 16px;
+    padding-right: 10px;
+}
+
+/* Type-element icon */
+.mip-type-icon {
+    width:  36px;
+    height: 36px;
+    min-width:  36px;
+    min-height: 36px;
+    -unity-background-scale-mode: scale-to-fit;
+    margin-top: 10px;      /* extra downward offset so icon sits lower than the title text */
+    margin-right: 4px;
+}
+
+/* Name + level + side grouped and centred in the remaining header space */
+.mip-title-group {
+    flex-grow: 1;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: -6px;      /* pull name/level/allegiance up ~6px from its centered position */
+}
+
+.mip-name {
+    font-size: 19px;
+    -unity-font-style: bold;
+    color: rgba(240, 240, 240, 255);
+    -unity-text-align: middle-center;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.mip-level {
+    font-size: 17px;
+    color: rgba(200, 200, 220, 255);
+    -unity-text-align: middle-center;
+    white-space: nowrap;
+}
+
+.mip-side {
+    font-size: 17px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    white-space: nowrap;
+    min-width: 50px;
+}
+
+/* HP row — inside the transparent header section */
+.mip-hp {
+    margin-top: -17px;     /* pulls HP up into the gap between it and the title row */
+    margin-left: 14px;
+    margin-right: 14px;
+    height: 28px;
+    font-size: 20px;
+    -unity-font-style: bold;
+    color: rgba(240, 240, 240, 255);
+    -unity-text-align: middle-center;
+    white-space: nowrap;
+}
+
+/* ── Body ────────────────────────────────────────────────────────────────── */
+.mip-body {
+    flex-direction: column;
+    flex-grow: 1;
+    padding-top: 4px;
+    padding-bottom: 6px;
+}
+
+.mip-stage-header {
+    align-self: flex-end;
+    margin-right: 14px;
+    height: 18px;
+    font-size: 13px;
+    -unity-font-style: italic;
+    color: rgba(140, 140, 166, 255);
+    -unity-text-align: upper-right;
+    white-space: nowrap;
+}
+
+.mip-stats-row {
+    flex-direction: row;
+    flex-grow: 1;
+    margin-top: 2px;
+}
+
+.mip-stats {
+    flex-grow: 1;
+    margin-left: 14px;
+    font-size: 18px;
+    color: rgba(224, 224, 224, 255);
+    -unity-text-align: upper-left;
+    white-space: normal;
+}
+
+.mip-stages {
+    width: 120px;
+    margin-right: 14px;
+    font-size: 18px;
+    color: rgba(224, 224, 224, 255);
+    -unity-text-align: upper-right;
+    white-space: normal;
+}
+
+/* ── Close button ────────────────────────────────────────────────────────── */
+.mip-close-btn {
+    align-self: center;
+    width:  190px;
+    height:  42px;
+    margin-top: 10px;
+    margin-bottom: 14px;
+
+    border-width: 0;
+    border-radius: 2px;
+    background-color: rgba(0, 0, 0, 0);
+
+    font-size: 18px;
+    -unity-font-style: bold;
+    color: rgba(255, 255, 255, 255);
+    -unity-text-align: middle-center;
+
+    transition-property: -unity-background-image-tint-color;
+    transition-duration: 0.08s;
+}
+
+.mip-close-btn:hover  { -unity-background-image-tint-color: rgba(210, 210, 210, 255); }
+.mip-close-btn:active { -unity-background-image-tint-color: rgba(150, 150, 150, 255); }

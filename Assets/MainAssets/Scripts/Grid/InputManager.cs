@@ -142,21 +142,73 @@ public class InputManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Keyboard shortcuts that work any time it is the player's turn.
-    ///   Space → pass turn (same as clicking End Turn)
+    /// Processes all hotkeys each frame using the HotkeyManager so bindings
+    /// are rebindable.  Falls back to raw keyboard if HotkeyManager is absent.
     /// </summary>
     private void HandleHotkeys()
     {
-        var kb = Keyboard.current;
-        if (kb == null) return;
+        var hk = HotkeyManager.Instance;
 
-        if (kb.spaceKey.wasPressedThisFrame)
+        // ── Always-active ──────────────────────────────────────────────────────
+        bool endTurnPressed = hk != null
+            ? hk.WasPressedThisFrame(HotkeyAction.EndTurn)
+            : Keyboard.current?.spaceKey.wasPressedThisFrame ?? false;
+
+        if (endTurnPressed && playerTurnController != null && playerTurnController.IsActive)
         {
-            if (playerTurnController != null && playerTurnController.IsActive)
+            Debug.Log("[InputManager] EndTurn hotkey.");
+            playerTurnController.OnEndTurnButtonPressed();
+            return;   // don't process other hotkeys the same frame
+        }
+
+        bool cancelPressed = hk != null
+            ? hk.WasPressedThisFrame(HotkeyAction.Cancel)
+            : Keyboard.current?.backspaceKey.wasPressedThisFrame ?? false;
+
+        if (cancelPressed)
+        {
+            Debug.Log("[InputManager] Cancel hotkey.");
+            CancelCurrentAction();
+            return;
+        }
+
+        // ── Friendly-monster-selected hotkeys (Normal state only) ──────────────
+        if (currentState == InputState.Normal &&
+            selectedTile  != null &&
+            selectedTile.Occupation == Tile.OccupationType.Monster)
+        {
+            Monster mon = selectedTile.GetMonster();
+            if (mon != null && !mon.IsEnemy)
             {
-                Debug.Log("[InputManager] Space pressed — passing turn.");
-                playerTurnController.OnEndTurnButtonPressed();
+                Tile savedTile = selectedTile;  // CloseRadialMenu() will null selectedTile
+
+                if (hk != null && hk.WasPressedThisFrame(HotkeyAction.Move))
+                {
+                    Debug.Log("[InputManager] Move hotkey.");
+                    HandleMovementAction(savedTile);
+                    return;
+                }
+                if (hk != null && hk.WasPressedThisFrame(HotkeyAction.Attack))
+                {
+                    Debug.Log("[InputManager] Attack hotkey.");
+                    HandleAbilitiesAction(savedTile);
+                    return;
+                }
+                if (hk != null && hk.WasPressedThisFrame(HotkeyAction.Info))
+                {
+                    Debug.Log("[InputManager] Info hotkey.");
+                    HandleInfoAction(savedTile);
+                    return;
+                }
             }
+        }
+
+        // ── Attack-slot hotkeys (attack sub-menu open) ─────────────────────────
+        if (currentState == InputState.AttackSelection && hk != null)
+        {
+            if      (hk.WasPressedThisFrame(HotkeyAction.Attack1)) HandleAttackSelected(0);
+            else if (hk.WasPressedThisFrame(HotkeyAction.Attack2)) HandleAttackSelected(1);
+            else if (hk.WasPressedThisFrame(HotkeyAction.Attack3)) HandleAttackSelected(2);
         }
     }
 
@@ -187,9 +239,11 @@ public class InputManager : MonoBehaviour
                     currentHoveredTile.SetHovered(true);
                 }
 
-                // AOE footprint preview on hover
+                // AOE / directional footprint preview on hover
                 if (currentState == InputState.TargetSelection && IsValidTarget(hitTile))
                     UpdateAOEFootprint(hitTile);
+                else if (currentState == InputState.TargetSelection)
+                    ClearAOEFootprint();   // moved off aim zone — remove stale footprint
 
                 // Show AP cost hint while in movement mode
                 if (currentState == InputState.MovementMode && IsValidMovementDestination(hitTile)
@@ -363,6 +417,7 @@ public class InputManager : MonoBehaviour
     {
         switch (currentState)
         {
+            // Normal: close any open menu and deselect the tile
             case InputState.Normal:
                 if (activeMenu != null) CloseRadialMenu();
                 if (selectedTile != null) { selectedTile.SetSelected(false); selectedTile = null; }
@@ -377,17 +432,33 @@ public class InputManager : MonoBehaviour
                 Debug.Log("[InputManager] Cannot cancel while monster is moving.");
                 break;
 
+            // AttackSelection: go back to the top-level radial menu for this monster
             case InputState.AttackSelection:
+            {
+                Monster savedMonster = attackingMonster;
                 CloseAttackSubMenu();
                 currentState     = InputState.Normal;
                 attackingMonster = null;
-                if (selectedTile != null) { selectedTile.SetSelected(false); selectedTile = null; }
-                cameraController?.ReleaseFocus();
-                break;
 
-            case InputState.TargetSelection:
-                ExitTargetSelection();
+                if (savedMonster?.CurrentTile != null)
+                {
+                    selectedTile = savedMonster.CurrentTile;
+                    selectedTile.SetSelected(true);
+                    OpenRadialMenu(selectedTile);
+                }
                 break;
+            }
+
+            // TargetSelection: go back to the attack sub-menu
+            case InputState.TargetSelection:
+            {
+                Monster savedMonster = attackingMonster;
+                ExitTargetSelection();   // clears attackingMonster
+
+                if (savedMonster?.CurrentTile != null)
+                    OpenAttackSubMenu(savedMonster.CurrentTile, savedMonster);
+                break;
+            }
         }
     }
 
@@ -538,19 +609,47 @@ public class InputManager : MonoBehaviour
     // -- AOE Footprint Helpers -------------------------------------------------
 
     /// <summary>
-    /// Updates the orange AOE footprint highlight centered on <paramref name="center"/>.
-    /// Only shown when the selected attack has RangeTargetShapeSize > 1.
+    /// Updates the orange AOE footprint highlight.
+    /// <para>
+    /// Directional shapes (line/column/cone): <paramref name="center"/> is used as the
+    /// aim direction tile — the footprint radiates from the attacker's tile toward it.
+    /// </para>
+    /// <para>
+    /// Standard AOE shapes: the footprint is centred on <paramref name="center"/>.
+    /// </para>
+    /// Does nothing for non-AOE non-directional (single-target) shapes.
     /// </summary>
     private void UpdateAOEFootprint(Tile center)
     {
-        if (selectedAttackData == null || selectedAttackData.RangeTargetShapeSize <= 1) return;
+        if (selectedAttackData == null) return;
+
+        bool directional = IsDirectionalShape(selectedAttackData.TargetShape);
+        bool aoe         = selectedAttackData.RangeTargetShapeSize > 1;
+
+        if (!directional && !aoe) return;   // single-target: no footprint needed
 
         ClearAOEFootprint();
 
-        currentAOEFootprint = gridManager.GetTilesInAttackShape(
-            center,
-            selectedAttackData.RangeTargetShapeSize,
-            selectedAttackData.TargetShape);
+        if (directional)
+        {
+            // Footprint from the attacker's tile, aimed toward the hovered tile.
+            Tile origin = attackingMonster?.CurrentTile;
+            if (origin == null) return;
+
+            currentAOEFootprint = gridManager.GetTilesInAttackShape(
+                origin,
+                selectedAttackData.Range,
+                selectedAttackData.TargetShape,
+                center);            // center = hovered direction tile
+        }
+        else
+        {
+            // Standard AOE: footprint centred on the hovered tile.
+            currentAOEFootprint = gridManager.GetTilesInAttackShape(
+                center,
+                selectedAttackData.RangeTargetShapeSize,
+                selectedAttackData.TargetShape);
+        }
 
         foreach (Tile t in currentAOEFootprint)
             t.Highlight(aoeFootprintColor, 0.3f);
@@ -571,7 +670,9 @@ public class InputManager : MonoBehaviour
     }
 
     bool IsValidMovementDestination(Tile tile)
-        => validMovementTiles != null && validMovementTiles.Contains(tile);
+        // Extra IsWalkable() guard: stale validMovementTiles could contain tiles
+        // that became occupied AFTER the movement range was computed.
+        => validMovementTiles != null && validMovementTiles.Contains(tile) && tile.IsWalkable();
 
     // -- Move Coroutine --------------------------------------------------------
 
@@ -792,27 +893,39 @@ public class InputManager : MonoBehaviour
             return;
         }
 
-        bool isAOE       = selectedAttackData.RangeTargetShapeSize > 1;
-        bool targetAlly  = selectedAttackData.TargetTeam == AttackEnum.AttackTargetTeam.ally;
+        bool isAOE        = selectedAttackData.RangeTargetShapeSize > 1;
+        bool targetAlly   = selectedAttackData.TargetTeam == AttackEnum.AttackTargetTeam.ally;
+        bool isDirectional = IsDirectionalShape(selectedAttackData.TargetShape);
 
-        // ── 1. Aim-zone: all tiles the attacker can project the attack center onto
-        //      AOE   → plain radius circle (same appearance as single-target)
-        //      Single → attack shape (line, column, etc.)
-        var allShapeTiles = isAOE
-            ? gridManager.GetTilesInRange(originTile, selectedAttackData.Range, walkableOnly: false)
-            : gridManager.GetTilesInAttackShape(
+        // ── 1. Aim-zone tiles ──────────────────────────────────────────────────────
+        //   Directional  → all 8 straight-line rays so the player picks a direction.
+        //   AOE          → plain radius circle (player picks the AOE centre tile).
+        //   Single-target → the attack's own shape (player picks a specific target).
+        List<Tile> allShapeTiles;
+        if (isDirectional)
+            allShapeTiles = gridManager.GetStraightTilesInRange(originTile, selectedAttackData.Range);
+        else if (isAOE)
+            allShapeTiles = gridManager.GetTilesInRange(originTile, selectedAttackData.Range, walkableOnly: false);
+        else
+            allShapeTiles = gridManager.GetTilesInAttackShape(
                 originTile, selectedAttackData.Range, selectedAttackData.TargetShape);
 
-        // ── 2. Dim-highlight every aim-zone tile so the range is visible ────
+        // ── 2. Dim-highlight every aim-zone tile so the range is visible ───────────
         gridManager.HighlightTiles(allShapeTiles, attackRangeColor, 0.05f);
 
         // Pick pulse colours based on whether we're targeting allies or enemies.
         Color pulseA = targetAlly ? allyPulseColorA : attackPulseColorA;
         Color pulseB = targetAlly ? allyPulseColorB : attackPulseColorB;
 
-        if (isAOE)
+        if (isDirectional)
         {
-            // For AOE: any tile in the aim zone is a valid click target
+            // Any tile along a straight line is a valid click — it sets the aim direction.
+            // The footprint preview in UpdateAOEFootprint handles hover feedback.
+            validTargetTiles = allShapeTiles;
+        }
+        else if (isAOE)
+        {
+            // For AOE: any tile in the aim zone is a valid click target.
             // (footprint preview is shown on hover in HandleTileHovering)
             validTargetTiles = allShapeTiles;
 
@@ -859,7 +972,7 @@ public class InputManager : MonoBehaviour
         cameraController?.ReleaseFocus();
         currentState = InputState.TargetSelection;
         Debug.Log($"[InputManager] Targeting '{selectedAttackData.DisplayName}' " +
-                  $"({(isAOE ? "AOE" : "single")}) — " +
+                  $"({(isDirectional ? "directional" : isAOE ? "AOE" : "single")}) — " +
                   $"{validTargetTiles.Count} aim tile(s) highlighted.");
     }
 
@@ -875,6 +988,15 @@ public class InputManager : MonoBehaviour
 
     bool IsValidTarget(Tile tile) => validTargetTiles != null && validTargetTiles.Contains(tile);
 
+    /// <summary>
+    /// True when the selected attack shape requires the player to pick a direction
+    /// (line, column, cone) rather than a specific target tile or AOE centre.
+    /// </summary>
+    private bool IsDirectionalShape(AttackEnum.AttackTargetShape shape) =>
+        shape == AttackEnum.AttackTargetShape.line   ||
+        shape == AttackEnum.AttackTargetShape.column ||
+        shape == AttackEnum.AttackTargetShape.cone;
+
     void ExecutePlayerAttack(Tile targetTile)
     {
         if (attackingMonster == null || selectedAttackData == null)
@@ -884,75 +1006,86 @@ public class InputManager : MonoBehaviour
             return;
         }
 
-        bool isAOE = selectedAttackData.RangeTargetShapeSize > 1;
+        bool isDirectional = IsDirectionalShape(selectedAttackData.TargetShape);
+        bool isAOE         = selectedAttackData.RangeTargetShapeSize > 1;
+        bool targetAlly    = selectedAttackData.TargetTeam == AttackEnum.AttackTargetTeam.ally;
 
-        if (isAOE)
+        // ── Compute the footprint of affected tiles ────────────────────────────────
+        List<Tile> footprint;
+
+        if (isDirectional)
         {
-            // Collect all monsters in the footprint centered on the clicked tile
-            var footprint = gridManager.GetTilesInAttackShape(
+            // targetTile gives the aim direction from the attacker.
+            // The full ray/column/cone radiates from the attacker's origin.
+            Tile origin = attackingMonster.CurrentTile
+                       ?? gridManager.GetTileAtWorldPosition(attackingMonster.transform.root.position);
+            footprint = gridManager.GetTilesInAttackShape(
+                origin,
+                selectedAttackData.Range,
+                selectedAttackData.TargetShape,
+                targetTile);   // directionTile = the clicked tile
+        }
+        else if (isAOE)
+        {
+            // Standard AOE: footprint centred on the clicked tile.
+            footprint = gridManager.GetTilesInAttackShape(
                 targetTile,
                 selectedAttackData.RangeTargetShapeSize,
                 selectedAttackData.TargetShape);
-
-            bool targetAllyAOE = selectedAttackData.TargetTeam == AttackEnum.AttackTargetTeam.ally;
-            var targets = new System.Collections.Generic.List<Monster>();
-            foreach (Tile ft in footprint)
-            {
-                Monster m = ft.GetMonster();
-                if (m == null) continue;
-                bool validTeam = targetAllyAOE
-                    ? m.IsEnemy == attackingMonster.IsEnemy
-                    : m.IsEnemy != attackingMonster.IsEnemy;
-                if (validTeam) targets.Add(m);
-            }
-
-            if (playerTurnController != null &&
-                !playerTurnController.TrySpendAPForAttack(attackingMonster, selectedAttackData))
-            {
-                Debug.Log("[InputManager] AOE cancelled — not enough AP.");
-                ExitTargetSelection();
-                return;
-            }
-
-            // Face the click point
-            Vector3 aoeCenter = targetTile.transform.position;
-            Vector3 aoeDir = new Vector3(
-                aoeCenter.x - attackingMonster.transform.position.x, 0f,
-                aoeCenter.z - attackingMonster.transform.position.z);
-            if (aoeDir != Vector3.zero)
-                attackingMonster.transform.root.rotation = Quaternion.LookRotation(aoeDir);
-
-            attackingMonster.ExecuteAoEAttack(aoeCenter, targets, selectedAttackIndex, selectedAttackData.IsDirect);
-            Debug.Log($"[InputManager] AOE '{selectedAttackData.DisplayName}' hitting {targets.Count} target(s).");
         }
         else
         {
-            // Single target
-            Monster target = targetTile.GetMonster();
-            if (target == null)
-            {
-                Debug.LogError("[InputManager] Invalid attack state — no monster on target tile!");
-                ExitTargetSelection();
-                return;
-            }
+            // Single-target: only the clicked tile itself.
+            footprint = new List<Tile> { targetTile };
+        }
 
-            if (playerTurnController != null &&
-                !playerTurnController.TrySpendAPForAttack(attackingMonster, selectedAttackData))
-            {
-                Debug.Log("[InputManager] Attack cancelled — not enough AP.");
-                ExitTargetSelection();
-                return;
-            }
+        // ── Collect valid-team monsters within the footprint ───────────────────────
+        var targets = new List<Monster>();
+        foreach (Tile ft in footprint)
+        {
+            Monster m = ft.GetMonster();
+            if (m == null) continue;
+            bool validTeam = targetAlly
+                ? m.IsEnemy == attackingMonster.IsEnemy
+                : m.IsEnemy != attackingMonster.IsEnemy;
+            if (validTeam) targets.Add(m);
+        }
 
-            Vector3 attackDir = new Vector3(
-                targetTile.transform.position.x - attackingMonster.transform.position.x, 0f,
-                targetTile.transform.position.z - attackingMonster.transform.position.z);
-            if (attackDir != Vector3.zero)
-                attackingMonster.transform.root.rotation = Quaternion.LookRotation(attackDir);
+        // For non-directional attacks, bail out if the footprint is empty.
+        // Directional attacks always fire (and consume AP) even into empty space.
+        if (targets.Count == 0 && !isDirectional)
+        {
+            Debug.Log("[InputManager] No targets in footprint — cancelling.");
+            ExitTargetSelection();
+            return;
+        }
 
-            attackingMonster.ExecuteAttack(new List<Monster> { target }, selectedAttackIndex, selectedAttackData.IsDirect);
-            Debug.Log($"[InputManager] {attackingMonster.name} used '{selectedAttackData.DisplayName}' " +
-                      $"on {target.name}.");
+        // ── Spend AP ──────────────────────────────────────────────────────────────
+        if (playerTurnController != null &&
+            !playerTurnController.TrySpendAPForAttack(attackingMonster, selectedAttackData))
+        {
+            Debug.Log("[InputManager] Attack cancelled — not enough AP.");
+            ExitTargetSelection();
+            return;
+        }
+
+        // ── Face the aimed direction ───────────────────────────────────────────────
+        Vector3 aimDir = new Vector3(
+            targetTile.transform.position.x - attackingMonster.transform.position.x, 0f,
+            targetTile.transform.position.z - attackingMonster.transform.position.z);
+        if (aimDir != Vector3.zero)
+            attackingMonster.transform.root.rotation = Quaternion.LookRotation(aimDir);
+
+        // ── Execute the attack on each valid target ────────────────────────────────
+        if (targets.Count == 0)
+        {
+            // Directional attack fired into empty space — AP spent, no damage dealt.
+            Debug.Log($"[InputManager] '{selectedAttackData.DisplayName}' fired but no targets hit.");
+        }
+        else
+        {
+            attackingMonster.ExecuteAttack(targets, selectedAttackIndex, selectedAttackData.IsDirect);
+            Debug.Log($"[InputManager] '{selectedAttackData.DisplayName}' hit {targets.Count} target(s).");
         }
 
         AttackInfoPanel.Hide();
@@ -963,6 +1096,7 @@ public class InputManager : MonoBehaviour
 
     void ExitTargetSelection()
     {
+        AttackInfoPanel.Hide();   // Bug fix: panel was staying visible on cancel
         ClearAOEFootprint();
 
         // Stop pulse + jitter on any target tiles

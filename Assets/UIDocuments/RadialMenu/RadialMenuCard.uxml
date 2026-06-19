@@ -3,5 +3,6 @@
     <ui:VisualElement class="menu-card" style="background-image: none; rotate: 0 0 0 5deg;">
         <ui:VisualElement class="menu-card-dot"/>
         <ui:Label name="card-label" text="ACTION NAME" class="menu-card-label"/>
+        <ui:Label name="card-ap"    text=""            class="menu-card-ap"/>
     </ui:VisualElement>
 </ui:UXML>

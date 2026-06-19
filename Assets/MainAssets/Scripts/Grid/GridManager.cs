@@ -8,6 +8,14 @@ public class GridManager : MonoBehaviour
     [SerializeField] private int gridHeight = 10;
     [SerializeField] private GameObject tilePrefab;
     [SerializeField] private float tileSpacing = 1.1f;
+    [Tooltip("Visual side length of each tile in world units.\n" +
+             "Set this here on the GridManager — the Tile prefab's own scale is\n" +
+             "ignored at runtime and has no effect.\n\n" +
+             "Typical values:\n" +
+             "  = tileSpacing  → seamless (tiles touch edge-to-edge)\n" +
+             "  < tileSpacing  → gap between tiles\n" +
+             "  > tileSpacing  → overlap (clamped automatically to tileSpacing)")]
+    [SerializeField] private float tileSideLength = 1.0f;
     
     private Tile[,] grid;
     
@@ -21,31 +29,69 @@ public class GridManager : MonoBehaviour
         GenerateGrid();
         SyncCameraWithGrid();
     }
-    
+
+    /// <summary>
+    /// Called by the Unity Editor whenever any Inspector field is changed.
+    /// Re-applies the tile scale live so the level designer sees the result
+    /// immediately without restarting Play Mode.
+    /// Grid size / spacing changes still require a Play Mode restart.
+    /// </summary>
+    void OnValidate()
+    {
+        // Clamp tileSideLength so it can never exceed tileSpacing (no accidental overlap).
+        tileSideLength = Mathf.Clamp(tileSideLength, 0.05f, tileSpacing);
+
+        // grid is null before Start() (Edit Mode / before Play Mode).
+        // GenerateGrid() will apply the correct scale when Play Mode starts.
+        if (!Application.isPlaying || grid == null) return;
+
+        ApplyTileScales();
+    }
+
+    /// <summary>
+    /// Computes and applies the correct local scale to every tile in the grid.
+    /// Unity Plane mesh = 10×10 local units, so: localScale = tileSideLength / 10.
+    /// Called once at the end of GenerateGrid() and live from OnValidate().
+    /// </summary>
+    private void ApplyTileScales()
+    {
+        float tileScale = tileSideLength / 10f;
+        for (int x = 0; x < gridWidth; x++)
+        for (int y = 0; y < gridHeight; y++)
+        {
+            if (grid[x, y] != null)
+                grid[x, y].transform.localScale = new Vector3(tileScale, tileScale, tileScale);
+        }
+    }
+
     void GenerateGrid()
     {
         grid = new Tile[gridWidth, gridHeight];
-        
+
         for (int x = 0; x < gridWidth; x++)
         {
             for (int y = 0; y < gridHeight; y++)
             {
                 Vector3 worldPosition = new Vector3(x * tileSpacing, 0, y * tileSpacing);
-                
+
                 GameObject tileObject = Instantiate(tilePrefab, worldPosition, Quaternion.identity);
                 tileObject.name = $"Tile ({x}, {y})";
                 tileObject.transform.parent = transform;
-                
+
                 // Set layer for raycasting
                 tileObject.layer = LayerMask.NameToLayer("Tile");
-                
+
                 Tile tile = tileObject.GetComponent<Tile>();
                 tile.Initialize(x, y, gridHeight);
-                
+
                 grid[x, y] = tile;
             }
         }
-        
+
+        // Apply the correct tile scale now that all tiles exist.
+        // Unity Plane mesh = 10×10 local units, so scale = (spacing × fill) / 10.
+        ApplyTileScales();
+
         Debug.Log($"Grid generated: {gridWidth}x{gridHeight}");
     }
     
@@ -256,14 +302,20 @@ public class GridManager : MonoBehaviour
     /// Returns all tiles that fall within an attack's shape and range, excluding
     /// the origin tile itself.
     ///
-    /// Shapes:
+    /// Non-directional shapes:
     ///   sphere  — Manhattan diamond  (|dx|+|dy| ≤ range)
     ///   cube    — Chebyshev square   (max(|dx|,|dy|) ≤ range)
-    ///   line    — Orthogonal cross   (|dx|=0 OR |dy|=0)
-    ///   column  — Diagonal cross     (|dx|=|dy|)
+    ///   cross   — Cardinal plus (+)  (same row OR same column, ≤ range tiles away)
+    ///
+    /// Directional shapes (require <paramref name="directionTile"/>; fall back to
+    /// sphere when none is supplied, e.g. for AI calls that have no cursor aim):
+    ///   line    — Directional ray    — range tiles along the aim direction
+    ///   column  — Perpendicular line — runs ⊥ to aim, centred on the adjacent tile
+    ///   cone    — Bowling-pin cone   — expands 1 tile wider per step of depth
     /// </summary>
     public List<Tile> GetTilesInAttackShape(Tile origin, int range,
-                                             AttackEnum.AttackTargetShape shape)
+                                             AttackEnum.AttackTargetShape shape,
+                                             Tile directionTile = null)
     {
         var result = new List<Tile>();
         if (origin == null || range <= 0) return result;
@@ -271,26 +323,123 @@ public class GridManager : MonoBehaviour
         int cx = origin.GridPosition.x;
         int cy = origin.GridPosition.y;
 
-        for (int x = cx - range; x <= cx + range; x++)
-        for (int y = cy - range; y <= cy + range; y++)
+        bool isDirectional = shape == AttackEnum.AttackTargetShape.line   ||
+                             shape == AttackEnum.AttackTargetShape.column ||
+                             shape == AttackEnum.AttackTargetShape.cone;
+
+        // ── Non-directional shapes (or directional without an aim → sphere fallback) ──
+        if (!isDirectional || directionTile == null)
         {
-            if (!IsValidPosition(x, y)) continue;
-            if (x == cx && y == cy)    continue;   // exclude origin
-
-            int dx = Mathf.Abs(x - cx);
-            int dy = Mathf.Abs(y - cy);
-
-            bool include = shape switch
+            for (int x = cx - range; x <= cx + range; x++)
+            for (int y = cy - range; y <= cy + range; y++)
             {
-                AttackEnum.AttackTargetShape.sphere => dx + dy <= range,          // diamond
-                AttackEnum.AttackTargetShape.cube   => dx <= range && dy <= range, // square
-                AttackEnum.AttackTargetShape.line   => dx == 0 || dy == 0,        // plus / cross
-                AttackEnum.AttackTargetShape.column => dx == dy,                  // diagonal cross
-                _                                   => dx + dy <= range
-            };
+                if (!IsValidPosition(x, y)) continue;
+                if (x == cx && y == cy)    continue;   // exclude origin
 
-            if (include)
-                result.Add(grid[x, y]);
+                int dx = Mathf.Abs(x - cx);
+                int dy = Mathf.Abs(y - cy);
+
+                bool include = shape switch
+                {
+                    AttackEnum.AttackTargetShape.sphere => dx + dy <= range,
+                    AttackEnum.AttackTargetShape.cube   => true,            // loop bounds already enforce ≤ range in both axes
+                    AttackEnum.AttackTargetShape.cross  => dx == 0 || dy == 0,
+                    _                                   => dx + dy <= range // directional fallback → sphere
+                };
+
+                if (include) result.Add(grid[x, y]);
+            }
+            return result;
+        }
+
+        // ── Directional shapes — compute aim vector ────────────────────────────
+        int ddx = (int)Mathf.Sign(directionTile.GridPosition.x - cx);
+        int ddy = (int)Mathf.Sign(directionTile.GridPosition.y - cy);
+
+        // Perpendicular direction (90° CCW rotation of the aim vector)
+        int pdx = -ddy;
+        int pdy =  ddx;
+
+        switch (shape)
+        {
+            case AttackEnum.AttackTargetShape.line:
+            {
+                // Ray of tiles at distance 1…range along the aim direction.
+                // Stops early if the ray leaves the grid.
+                for (int r = 1; r <= range; r++)
+                {
+                    int tx = cx + r * ddx;
+                    int ty = cy + r * ddy;
+                    if (!IsValidPosition(tx, ty)) break;
+                    result.Add(grid[tx, ty]);
+                }
+                break;
+            }
+
+            case AttackEnum.AttackTargetShape.column:
+            {
+                // Perpendicular line centred on the tile one step in the aim direction.
+                // Extends ±range tiles along the perpendicular axis (total = 2*range+1 wide).
+                int fcx = cx + ddx;
+                int fcy = cy + ddy;
+                for (int s = -range; s <= range; s++)
+                {
+                    int tx = fcx + s * pdx;
+                    int ty = fcy + s * pdy;
+                    if (!IsValidPosition(tx, ty)) continue;
+                    result.Add(grid[tx, ty]);
+                }
+                break;
+            }
+
+            case AttackEnum.AttackTargetShape.cone:
+            {
+                // Bowling-pin cone starting one tile ahead of the caster.
+                // Row 0 (adjacent tile) is 1 tile wide; each deeper row adds 1 on each side.
+                // Total depth = range rows.
+                int startX = cx + ddx;
+                int startY = cy + ddy;
+                for (int r = 0; r < range; r++)
+                for (int s = -r; s <= r; s++)
+                {
+                    int tx = startX + r * ddx + s * pdx;
+                    int ty = startY + r * ddy + s * pdy;
+                    if (!IsValidPosition(tx, ty)) continue;
+                    result.Add(grid[tx, ty]);
+                }
+                break;
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Returns all tiles along the eight straight lines (4 cardinal + 4 diagonal)
+    /// radiating from <paramref name="origin"/>, up to <paramref name="maxRange"/>
+    /// steps in each direction.
+    /// Used by the UI to shade valid aiming directions for directional attack shapes.
+    /// </summary>
+    public List<Tile> GetStraightTilesInRange(Tile origin, int maxRange)
+    {
+        var result = new List<Tile>();
+        if (origin == null || maxRange <= 0) return result;
+
+        int cx = origin.GridPosition.x;
+        int cy = origin.GridPosition.y;
+
+        int[] steps = { -1, 0, 1 };
+        foreach (int dx in steps)
+        foreach (int dy in steps)
+        {
+            if (dx == 0 && dy == 0) continue;   // skip the "no movement" direction
+            for (int r = 1; r <= maxRange; r++)
+            {
+                int tx = cx + r * dx;
+                int ty = cy + r * dy;
+                if (!IsValidPosition(tx, ty)) break;
+                result.Add(grid[tx, ty]);
+            }
         }
 
         return result;
