@@ -1,0 +1,37 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+
+    <Style src="MonsterInfoPanel.uss" />
+
+    <ui:VisualElement class="mip-screen" picking-mode="Ignore">
+
+        <ui:VisualElement name="panel-root" class="mip-panel" picking-mode="Ignore">
+
+            <!-- Header: icon left, then name+level+side grouped and centred -->
+            <ui:VisualElement name="top-bar" class="mip-top-bar" picking-mode="Ignore">
+                <ui:VisualElement class="mip-header-row" picking-mode="Ignore">
+                    <ui:VisualElement name="type-icon" class="mip-type-icon" picking-mode="Ignore" />
+                    <ui:VisualElement class="mip-title-group" picking-mode="Ignore">
+                        <ui:Label name="name-label"  class="mip-name"  picking-mode="Ignore" />
+                        <ui:Label name="level-label" class="mip-level" picking-mode="Ignore" />
+                        <ui:Label name="side-label"  class="mip-side"  enable-rich-text="true" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:Label name="hp-label" class="mip-hp" enable-rich-text="true" picking-mode="Ignore" />
+            </ui:VisualElement>
+
+            <!-- Body: STAGE heading + two-column stats -->
+            <ui:VisualElement class="mip-body" picking-mode="Ignore">
+                <ui:Label name="stage-header" class="mip-stage-header" text="STAGE" picking-mode="Ignore" />
+                <ui:VisualElement class="mip-stats-row" picking-mode="Ignore">
+                    <ui:Label name="stats-label"  class="mip-stats"  picking-mode="Ignore" />
+                    <ui:Label name="stages-label" class="mip-stages" enable-rich-text="true" picking-mode="Ignore" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:Button name="close-button" class="mip-close-btn" text="CLOSE" />
+
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+
+</ui:UXML>

@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UIStyleConfig
   panelSprite: {fileID: 606878106, guid: 3b59132296905274eada64dd71c311f1, type: 3}
   buttonSprite: {fileID: 1982730354, guid: 4f019f0e389a4df4dbe041373a58851e, type: 3}
+  panelHeaderHeight: 50
   pausePanelColor: {r: 0.07, g: 0.07, b: 0.12, a: 0.98}
   resumeButtonColor: {r: 0.15, g: 0.5, b: 0.2, a: 1}
   keyBindButtonColor: {r: 0.2, g: 0.2, b: 0.38, a: 1}
@@ -25,3 +26,7 @@ MonoBehaviour:
   closeButtonColor: {r: 0.65, g: 0.15, b: 0.15, a: 1}
   attackPanelColor: {r: 0.07, g: 0.07, b: 0.11, a: 0.95}
   attackHeaderColor: {r: 0.1, g: 0.15, b: 0.25, a: 1}
+  panelSettings: {fileID: 11400000, guid: 36883dab48e6e2749bf709fd73038c9e, type: 2}
+  monsterInfoPanelUXML: {fileID: 9197481963319205126, guid: 9c6555d9ee8efe34b81aed9373946c07, type: 3}
+  attackInfoPanelUXML: {fileID: 9197481963319205126, guid: bec4114f8f9fc1d4abde83bf3489ff82, type: 3}
+  pauseMenuUXML: {fileID: 9197481963319205126, guid: d23e4d3e62d580e4f9a36c8300a05233, type: 3}

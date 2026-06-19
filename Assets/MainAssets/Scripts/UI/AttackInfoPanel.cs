@@ -1,24 +1,17 @@
-﻿using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
+using UnityEngine;
+using UnityEngine.UIElements;
 
 /// <summary>
-/// Screen-space overlay panel that shows an attack's details when the player
-/// hovers over an attack button in the radial (attack sub-)menu.
+/// Screen-space overlay panel at the bottom-left showing attack details on hover.
+/// Rendered via UI Toolkit. Assign AttackInfoPanel.uxml and PanelSettings in UIStyleConfig.
 ///
-/// Appears at the bottom-LEFT of the screen, mirroring the MonsterInfoPanel
-/// which sits bottom-right.  Instantly shows/hides â€” no fade â€” so it tracks
-/// hover state frame-accurately.
-///
-/// Usage (from RadialMenuButton):
+/// Usage (from RadialMenu card hover):
 ///   AttackInfoPanel.Show(attackData);
 ///   AttackInfoPanel.Hide();
-///
-/// Auto-created singleton â€” no prefab or scene setup needed.
 /// </summary>
 public class AttackInfoPanel : MonoBehaviour
 {
-    // â”€â”€ Singleton â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Singleton ──────────────────────────────────────────────────────────────
 
     public static AttackInfoPanel Instance { get; private set; }
 
@@ -29,19 +22,16 @@ public class AttackInfoPanel : MonoBehaviour
         new GameObject("AttackInfoPanel").AddComponent<AttackInfoPanel>();
     }
 
-    // Style — loaded from UIStyleConfig in BuildUI()
-    private Sprite _panelSprite;
-    private Color  _panelColor;
-    private Color  _headerColor;
+    // ── UI references ──────────────────────────────────────────────────────────
 
-    // ── UI References ─────────────────────────────────────────────────────────
+    private UIDocument _uiDoc;
+    private VisualElement _root;
+    private Label _titleLabel;
+    private Label _apLabel;
+    private Label _descLabel;
+    private Label _statsLabel;
 
-    private GameObject      panelRoot;
-    private TextMeshProUGUI titleText;
-    private TextMeshProUGUI descText;
-    private TextMeshProUGUI statsText;
-
-    // â”€â”€ Lifecycle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Lifecycle ──────────────────────────────────────────────────────────────
 
     private void Awake()
     {
@@ -49,7 +39,7 @@ public class AttackInfoPanel : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
         BuildUI();
-        panelRoot.SetActive(false);
+        if (_root != null) _root.style.display = DisplayStyle.None;
     }
 
     private void OnDestroy()
@@ -57,36 +47,32 @@ public class AttackInfoPanel : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
-    // â”€â”€ Public API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Public API ─────────────────────────────────────────────────────────────
 
-    /// <summary>Shows the panel populated with <paramref name="attack"/>'s data.</summary>
     public static void Show(AttackData attack)
     {
-        if (Instance == null || attack == null) return;
+        if (Instance == null || Instance._root == null || attack == null) return;
         Instance.Refresh(attack);
-        Instance.panelRoot.SetActive(true);
+        Instance._root.style.display = DisplayStyle.Flex;
     }
 
-    /// <summary>Hides the panel.</summary>
     public static void Hide()
     {
-        if (Instance == null) return;
-        Instance.panelRoot.SetActive(false);
+        if (Instance == null || Instance._root == null) return;
+        Instance._root.style.display = DisplayStyle.None;
     }
 
-    // â”€â”€ Refresh â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Refresh ────────────────────────────────────────────────────────────────
 
     private void Refresh(AttackData attack)
     {
-        // â”€â”€ Title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        titleText.text = $"<b>{attack.DisplayName}</b>";
+        _titleLabel.text = attack.DisplayName;
+        if (_apLabel != null) _apLabel.text = $"{attack.ConsumeActionPoints} AP";
 
-        // â”€â”€ Description â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        descText.text = string.IsNullOrWhiteSpace(attack.Description)
+        _descLabel.text = string.IsNullOrWhiteSpace(attack.Description)
             ? "<i>No description.</i>"
             : attack.Description;
 
-        // â”€â”€ Stat block â€” content depends on the primary effect's category â”€â”€â”€â”€â”€
         string accStr   = attack.GuaranteedHit ? "Always hits" : $"{attack.Accuracy}%";
         string shapeStr = attack.TargetShape.ToString();
 
@@ -103,21 +89,17 @@ public class AttackInfoPanel : MonoBehaviour
                     sb.AppendLine($"DMG    {primary.value}");
                     sb.AppendLine($"ACC    {accStr}");
                     break;
-
                 case AttackEnum.AttackCategory.heal:
                     sb.AppendLine($"HEAL   {primary.value}");
-                    // Heals usually target self/allies, so accuracy isn't relevant
                     break;
-
                 case AttackEnum.AttackCategory.buff:
-                    string buffSign = primary.isDebuff ? "âˆ’" : "+";
+                    string buffSign = primary.isDebuff ? "−" : "+";
                     sb.AppendLine($"STAT   {primary.buffType}");
                     sb.AppendLine($"STAGES {buffSign}{primary.stageCount}");
                     if (primary.chance < 100)
                         sb.AppendLine($"CHANCE {primary.chance}%");
                     sb.AppendLine($"DURTN  {primary.duration} turns");
                     break;
-
                 case AttackEnum.AttackCategory.status:
                     string statusName = primary.statusEffect != null
                         ? primary.statusEffect.name : "Unknown";
@@ -133,124 +115,49 @@ public class AttackInfoPanel : MonoBehaviour
             sb.AppendLine("No effects set.");
         }
 
-        // Always show AP cost, range, and shape regardless of effect type
-        sb.AppendLine($"AP     {attack.ConsumeActionPoints}");
         sb.AppendLine($"RNG    {attack.Range}");
         sb.Append    ($"SHAPE  {shapeStr}");
 
-        statsText.text = sb.ToString();
+        _statsLabel.text = sb.ToString();
     }
 
-    // â”€â”€ UI Construction â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── UI Construction ────────────────────────────────────────────────────────
 
     private void BuildUI()
     {
-        var s    = UIStyleConfig.Load();
-        _panelSprite  = s?.panelSprite;
-        _panelColor   = s?.attackPanelColor  ?? new Color(0.07f, 0.07f, 0.11f, 0.95f);
-        _headerColor  = s?.attackHeaderColor ?? new Color(0.10f, 0.15f, 0.25f, 1f);
-        float h       = s?.panelHeaderHeight ?? 50f;   // header height drives all body offsets
+        var s = UIStyleConfig.Load();
 
-        // Root canvas — ScreenSpaceOverlay, sort order 500 (same as MonsterInfoPanel)
-        var canvasGO = new GameObject("AttackInfoCanvas");
-        canvasGO.transform.SetParent(transform);
+        if (s?.panelSettings == null || s?.attackInfoPanelUXML == null)
+        {
+            Debug.LogWarning("[AttackInfoPanel] PanelSettings or UXML not assigned in UIStyleConfig — panel disabled.");
+            return;
+        }
 
-        var canvas = canvasGO.AddComponent<Canvas>();
-        canvas.renderMode   = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 500;
+        _uiDoc = gameObject.AddComponent<UIDocument>();
+        _uiDoc.panelSettings   = s.panelSettings;
+        _uiDoc.sortingOrder    = 1;
+        _uiDoc.visualTreeAsset = s.attackInfoPanelUXML;
 
-        var scaler = canvasGO.AddComponent<CanvasScaler>();
-        scaler.uiScaleMode         = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
-        scaler.matchWidthOrHeight  = 0.5f;
+        _root = _uiDoc.rootVisualElement.Q("panel-root");
 
-        canvasGO.AddComponent<GraphicRaycaster>();
+        if (_root == null)
+        {
+            Debug.LogError("[AttackInfoPanel] 'panel-root' element not found in UXML.");
+            return;
+        }
 
-        // â”€â”€ Panel root â€” bottom-LEFT, 420 Ã— 300 px â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        panelRoot = MakeChild(canvasGO, "Panel");
-        var panelRT = panelRoot.GetComponent<RectTransform>();
-        panelRT.anchorMin        = new Vector2(0f, 0f);
-        panelRT.anchorMax        = new Vector2(0f, 0f);
-        panelRT.pivot            = new Vector2(0f, 0f);
-        panelRT.anchoredPosition = new Vector2(24f, 24f);   // 24 px from bottom-left
-        panelRT.sizeDelta        = new Vector2(420f, 300f);
+        // Sprite fills the full panel; top-bar is transparent so sprite's header shows.
+        UIStyleConfig.ApplySprite(_root, s.panelSprite, s.attackPanelColor);
 
-        var bg = panelRoot.AddComponent<Image>();
-        UIStyleConfig.ApplySprite(bg, _panelSprite, _panelColor);
+        // Keep the header at the correct height so text sits within the sprite's dark section.
+        var topBar = _root.Q("top-bar");
+        if (topBar != null)
+            topBar.style.height = s.panelHeaderHeight;
 
-        // â”€â”€ Coloured top bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        var barGO = MakeChild(panelRoot, "TopBar");
-        var barRT = barGO.GetComponent<RectTransform>();
-        barRT.anchorMin        = new Vector2(0f, 1f);
-        barRT.anchorMax        = new Vector2(1f, 1f);
-        barRT.pivot            = new Vector2(0.5f, 1f);
-        barRT.anchoredPosition = Vector2.zero;
-        barRT.sizeDelta        = new Vector2(0f, h);
-        // Only add a coloured bar when no panel sprite is set.
-        // When a sprite is used, the header area is already part of the sprite artwork.
-        if (_panelSprite == null)
-            barGO.AddComponent<Image>().color = _headerColor;
-
-        // â”€â”€ Title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        var titleGO = MakeChild(barGO, "Title");
-        var titleRT = titleGO.GetComponent<RectTransform>();
-        titleRT.anchorMin = Vector2.zero; titleRT.anchorMax = Vector2.one;
-        titleRT.offsetMin = new Vector2(14f, 4f); titleRT.offsetMax = new Vector2(-14f, -4f);
-        titleText = titleGO.AddComponent<TextMeshProUGUI>();
-        titleText.fontSize           = 22f;
-        titleText.color              = new Color(0.85f, 0.95f, 1f, 1f);   // pale blue-white
-        titleText.alignment          = TextAlignmentOptions.Center;
-        titleText.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
-
-        // â”€â”€ Description text â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        var descGO = MakeChild(panelRoot, "Desc");
-        var descRT = descGO.GetComponent<RectTransform>();
-        descRT.anchorMin        = new Vector2(0f, 1f);
-        descRT.anchorMax        = new Vector2(1f, 1f);
-        descRT.pivot            = new Vector2(0.5f, 1f);
-        descRT.anchoredPosition = new Vector2(0f, -(h + 4f));
-        descRT.sizeDelta        = new Vector2(-28f, 48f);
-        descText = descGO.AddComponent<TextMeshProUGUI>();
-        descText.fontSize        = 16f;
-        descText.color           = new Color(0.78f, 0.78f, 0.78f, 1f);
-        descText.alignment       = TextAlignmentOptions.Center;
-        descText.textWrappingMode = TMPro.TextWrappingModes.Normal;
-
-        // â”€â”€ Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        var divGO = MakeChild(panelRoot, "Divider");
-        var divRT = divGO.GetComponent<RectTransform>();
-        divRT.anchorMin        = new Vector2(0f, 1f);
-        divRT.anchorMax        = new Vector2(1f, 1f);
-        divRT.pivot            = new Vector2(0.5f, 1f);
-        divRT.anchoredPosition = new Vector2(0f, -(h + 56f));
-        divRT.sizeDelta        = new Vector2(-28f, 2f);
-        // Only draw the code divider when no panel sprite is set.
-        // When a sprite is used its artwork already provides the visual separator.
-        if (_panelSprite == null)
-            divGO.AddComponent<Image>().color = new Color(0.25f, 0.35f, 0.5f, 1f);
-
-        // â”€â”€ Stats block â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        var statsGO = MakeChild(panelRoot, "Stats");
-        var statsRT = statsGO.GetComponent<RectTransform>();
-        statsRT.anchorMin        = new Vector2(0f, 1f);
-        statsRT.anchorMax        = new Vector2(1f, 1f);
-        statsRT.pivot            = new Vector2(0.5f, 1f);
-        statsRT.anchoredPosition = new Vector2(0f, -(h + 64f));
-        statsRT.sizeDelta        = new Vector2(-28f, 160f);
-        statsText = statsGO.AddComponent<TextMeshProUGUI>();
-        statsText.fontSize        = 18f;
-        statsText.color           = new Color(0.88f, 0.88f, 0.88f, 1f);
-        statsText.alignment       = TextAlignmentOptions.Left;
-        statsText.lineSpacing     = 8f;
-        statsText.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
-    }
-
-    private static GameObject MakeChild(GameObject parent, string name)
-    {
-        var go = new GameObject(name);
-        go.transform.SetParent(parent.transform, false);
-        go.AddComponent<RectTransform>();
-        return go;
+        // Cache element references
+        _titleLabel = _root.Q<Label>("title-label");
+        _apLabel    = _root.Q<Label>("ap-label");
+        _descLabel  = _root.Q<Label>("desc-label");
+        _statsLabel = _root.Q<Label>("stats-label");
     }
 }
-

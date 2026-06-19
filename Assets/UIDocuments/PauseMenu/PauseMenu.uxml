@@ -1,0 +1,37 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+
+    <!--
+        PauseMenu.uxml
+        Full-screen dim overlay with a centred panel.
+        Sprites, colours, and event wiring done at runtime by PauseMenu.cs.
+    -->
+
+    <Style src="PauseMenu.uss" />
+
+    <!-- Full-screen semi-transparent overlay -->
+    <ui:VisualElement name="overlay" class="pm-overlay">
+
+        <!-- Centred panel -->
+        <ui:VisualElement name="panel-root" class="pm-panel">
+
+            <ui:Label class="pm-title" text="PAUSED" />
+
+            <ui:VisualElement class="pm-divider" />
+
+            <ui:Label class="pm-section-label" text="Settings" />
+
+            <ui:Toggle name="edge-scroll-toggle" class="pm-toggle" label="Edge Scroll" />
+
+            <ui:VisualElement class="pm-divider" />
+
+            <ui:Button name="keybindings-button" class="pm-button pm-keybind-btn" text="Key Bindings" />
+
+            <ui:VisualElement class="pm-divider-small" />
+
+            <ui:Button name="resume-button" class="pm-button pm-resume-btn" text="Resume" />
+
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+
+</ui:UXML>

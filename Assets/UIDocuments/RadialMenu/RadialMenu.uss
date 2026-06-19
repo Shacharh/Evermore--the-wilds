@@ -27,7 +27,7 @@
     top: 0;        /* overridden each frame in C# to vertically centre the list */
     flex-direction: column;
     gap: 6px;
-    width: 270px;
+    width: 310px;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -35,37 +35,36 @@
    Left accent bar fades in on hover. Circle dot on far left.
    ══════════════════════════════════════════════════════════════════════════ */
 .menu-card {
-    width:  270px;
+    width:  310px;
     height:  60px;
 
     border-radius: 2px;
-    border-width: 1px;
-    border-color: rgba(255, 255, 255, 18);
+    border-width: 0;              /* no white outline */
+    border-left-width: 0;
+    border-left-color: rgba(220, 60, 60, 0);
 
     background-color: rgba(10, 10, 16, 210);
+    background-size: 100% 100%;   /* force sprite to stretch across the full card */
 
     flex-direction: row;
     align-items: center;
 
     overflow: hidden;
 
-    transition-property: background-color, border-color, border-left-width, border-left-color;
-    transition-duration: 0.08s, 0.08s, 0.08s, 0.08s;
+    transition-property: border-left-width, border-left-color, -unity-background-image-tint-color;
+    transition-duration: 0.08s, 0.08s, 0.08s;
 }
 
 .menu-card:hover {
-    background-color: rgba(30, 18, 18, 235);
-    border-color:     rgba(200, 60, 60, 200);
-    /* Thicker left edge on hover to mimic E33's selection indicator */
     border-left-width: 4px;
     border-left-color: rgba(220, 60, 60, 255);
+    -unity-background-image-tint-color: rgba(220, 170, 170, 255);
 }
 
 .menu-card:active {
-    background-color: rgba(160, 110, 0, 240);
-    border-color:     rgba(255, 210, 0, 255);
     border-left-width: 4px;
     border-left-color: rgba(255, 230, 0, 255);
+    -unity-background-image-tint-color: rgba(255, 230, 140, 255);
 }
 
 /* ── Circle indicator — mirrors E33's controller-button circles ──────────── */
@@ -77,10 +76,9 @@
     border-color: rgba(200, 200, 220, 140);
     background-color: rgba(0, 0, 0, 0);
 
-    /* fixed distance from left edge */
     position: absolute;
-    left: 16px;
-    top:  21px;   /* (60 - 18) / 2 */
+    left: 26px;   /* clear the pointed arrow tip */
+    top:  21px;   /* (60 - 18) / 2 — vertically centred */
 
     transition-property: border-color, background-color;
     transition-duration: 0.08s;
@@ -96,19 +94,20 @@
     background-color: rgba(200, 150, 0, 80);
 }
 
-/* ── Action label ────────────────────────────────────────────────────────── */
+/* ── Action label — centred across the full card ─────────────────────────── */
 .menu-card-label {
     position: absolute;
-    left:   46px;   /* clears the dot (16 + 18 + 12 gap) */
-    right:  14px;
-    top:     0;
-    bottom:  0;
+    left:   44px;   /* clear the dot on the left */
+    right:  75px;   /* stop before the AP text on the right */
+    top:    0;
+    bottom: 0;
 
-    font-size: 22px;
+    font-size: 20px;
     -unity-font-style: bold;
     color: rgba(235, 235, 235, 230);
-    -unity-text-align: middle-left;
+    -unity-text-align: middle-center;
     white-space: nowrap;
+    overflow: hidden;   /* clip if still too long rather than crossing AP */
     letter-spacing: 1px;
 
     transition-property: color;
@@ -121,4 +120,18 @@
 
 .menu-card:active .menu-card-label {
     color: rgba(20, 15, 5, 255);
+}
+
+/* ── AP cost label — shown only on attack cards (hidden via C# otherwise) ── */
+.menu-card-ap {
+    position: absolute;
+    right:  32px;      /* pulled in from edge so it clears the arrow tip */
+    top:     0;
+    bottom:  0;
+
+    font-size: 18px;
+    -unity-font-style: bold;
+    color: rgba(40, 70, 160, 255);   /* dark navy — visible against grey without standing out */
+    -unity-text-align: middle-right;
+    white-space: nowrap;
 }

@@ -113,7 +113,7 @@ public class RadialMenu : MonoBehaviour
         if (rect.width > 0f && rect.height > 0f)
         {
             float listH   = _cardCount * CardHeight + Mathf.Max(0, _cardCount - 1) * CardGap;
-            float marginX = 330f;                  // list left-offset + card width + padding
+            float marginX = 370f;                  // list left-offset + card width + padding
             float marginY = listH * 0.5f + 20f;
             pp.x = Mathf.Clamp(pp.x, 20f,     rect.width  - marginX);
             pp.y = Mathf.Clamp(pp.y, marginY,  rect.height - marginY);
@@ -171,6 +171,25 @@ public class RadialMenu : MonoBehaviour
         // Wire events on the inner .menu-card element
         var card = container.Q(className: "menu-card");
         if (card == null) card = container; // fallback: use container root
+
+        // Apply button sprite (overrides the card's USS background-color)
+        var style = UIStyleConfig.Load();
+        UIStyleConfig.ApplySprite(card, style?.buttonSprite, new Color(0.04f, 0.04f, 0.06f, 0.82f));
+
+        // AP cost label — shown only on attack cards
+        var apLbl = container.Q<Label>("card-ap");
+        if (apLbl != null)
+        {
+            if (attackData != null)
+            {
+                apLbl.text = $"{attackData.ConsumeActionPoints} AP";
+                apLbl.style.display = DisplayStyle.Flex;
+            }
+            else
+            {
+                apLbl.style.display = DisplayStyle.None;
+            }
+        }
 
         card.RegisterCallback<PointerEnterEvent>(_ =>
         {

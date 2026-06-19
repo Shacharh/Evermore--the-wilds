@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.UIElements;
 
 /// <summary>
 /// Single asset that controls the visual style of all auto-generated UI panels.
@@ -63,6 +63,22 @@ public class UIStyleConfig : ScriptableObject
     public Color attackPanelColor   = new Color(0.07f, 0.07f, 0.11f, 0.95f);
     public Color attackHeaderColor  = new Color(0.10f, 0.15f, 0.25f, 1f);
 
+    // ── UI Toolkit ────────────────────────────────────────────────────────────
+
+    [Header("UI Toolkit — assign in Inspector")]
+    [Tooltip("Shared PanelSettings for all code-spawned UI Toolkit panels. " +
+             "Drag RadialMenuPanelSettings here.")]
+    public PanelSettings panelSettings;
+
+    [Tooltip("UXML for MonsterInfoPanel. Drag Assets/UIDocuments/MonsterInfoPanel/MonsterInfoPanel.uxml here.")]
+    public VisualTreeAsset monsterInfoPanelUXML;
+
+    [Tooltip("UXML for AttackInfoPanel. Drag Assets/UIDocuments/AttackInfoPanel/AttackInfoPanel.uxml here.")]
+    public VisualTreeAsset attackInfoPanelUXML;
+
+    [Tooltip("UXML for PauseMenu. Drag Assets/UIDocuments/PauseMenu/PauseMenu.uxml here.")]
+    public VisualTreeAsset pauseMenuUXML;
+
     // ── Helper ────────────────────────────────────────────────────────────────
 
     /// <summary>
@@ -103,19 +119,47 @@ public class UIStyleConfig : ScriptableObject
     /// This means the colour fields in UIStyleConfig are only active when no sprite
     /// is set — you never have to set them to white to "un-tint" a sprite.
     /// </summary>
-    public static void ApplySprite(Image img, Sprite sprite, Color solidFallback)
+    public static void ApplySprite(UnityEngine.UI.Image img, Sprite sprite, Color solidFallback)
     {
         if (sprite != null)
         {
             img.sprite = sprite;
             img.type   = sprite.border != Vector4.zero
-                ? Image.Type.Sliced
-                : Image.Type.Simple;
-            img.color  = Color.white;   // show sprite as-is, no tint
+                ? UnityEngine.UI.Image.Type.Sliced
+                : UnityEngine.UI.Image.Type.Simple;
+            img.color  = Color.white;
         }
         else
         {
-            img.color = solidFallback;  // no sprite — use the configured colour
+            img.color = solidFallback;
+        }
+    }
+
+    /// <summary>
+    /// UI Toolkit equivalent of ApplySprite.
+    /// Applies <paramref name="sprite"/> as a background on a VisualElement,
+    /// including 9-slice borders if the sprite has them.
+    /// Falls back to a solid background colour if no sprite is assigned.
+    /// </summary>
+    public static void ApplySprite(VisualElement el, Sprite sprite, Color solidFallback)
+    {
+        if (sprite != null)
+        {
+            el.style.backgroundImage = new StyleBackground(sprite);
+            el.style.unityBackgroundImageTintColor = Color.white;
+            el.style.backgroundColor = Color.clear;   // hide any USS background-color behind the sprite
+            if (sprite.border != Vector4.zero)
+            {
+                el.style.unitySliceLeft   = Mathf.RoundToInt(sprite.border.x);
+                el.style.unitySliceBottom = Mathf.RoundToInt(sprite.border.y);
+                el.style.unitySliceRight  = Mathf.RoundToInt(sprite.border.z);
+                el.style.unitySliceTop    = Mathf.RoundToInt(sprite.border.w);
+                el.style.unitySliceScale  = 1f;
+            }
+        }
+        else
+        {
+            el.style.backgroundColor = solidFallback;
         }
     }
 }

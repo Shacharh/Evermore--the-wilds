@@ -1,0 +1,115 @@
+/*
+    PauseMenu.uss  —  Evermore: The Wilds
+    ───────────────────────────────────────
+    Full-screen dim + centred dark glass panel.
+    Colours are fallbacks; sprites override them at runtime.
+*/
+
+/* ── Full-screen dim overlay ─────────────────────────────────────────────── */
+.pm-overlay {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 166);  /* ~65% black dim */
+
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── Centred panel ───────────────────────────────────────────────────────── */
+.pm-panel {
+    width:  480px;
+    flex-direction: column;
+    align-items: center;
+    padding-bottom: 20px;
+
+    border-radius: 3px;
+    overflow: hidden;
+
+    background-color: rgba(18, 18, 31, 250);
+}
+
+/* ── Title ───────────────────────────────────────────────────────────────── */
+.pm-title {
+    margin-top: 28px;
+    font-size: 36px;
+    -unity-font-style: bold;
+    color: rgba(240, 240, 240, 255);
+    -unity-text-align: middle-center;
+    letter-spacing: 3px;
+}
+
+/* ── Dividers ────────────────────────────────────────────────────────────── */
+.pm-divider {
+    width: 400px;
+    height: 2px;
+    margin-top: 14px;
+    margin-bottom: 10px;
+    background-color: rgba(77, 77, 115, 255);
+}
+
+.pm-divider-small {
+    height: 6px;
+}
+
+/* ── Settings label ──────────────────────────────────────────────────────── */
+.pm-section-label {
+    font-size: 20px;
+    -unity-font-style: italic;
+    color: rgba(153, 153, 191, 255);
+    -unity-text-align: middle-center;
+    margin-bottom: 8px;
+}
+
+/* ── Edge Scroll toggle ──────────────────────────────────────────────────── */
+.pm-toggle {
+    width: 420px;
+    height: 36px;
+    margin-bottom: 8px;
+    color: rgba(224, 224, 224, 255);
+    font-size: 18px;
+}
+
+/* Checkmark colours */
+.pm-toggle .unity-toggle__checkmark {
+    background-color: rgba(51, 51, 77, 255);
+    border-color: rgba(100, 100, 150, 255);
+    border-width: 2px;
+    border-radius: 2px;
+    width: 22px;
+    height: 22px;
+}
+
+.pm-toggle.unity-toggle--checked .unity-toggle__checkmark {
+    background-color: rgba(51, 180, 100, 255);
+    border-color: rgba(80, 220, 130, 255);
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+.pm-button {
+    width:  280px;
+    height:  44px;
+    margin-top: 2px;
+
+    border-width: 0;
+    border-radius: 2px;
+
+    font-size: 20px;
+    -unity-font-style: bold;
+    color: rgba(255, 255, 255, 255);
+    -unity-text-align: middle-center;
+
+    transition-property: background-color;
+    transition-duration: 0.08s;
+}
+
+.pm-keybind-btn {
+    background-color: rgba(51, 51, 97, 255);
+}
+.pm-keybind-btn:hover  { background-color: rgba(70, 70, 130, 255); }
+.pm-keybind-btn:active { background-color: rgba(30, 30, 70, 255); }
+
+.pm-resume-btn {
+    background-color: rgba(38, 128, 51, 255);
+}
+.pm-resume-btn:hover  { background-color: rgba(55, 160, 70, 255); }
+.pm-resume-btn:active { background-color: rgba(20, 90, 35, 255); }
