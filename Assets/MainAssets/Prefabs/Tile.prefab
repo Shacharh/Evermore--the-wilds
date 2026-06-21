@@ -69,7 +69,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 3c70740e2b705844293a14a833f701be, type: 2}
+  - {fileID: 2100000, guid: f73db256820c1c94ebb134eaf94e546a, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -127,7 +127,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9d291e2a64cd384dae941ca1c46a0a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Tile
-  baseTileColor: {r: 0.7, g: 0.7, b: 0.7, a: 0.25490198}
+  baseTileColor: {r: 0.4811321, g: 0.39716092, b: 0.39716092, a: 0.25490198}
   hoverColor: {r: 1, g: 0.9490196, b: 0.56078434, a: 0.70980394}
   selectedColor: {r: 0.3, g: 1, b: 0.3, a: 0.7176471}
   checkerboardDarkenAmount: 0.85
@@ -161,7 +161,7 @@ Transform:
   m_GameObject: {fileID: 4390144625004061574}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.2, z: 0}
+  m_LocalPosition: {x: 0, y: -0.002, z: 0}
   m_LocalScale: {x: 1.1, y: 1.1, z: 1.1}
   m_ConstrainProportionsScale: 0
   m_Children: []
