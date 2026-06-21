@@ -108,9 +108,9 @@ Material:
     m_Colors:
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
-    - _RippleColor: {r: 1, g: 1, b: 1, a: 1}
+    - _RippleColor: {r: 0.3962264, g: 0.33454967, b: 0.33454967, a: 1}
     - _RippleSpeed: {r: -0.3, g: -0.4, b: 0, a: 0}
-    - _Water_Color: {r: 0.09019607, g: 0.23006776, b: 0.7647059, a: 1}
+    - _Water_Color: {r: 0.6509434, g: 0.40653256, b: 0.03991636, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &1784073632432746282
