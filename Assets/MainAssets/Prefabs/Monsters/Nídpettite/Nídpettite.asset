@@ -19,7 +19,7 @@ MonoBehaviour:
   baseHP: 280
   baseAttack: 280
   baseDefense: 200
-  baseSpeed: 50
+  baseSpeed: 40
   baseCritRate: 65
   baseCritMod: 50
   baseDodge: 45
