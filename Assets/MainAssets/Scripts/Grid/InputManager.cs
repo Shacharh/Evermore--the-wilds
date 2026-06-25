@@ -29,7 +29,7 @@ public class InputManager : MonoBehaviour
 
     [Header("Attack Settings")]
     [Tooltip("Dim highlight shown on ALL tiles in the attack's range/shape.")]
-    [SerializeField] private Color attackRangeColor   = new Color(0.55f, 0.05f, 0.05f, 0.35f);
+    [SerializeField] private Color attackRangeColor   = new Color(0.55f, 0.05f, 0.05f, 0.75f);
     [Tooltip("Bright pulse colour A for enemy tiles in attack range.")]
     [SerializeField] private Color attackPulseColorA  = new Color(1f, 0.10f, 0.10f, 0.95f);
     [Tooltip("Dim pulse colour B for enemy tiles in attack range.")]
@@ -91,6 +91,12 @@ public class InputManager : MonoBehaviour
 
     void Awake()
     {
+        // The tile material is transparent. Original attackRangeColor alpha (0.35) made tiles
+        // nearly invisible since alpha now controls actual opacity. Force a bright visible red
+        // if the serialised value is still the old too-transparent one.
+        if (attackRangeColor.a < 0.7f)
+            attackRangeColor = new Color(0.9f, 0.05f, 0.05f, 0.85f);
+
         if (mainCamera == null)
             mainCamera = Camera.main;
 
