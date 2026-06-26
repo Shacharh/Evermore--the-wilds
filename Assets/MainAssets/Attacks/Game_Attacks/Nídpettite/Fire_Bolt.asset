@@ -19,7 +19,7 @@ MonoBehaviour:
   effects:
   - category: 0
     value: 165
-    stageCount: 0
+    stageCount: 1
     selfInflicted: 0
     buffType: 0
     chance: 0
@@ -31,7 +31,7 @@ MonoBehaviour:
   consumeActionPoints: 4
   guaranteedHit: 0
   accuracy: 100
-  range: 5
+  range: 4
   targetTeam: 0
   targetShape: 0
   rangeTargetShapeSize: 1
