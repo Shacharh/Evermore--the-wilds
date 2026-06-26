@@ -113,20 +113,20 @@ public class ControlsHint : MonoBehaviour
         _panel.style.backgroundColor       = new Color(0.04f, 0.06f, 0.12f, 0.88f);
         _panel.style.borderTopLeftRadius    = 5; _panel.style.borderTopRightRadius    = 5;
         _panel.style.borderBottomLeftRadius = 5; _panel.style.borderBottomRightRadius = 5;
-        // Highlight border — gold top edge, subtle gold on sides/bottom
+        // Highlight border — red top edge, subtle red on sides/bottom
         _panel.style.borderTopWidth    = 2; _panel.style.borderBottomWidth = 1;
         _panel.style.borderLeftWidth   = 1; _panel.style.borderRightWidth  = 1;
-        _panel.style.borderTopColor    = new Color(0.95f, 0.80f, 0.25f, 1f);
-        _panel.style.borderBottomColor = new Color(0.95f, 0.80f, 0.25f, 0.35f);
-        _panel.style.borderLeftColor   = new Color(0.95f, 0.80f, 0.25f, 0.35f);
-        _panel.style.borderRightColor  = new Color(0.95f, 0.80f, 0.25f, 0.35f);
+        _panel.style.borderTopColor    = new Color(0.88f, 0.22f, 0.22f, 1f);
+        _panel.style.borderBottomColor = new Color(0.88f, 0.22f, 0.22f, 0.35f);
+        _panel.style.borderLeftColor   = new Color(0.88f, 0.22f, 0.22f, 0.35f);
+        _panel.style.borderRightColor  = new Color(0.88f, 0.22f, 0.22f, 0.35f);
         _panel.style.flexDirection = FlexDirection.Column;
 
         var header = new Label("CONTROLS");
         header.pickingMode = PickingMode.Ignore;
         header.style.fontSize                = 10;
         header.style.unityFontStyleAndWeight = FontStyle.Bold;
-        header.style.color                   = new Color(0.95f, 0.80f, 0.25f, 1f);  // gold to match border
+        header.style.color                   = new Color(0.88f, 0.22f, 0.22f, 1f);  // red to match border
         header.style.marginBottom            = 5;
         _panel.Add(header);
 

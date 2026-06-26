@@ -165,8 +165,6 @@ public class WinLoseManager : MonoBehaviour
         var panel = new VisualElement();
         panel.style.width         = 520;
         panel.style.minHeight     = 320;
-        panel.style.paddingTop    = 50; panel.style.paddingBottom = 30;
-        panel.style.paddingLeft   = 30; panel.style.paddingRight  = 30;
         panel.style.flexDirection = FlexDirection.Column;
         panel.style.alignItems    = Align.Center;
         panel.style.borderTopLeftRadius    = 8; panel.style.borderTopRightRadius    = 8;
@@ -175,6 +173,16 @@ public class WinLoseManager : MonoBehaviour
         UIStyleConfig.ApplySprite(panel, s?.panelSprite,
             s?.winlosePanelColor ?? new Color(0.06f, 0.06f, 0.10f, 0.97f));
 
+        // ── Dark header strip — title lives entirely within this ───────────
+        var titleHeader = new VisualElement();
+        titleHeader.style.width           = new Length(100, LengthUnit.Percent);
+        titleHeader.style.paddingTop      = 22;
+        titleHeader.style.paddingBottom   = 22;
+        titleHeader.style.paddingLeft     = 20;
+        titleHeader.style.paddingRight    = 20;
+        titleHeader.style.alignItems      = Align.Center;
+        titleHeader.style.backgroundColor = new Color(0.08f, 0.04f, 0.14f, 1f);
+
         // Title — rich text colour set at runtime via TriggerResult()
         _titleLabel = new Label();
         _titleLabel.pickingMode = PickingMode.Ignore;
@@ -182,7 +190,15 @@ public class WinLoseManager : MonoBehaviour
         _titleLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
         _titleLabel.style.color                   = Color.white;
         _titleLabel.style.unityTextAlign          = TextAnchor.MiddleCenter;
-        _titleLabel.style.marginBottom            = 10;
+        titleHeader.Add(_titleLabel);
+
+        // ── Body — reason text and buttons ────────────────────────────────
+        var body = new VisualElement();
+        body.style.width         = new Length(100, LengthUnit.Percent);
+        body.style.paddingTop    = 24; body.style.paddingBottom = 30;
+        body.style.paddingLeft   = 30; body.style.paddingRight  = 30;
+        body.style.alignItems    = Align.Center;
+        body.style.flexDirection = FlexDirection.Column;
 
         // Reason
         _reasonLabel = new Label();
@@ -210,10 +226,11 @@ public class WinLoseManager : MonoBehaviour
 
         btnRow.Add(playAgainBtn);
         btnRow.Add(quitBtn);
+        body.Add(_reasonLabel);
+        body.Add(btnRow);
 
-        panel.Add(_titleLabel);
-        panel.Add(_reasonLabel);
-        panel.Add(btnRow);
+        panel.Add(titleHeader);
+        panel.Add(body);
         _overlayEl.Add(panel);
         root.Add(_overlayEl);
     }
