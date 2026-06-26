@@ -83,8 +83,9 @@ public class InputManager : MonoBehaviour
     private Monster                              attackingMonster;
     private AttackData                           selectedAttackData;
     private int                                  selectedAttackIndex;
-    private System.Collections.Generic.List<Tile> validTargetTiles;   // all aim-zone tiles
+    private System.Collections.Generic.List<Tile> validTargetTiles;    // all aim-zone tiles
     private System.Collections.Generic.List<Tile> currentAOEFootprint; // footprint on hovered tile
+    private System.Collections.Generic.List<Tile> _previewRangeTiles;  // hover preview while in attack menu
     private RadialMenu                           activeAttackMenu;
 
     // -- Lifecycle -------------------------------------------------------------
@@ -441,6 +442,7 @@ public class InputManager : MonoBehaviour
             // AttackSelection: go back to the top-level radial menu for this monster
             case InputState.AttackSelection:
             {
+                ClearAttackRangePreview();
                 Monster savedMonster = attackingMonster;
                 CloseAttackSubMenu();
                 currentState     = InputState.Normal;
@@ -829,8 +831,49 @@ public class InputManager : MonoBehaviour
         }
     }
 
+    // ── Attack Range Preview (hover in attack sub-menu) ───────────────────────
+
+    /// <summary>
+    /// Highlights the attack's aim-zone tiles while the player hovers its button
+    /// in the attack sub-menu. Does NOT enter TargetSelection state.
+    /// </summary>
+    public void PreviewAttackRange(AttackData data)
+    {
+        if (attackingMonster == null || data == null) return;
+        if (currentState != InputState.AttackSelection) return;
+
+        Tile originTile = attackingMonster.CurrentTile;
+        if (originTile == null) return;
+
+        ClearAttackRangePreview();
+
+        bool isDirectional = IsDirectionalShape(data.TargetShape);
+        bool isAOE         = data.RangeTargetShapeSize > 1;
+
+        List<Tile> shapeTiles;
+        if (isDirectional)
+            shapeTiles = gridManager.GetStraightTilesInRange(originTile, data.Range);
+        else if (isAOE)
+            shapeTiles = gridManager.GetTilesInRange(originTile, data.Range, walkableOnly: false);
+        else
+            shapeTiles = gridManager.GetTilesInAttackShape(originTile, data.Range, data.TargetShape);
+
+        _previewRangeTiles = shapeTiles;
+        gridManager.HighlightTiles(shapeTiles, attackRangeColor, 0.05f);
+    }
+
+    /// <summary>Restores tiles that were highlighted by a hover preview.</summary>
+    public void ClearAttackRangePreview()
+    {
+        if (_previewRangeTiles == null) return;
+        foreach (var t in _previewRangeTiles)
+            t.ResetVisuals();
+        _previewRangeTiles = null;
+    }
+
     void HandleAttackSelected(int attackIndex)
     {
+        ClearAttackRangePreview(); // dismiss hover preview before the real range is shown
         CloseAttackSubMenu();
 
         if (attackingMonster == null) { currentState = InputState.Normal; return; }
@@ -895,7 +938,7 @@ public class InputManager : MonoBehaviour
             attackingMonster   = null;
             selectedAttackData = null;
             if (selectedTile != null) { selectedTile.SetSelected(false); selectedTile = null; }
-            playerTurnController?.CheckAutoEndTurn();
+            StartCoroutine(DelayedAutoEndTurn());
             return;
         }
 
@@ -1097,7 +1140,7 @@ public class InputManager : MonoBehaviour
         AttackInfoPanel.Hide();
         cameraController?.ReleaseFocus();
         ExitTargetSelection();
-        playerTurnController?.CheckAutoEndTurn();
+        StartCoroutine(DelayedAutoEndTurn());
     }
 
     void ExitTargetSelection()
@@ -1153,6 +1196,14 @@ public class InputManager : MonoBehaviour
                   $"HP {monster.CurrentHP}/{monster.MaxHP}");
     }
 
+    // Waits one frame + a short buffer so BattleMessage, VFX and camera restore
+    // all get a head start before the enemy turn begins.
+    private System.Collections.IEnumerator DelayedAutoEndTurn()
+    {
+        yield return new WaitForSeconds(0.5f);
+        playerTurnController?.CheckAutoEndTurn();
+    }
+
     void OnDestroy()
     {
         if (leftClickAction  != null) leftClickAction.performed  -= OnLeftClick;
@@ -1178,6 +1229,7 @@ public class InputManager : MonoBehaviour
                 break;
 
             case InputState.AttackSelection:
+                ClearAttackRangePreview();
                 CloseAttackSubMenu();
                 currentState     = InputState.Normal;
                 attackingMonster = null;

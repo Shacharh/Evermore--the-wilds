@@ -277,14 +277,16 @@ public class Monster : MonoBehaviour
         if (attack == null)
             throw new System.ArgumentException("Attack cannot be null");
 
-        MonsterAttack monsterAttack = new MonsterAttack(attack);
-
-        if (learnedAttacks.Contains(monsterAttack))
-            throw new System.ArgumentException("Cannot learn the same attack twice");
+        // Prefab serialization can pre-populate learnedAttacks before MonsterSetup runs,
+        // leading to duplicates when the same attack is added again at runtime.
+        // Guard by AttackData reference so object-inequality doesn't bypass the check.
+        if (learnedAttacks.Exists(ma => ma.data == attack))
+            return;
 
         if (learnedAttacks.Count >= MaxAttacks)
             throw new System.ArgumentException($"{gameObject.name} cannot learn more than {MaxAttacks} attacks");
 
+        MonsterAttack monsterAttack = new MonsterAttack(attack);
         learnedAttacks.Add(monsterAttack);
         Debug.Log($"{gameObject.name} learned attack: {attack.DisplayName}");
     }
@@ -616,18 +618,36 @@ public class Monster : MonoBehaviour
         effectTarget.currentHP = newHP;
         effectTarget.OnHPChanged?.Invoke(effectTarget.currentHP, effectTarget.MaxHP);
 
-        if (damage > 0)
-            FloatingDamageNumber.Spawn(effectTarget.transform.position, damage);
-
         if (damage <= 0)
         {
+            AudioManager.PlayMiss();
             BattleMessage.Show($"{effectTarget.customeName} dodged the attack!", 2.5f);
             Debug.Log($"[{effectTarget.gameObject.name}] dodged — HP unchanged: " +
                       $"{effectTarget.currentHP}/{effectTarget.MaxHP}");
         }
         else
         {
-            BattleMessage.Show($"{attacker.customeName} → {effectTarget.customeName}: -{damage} HP  " +
+            // Compute type effectiveness before showing the floating number so both use the same value.
+            TypeEffectiveness eff = TypeEffectiveness.Normal;
+            string effectivenessPrefix = "";
+            TypeMatchupTable matchupTable = GameInitializer.Instance?.typeMatchupTable;
+            if (matchupTable != null && effectTarget.Data != null)
+            {
+                eff = matchupTable.GetEffectivenessEnum(effectTarget.Data.elementType, attackData.Element);
+                effectivenessPrefix = eff switch
+                {
+                    TypeEffectiveness.SuperEffective => "Super Effective!\n",
+                    TypeEffectiveness.Effective      => "Effective!\n",
+                    TypeEffectiveness.Weak           => "Not Very Effective...\n",
+                    TypeEffectiveness.SuperWeak      => "Barely Effective...\n",
+                    _                                => ""
+                };
+            }
+
+            FloatingDamageNumber.Spawn(effectTarget.transform.position, damage, effectiveness: eff);
+            AudioManager.PlayAttackSFX(attackData);
+
+            BattleMessage.Show($"{effectivenessPrefix}{attacker.customeName} → {effectTarget.customeName}: -{damage} HP  " +
                                $"({effectTarget.currentHP}/{effectTarget.MaxHP})", 3.5f);
             Debug.Log($"[{effectTarget.gameObject.name}] took {damage} damage — " +
                       $"HP: {effectTarget.currentHP}/{effectTarget.MaxHP}");
@@ -658,6 +678,7 @@ public class Monster : MonoBehaviour
     {
         currentHP = 0;
         ReturnAllVFX();
+        AudioManager.PlayDeath();
         OnDied?.Invoke(this);
         StartCoroutine(DieCoroutine());
     }

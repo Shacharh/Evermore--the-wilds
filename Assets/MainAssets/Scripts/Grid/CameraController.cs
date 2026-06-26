@@ -53,6 +53,10 @@ public class CameraController : MonoBehaviour
     [Tooltip("Speed of the focus-in and focus-out transitions.")]
     [SerializeField] private float focusSpeed = 6f;
 
+    [Header("Orbit Rotation")]
+    [Tooltip("How fast the camera orbits when dragging with the right mouse button.")]
+    [SerializeField] private float rotateSpeed = 0.25f;
+
     private InputAction moveAction;
     private InputAction zoomAction;
     private Vector3     currentVelocity;
@@ -64,6 +68,9 @@ public class CameraController : MonoBehaviour
     // Edge-scroll current speed (smoothly ramped)
     private Vector3 _edgeScrollVelocity;
 
+    // Orbit yaw (horizontal rotation around the target)
+    private float _orbitYaw;
+
     // ── Focus state ────────────────────────────────────────────────────────────
 
     private bool    _isLocked;       // true while focused on a monster
@@ -72,6 +79,7 @@ public class CameraController : MonoBehaviour
     private Vector3 _savedPos;
     private float   _savedZoom;
     private float   _savedAngle;
+    private float   _savedYaw;
 
     // ── Lifecycle ──────────────────────────────────────────────────────────────
 
@@ -95,6 +103,11 @@ public class CameraController : MonoBehaviour
     {
         if (cameraTarget == null || cinemachineCamera == null) return;
 
+        // Reset orbit yaw hotkey — only when the camera is free (not AI-locked).
+        if (!_isLocked && HotkeyManager.Instance != null &&
+            HotkeyManager.Instance.WasPressedThisFrame(HotkeyAction.ResetCamera))
+            ResetOrbitYaw();
+
         if (_isLocked)
         {
             SmoothToFocus();
@@ -105,6 +118,7 @@ public class CameraController : MonoBehaviour
         }
         else
         {
+            HandleOrbitRotation();
             HandleMiddleMousePan();
             HandleEdgeScroll();
             HandleMovement();
@@ -132,11 +146,21 @@ public class CameraController : MonoBehaviour
             _savedPos   = cameraTarget.position;
             _savedZoom  = targetZoom;
             _savedAngle = cameraAngle;
+            _savedYaw   = _orbitYaw;
         }
 
         _isRestoring   = false;
         _isLocked      = true;
         _focusWorldPos = worldPos;
+    }
+
+    /// <summary>
+    /// Moves the focus target to a new world position while already focused.
+    /// Use this to track a moving monster without releasing and re-acquiring focus.
+    /// </summary>
+    public void UpdateFocusTarget(Vector3 worldPos)
+    {
+        if (_isLocked) _focusWorldPos = worldPos;
     }
 
     /// <summary>
@@ -168,6 +192,7 @@ public class CameraController : MonoBehaviour
         cameraTarget.position = Vector3.Lerp(cameraTarget.position, _savedPos,  t);
         targetZoom            = Mathf.Lerp(targetZoom,  _savedZoom,  t);
         cameraAngle           = Mathf.Lerp(cameraAngle, _savedAngle, t);
+        _orbitYaw             = Mathf.LerpAngle(_orbitYaw, _savedYaw, t);
 
         // Snap once close enough so we don't lerp forever
         if (Vector3.Distance(cameraTarget.position, _savedPos) < 0.05f &&
@@ -176,8 +201,34 @@ public class CameraController : MonoBehaviour
             cameraTarget.position = _savedPos;
             targetZoom            = _savedZoom;
             cameraAngle           = _savedAngle;
+            _orbitYaw             = _savedYaw;
             _isRestoring          = false;
         }
+    }
+
+    // ── Orbit rotation (right-mouse drag) ─────────────────────────────────────
+
+    private void HandleOrbitRotation()
+    {
+        var mouse = Mouse.current;
+        if (mouse == null) return;
+        if (!mouse.rightButton.isPressed) return;
+
+        float dx = mouse.delta.ReadValue().x;
+        _orbitYaw = (_orbitYaw + dx * rotateSpeed) % 360f;
+    }
+
+    // ── Camera-relative direction helpers ─────────────────────────────────────
+
+    // Camera right and forward in world XZ based on current orbit yaw.
+    // right   = (cos, 0, sin)   — screen-right at any yaw
+    // forward = (-sin, 0, cos)  — screen-up  at any yaw
+    private void YawVectors(out Vector3 right, out Vector3 forward)
+    {
+        float rad = _orbitYaw * Mathf.Deg2Rad;
+        float s = Mathf.Sin(rad), c = Mathf.Cos(rad);
+        right   = new Vector3( c, 0f,  s);
+        forward = new Vector3(-s, 0f,  c);
     }
 
     // ── Middle-mouse pan ───────────────────────────────────────────────────────
@@ -192,8 +243,10 @@ public class CameraController : MonoBehaviour
 
         if (!_isPanning) return;
 
+        YawVectors(out Vector3 right, out Vector3 forward);
         Vector2 delta = mouse.delta.ReadValue();
-        Vector3 move  = new Vector3(-delta.x, 0f, -delta.y) * panSpeed;
+        // Drag "grabs" the world: mouse-right pulls camera-right (target moves in -right).
+        Vector3 move = (-right * delta.x - forward * delta.y) * panSpeed;
         cameraTarget.Translate(move, Space.World);
         ApplyBoundsClamping();
     }
@@ -212,15 +265,14 @@ public class CameraController : MonoBehaviour
         float sw = Screen.width;
         float sh = Screen.height;
 
-        float right = Mathf.InverseLerp(sw - edgeScrollMargin, sw, mousePos.x);
-        float left  = Mathf.InverseLerp(edgeScrollMargin, 0f,  mousePos.x);
-        float up    = Mathf.InverseLerp(sh - edgeScrollMargin, sh, mousePos.y);
-        float down  = Mathf.InverseLerp(edgeScrollMargin, 0f,  mousePos.y);
+        float r = Mathf.InverseLerp(sw - edgeScrollMargin, sw, mousePos.x);
+        float l = Mathf.InverseLerp(edgeScrollMargin, 0f,  mousePos.x);
+        float u = Mathf.InverseLerp(sh - edgeScrollMargin, sh, mousePos.y);
+        float d = Mathf.InverseLerp(edgeScrollMargin, 0f,  mousePos.y);
 
-        Vector3 targetVel = new Vector3(
-            (right - left) * edgeScrollMaxSpeed,
-            0f,
-            (up - down)    * edgeScrollMaxSpeed);
+        YawVectors(out Vector3 right, out Vector3 forward);
+        Vector3 targetVel = right   * ((r - l) * edgeScrollMaxSpeed)
+                          + forward * ((u - d) * edgeScrollMaxSpeed);
 
         _edgeScrollVelocity = Vector3.Lerp(
             _edgeScrollVelocity, targetVel,
@@ -240,11 +292,15 @@ public class CameraController : MonoBehaviour
         Vector2 input = moveAction.ReadValue<Vector2>();
         if (input.sqrMagnitude > 0.01f)
         {
-            Vector3 direction = new Vector3(input.x, 0, input.y);
+            YawVectors(out Vector3 right, out Vector3 forward);
+            Vector3 direction = right * input.x + forward * input.y;
             cameraTarget.Translate(direction * moveSpeed * Time.deltaTime, Space.World);
             ApplyBoundsClamping();
         }
     }
+
+    /// <summary>Snaps the orbit yaw back to 0 (north-facing default).</summary>
+    public void ResetOrbitYaw() => _orbitYaw = 0f;
 
     private void ApplyBoundsClamping()
     {
@@ -276,12 +332,17 @@ public class CameraController : MonoBehaviour
 
     private void ApplyCameraPosition()
     {
-        float rad = cameraAngle * Mathf.Deg2Rad;
+        float pitchRad = cameraAngle * Mathf.Deg2Rad;
+        float yawRad   = _orbitYaw   * Mathf.Deg2Rad;
 
-        float yOffset = currentZoom * Mathf.Sin(rad);
-        float zOffset = currentZoom * Mathf.Cos(rad);
+        float yOffset = currentZoom * Mathf.Sin(pitchRad);
+        float hOffset = currentZoom * Mathf.Cos(pitchRad);  // horizontal distance from target
 
-        Vector3 desiredPosition = cameraTarget.position + new Vector3(0, yOffset, -zOffset);
+        // Orbit around Y axis: yaw=0 → camera is directly behind (−Z), positive yaw rotates clockwise
+        float xOffset =  hOffset * Mathf.Sin(yawRad);
+        float zOffset = -hOffset * Mathf.Cos(yawRad);
+
+        Vector3 desiredPosition = cameraTarget.position + new Vector3(xOffset, yOffset, zOffset);
 
         cinemachineCamera.transform.position = desiredPosition;
         cinemachineCamera.transform.LookAt(cameraTarget.position);

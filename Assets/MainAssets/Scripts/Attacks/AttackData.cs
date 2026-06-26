@@ -38,6 +38,10 @@ public class AttackData : ScriptableObject
     [SerializeField] private GameObject vfxPrefab;
     [SerializeField] private AttackVFXTarget vfxTarget = AttackVFXTarget.AttackerSpawnPoint;
 
+    [Header("Audio")]
+    [Tooltip("Clip played when this attack hits a target. Leave empty to use the AudioManager's generic hit sound.")]
+    [SerializeField] private AudioClip sfxClip;
+
     #region Getters
     public string ID => id;
     public string DisplayName => displayName;
@@ -56,6 +60,7 @@ public class AttackData : ScriptableObject
     public float InDirectHitPercent => inDirectHitPrecent;
     public GameObject VFXPrefab => vfxPrefab;
     public AttackVFXTarget VFXTarget => vfxTarget;
+    public AudioClip SFXClip => sfxClip;
     #endregion
 
     private void OnValidate()

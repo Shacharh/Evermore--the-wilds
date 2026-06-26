@@ -1,13 +1,13 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.UIElements;
 using UnityEngine.SceneManagement;
-using TMPro;
 
 /// <summary>
 /// Evaluates win/lose conditions and shows a result screen.
-/// AUTO-SETUP: creates its own Canvas at runtime. No scene placement required.
+/// AUTO-SETUP: creates its own UIDocument at runtime. No scene placement required.
 /// Visual style is driven by a UIStyleConfig asset in Assets/Resources/.
+/// Uses UI Toolkit — resolution-independent at any screen size.
 /// </summary>
 public class WinLoseManager : MonoBehaviour
 {
@@ -33,17 +33,10 @@ public class WinLoseManager : MonoBehaviour
 
     // ── State ─────────────────────────────────────────────────────────────────
 
-    private bool             _gameOver;
-    private GameObject       _overlay;
-    private TextMeshProUGUI  _titleText;
-    private TextMeshProUGUI  _reasonText;
-
-    // Style
-    private Sprite _panelSprite;
-    private Sprite _buttonSprite;
-    private Color  _panelColor;
-    private Color  _playAgainColor;
-    private Color  _quitColor;
+    private bool          _gameOver;
+    private VisualElement _overlayEl;
+    private Label         _titleLabel;
+    private Label         _reasonLabel;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -112,20 +105,22 @@ public class WinLoseManager : MonoBehaviour
         if (_gameOver) return;
         _gameOver = true;
         PauseMenu.Instance?.Close();
-        _titleText.text  = victory ? "<color=#FFEE44>Victory!</color>" : "<color=#FF4444>Defeat</color>";
-        _reasonText.text = reason;
+        _titleLabel.text  = victory ? "<color=#FFEE44>Victory!</color>" : "<color=#FF4444>Defeat</color>";
+        _reasonLabel.text = reason;
         SetOverlayVisible(true);
         Time.timeScale = 0f;
+        if (victory) AudioManager.PlayVictory(); else AudioManager.PlayDefeat();
     }
 
-    private void SetOverlayVisible(bool v) => _overlay.SetActive(v);
+    private void SetOverlayVisible(bool v)
+        => _overlayEl.style.display = v ? DisplayStyle.Flex : DisplayStyle.None;
 
-    // ── Restart (bug fix: overlay persisted across scene reload) ──────────────
+    // ── Restart ───────────────────────────────────────────────────────────────
 
     private void RestartScene()
     {
         _gameOver = false;
-        SetOverlayVisible(false);      // hide BEFORE the scene loads
+        SetOverlayVisible(false);
         Time.timeScale = 1f;
         SceneManager.sceneLoaded += OnSceneReloaded;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
@@ -134,7 +129,7 @@ public class WinLoseManager : MonoBehaviour
     private void OnSceneReloaded(Scene scene, LoadSceneMode mode)
     {
         SceneManager.sceneLoaded -= OnSceneReloaded;
-        StartCoroutine(LateSubscribe());   // re-subscribe to new scene's monsters
+        StartCoroutine(LateSubscribe());
     }
 
     private void QuitGame()
@@ -150,90 +145,110 @@ public class WinLoseManager : MonoBehaviour
 
     private void BuildUI()
     {
-        var s         = UIStyleConfig.Load();
-        _panelSprite   = s?.panelSprite;
-        _buttonSprite  = s?.buttonSprite;
-        _panelColor    = s?.winlosePanelColor ?? new Color(0.06f, 0.06f, 0.10f, 0.97f);
-        _playAgainColor = s?.playAgainColor   ?? new Color(0.15f, 0.45f, 0.20f, 1f);
-        _quitColor     = s?.quitColor         ?? new Color(0.45f, 0.12f, 0.12f, 1f);
+        var s   = UIStyleConfig.Load();
+        var doc = gameObject.AddComponent<UIDocument>();
+        doc.panelSettings = s?.panelSettings;
+        doc.sortingOrder  = 1000;
 
-        var canvasGO        = new GameObject("WinLoseCanvas");
-        canvasGO.transform.SetParent(transform);
-        var canvas          = canvasGO.AddComponent<Canvas>();
-        canvas.renderMode   = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 1000;
-        var scaler                 = canvasGO.AddComponent<CanvasScaler>();
-        scaler.uiScaleMode         = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
-        scaler.matchWidthOrHeight  = 0.5f;
-        canvasGO.AddComponent<GraphicRaycaster>();
+        var root = doc.rootVisualElement;
+        root.pickingMode = PickingMode.Ignore;
 
-        _overlay = MakeChild(canvasGO, "Overlay");
-        var oRT = _overlay.GetComponent<RectTransform>();
-        oRT.anchorMin = Vector2.zero; oRT.anchorMax = Vector2.one; oRT.sizeDelta = Vector2.zero;
-        _overlay.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.78f);
+        // ── Full-screen dimmed overlay ─────────────────────────────────────
+        _overlayEl = new VisualElement();
+        _overlayEl.style.position        = Position.Absolute;
+        _overlayEl.style.left = 0; _overlayEl.style.top    = 0;
+        _overlayEl.style.right = 0; _overlayEl.style.bottom = 0;
+        _overlayEl.style.backgroundColor = new Color(0f, 0f, 0f, 0.78f);
+        _overlayEl.style.alignItems      = Align.Center;
+        _overlayEl.style.justifyContent  = Justify.Center;
 
-        var panel   = MakeChild(_overlay, "Panel");
-        var panelRT = panel.GetComponent<RectTransform>();
-        panelRT.anchorMin        = new Vector2(0.5f, 0.5f);
-        panelRT.anchorMax        = new Vector2(0.5f, 0.5f);
-        panelRT.pivot            = new Vector2(0.5f, 0.5f);
-        panelRT.anchoredPosition = Vector2.zero;
-        panelRT.sizeDelta        = new Vector2(500f, 320f);
-        UIStyleConfig.ApplySprite(panel.AddComponent<Image>(), _panelSprite, _panelColor);
+        // ── Center panel ──────────────────────────────────────────────────
+        var panel = new VisualElement();
+        panel.style.width         = 520;
+        panel.style.minHeight     = 320;
+        panel.style.flexDirection = FlexDirection.Column;
+        panel.style.alignItems    = Align.Center;
+        panel.style.borderTopLeftRadius    = 8; panel.style.borderTopRightRadius    = 8;
+        panel.style.borderBottomLeftRadius = 8; panel.style.borderBottomRightRadius = 8;
+        panel.style.overflow = Overflow.Hidden;
+        UIStyleConfig.ApplySprite(panel, s?.panelSprite,
+            s?.winlosePanelColor ?? new Color(0.06f, 0.06f, 0.10f, 0.97f));
 
-        var titleGO = MakeChild(panel, "Title");
-        var titleRT = titleGO.GetComponent<RectTransform>();
-        titleRT.anchorMin = new Vector2(0f, 1f); titleRT.anchorMax = new Vector2(1f, 1f);
-        titleRT.pivot = new Vector2(0.5f, 1f);
-        titleRT.anchoredPosition = new Vector2(0f, -30f); titleRT.sizeDelta = new Vector2(0f, 80f);
-        _titleText = titleGO.AddComponent<TextMeshProUGUI>();
-        _titleText.fontSize = 52f; _titleText.fontStyle = FontStyles.Bold;
-        _titleText.color = Color.white; _titleText.alignment = TextAlignmentOptions.Center;
-        _titleText.richText = true;
+        // ── Dark header strip — title lives entirely within this ───────────
+        var titleHeader = new VisualElement();
+        titleHeader.style.width           = new Length(100, LengthUnit.Percent);
+        titleHeader.style.paddingTop      = 22;
+        titleHeader.style.paddingBottom   = 22;
+        titleHeader.style.paddingLeft     = 20;
+        titleHeader.style.paddingRight    = 20;
+        titleHeader.style.alignItems      = Align.Center;
+        titleHeader.style.backgroundColor = new Color(0.08f, 0.04f, 0.14f, 1f);
 
-        var reasonGO = MakeChild(panel, "Reason");
-        var reasonRT = reasonGO.GetComponent<RectTransform>();
-        reasonRT.anchorMin = new Vector2(0f, 1f); reasonRT.anchorMax = new Vector2(1f, 1f);
-        reasonRT.pivot = new Vector2(0.5f, 1f);
-        reasonRT.anchoredPosition = new Vector2(0f, -120f); reasonRT.sizeDelta = new Vector2(-40f, 50f);
-        _reasonText = reasonGO.AddComponent<TextMeshProUGUI>();
-        _reasonText.fontSize = 20f; _reasonText.color = new Color(0.75f, 0.75f, 0.75f);
-        _reasonText.alignment = TextAlignmentOptions.Center;
+        // Title — rich text colour set at runtime via TriggerResult()
+        _titleLabel = new Label();
+        _titleLabel.pickingMode = PickingMode.Ignore;
+        _titleLabel.style.fontSize                = 64;
+        _titleLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+        _titleLabel.style.color                   = Color.white;
+        _titleLabel.style.unityTextAlign          = TextAnchor.MiddleCenter;
+        titleHeader.Add(_titleLabel);
 
-        AddButton(panel, "Play Again", _playAgainColor, 0.2f, -110f, RestartScene);
-        AddButton(panel, "Quit",       _quitColor,      0.2f,  110f, QuitGame);
+        // ── Body — reason text and buttons ────────────────────────────────
+        var body = new VisualElement();
+        body.style.width         = new Length(100, LengthUnit.Percent);
+        body.style.paddingTop    = 24; body.style.paddingBottom = 30;
+        body.style.paddingLeft   = 30; body.style.paddingRight  = 30;
+        body.style.alignItems    = Align.Center;
+        body.style.flexDirection = FlexDirection.Column;
+
+        // Reason
+        _reasonLabel = new Label();
+        _reasonLabel.pickingMode = PickingMode.Ignore;
+        _reasonLabel.style.fontSize       = 20;
+        _reasonLabel.style.color          = new Color(0.75f, 0.75f, 0.75f, 1f);
+        _reasonLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+        _reasonLabel.style.marginBottom   = 30;
+        _reasonLabel.style.whiteSpace     = WhiteSpace.Normal;
+
+        // Buttons side by side
+        var btnRow = new VisualElement();
+        btnRow.style.flexDirection  = FlexDirection.Row;
+        btnRow.style.justifyContent = Justify.Center;
+
+        var playAgainBtn = MakeWLButton("PLAY AGAIN",
+            s?.playAgainColor ?? new Color(0.15f, 0.45f, 0.20f, 1f),
+            s?.buttonSprite, RestartScene);
+        playAgainBtn.style.marginRight = 10;
+
+        var quitBtn = MakeWLButton("QUIT",
+            s?.quitColor ?? new Color(0.45f, 0.12f, 0.12f, 1f),
+            s?.buttonSprite, QuitGame);
+        quitBtn.style.marginLeft = 10;
+
+        btnRow.Add(playAgainBtn);
+        btnRow.Add(quitBtn);
+        body.Add(_reasonLabel);
+        body.Add(btnRow);
+
+        panel.Add(titleHeader);
+        panel.Add(body);
+        _overlayEl.Add(panel);
+        root.Add(_overlayEl);
     }
 
-    private void AddButton(GameObject panel, string label, Color bgColor,
-                           float anchorY, float offsetX, System.Action onClick)
+    private static Button MakeWLButton(string text, Color fallback, Sprite sprite, System.Action onClick)
     {
-        var go = MakeChild(panel, label + "Btn");
-        var rt = go.GetComponent<RectTransform>();
-        rt.anchorMin = new Vector2(0.5f, anchorY); rt.anchorMax = new Vector2(0.5f, anchorY);
-        rt.pivot = new Vector2(0.5f, 0.5f);
-        rt.anchoredPosition = new Vector2(offsetX, 0f); rt.sizeDelta = new Vector2(180f, 48f);
-
-        var img = go.AddComponent<Image>();
-        UIStyleConfig.ApplySprite(img, _buttonSprite, bgColor);
-
-        var btn = go.AddComponent<Button>();
-        btn.targetGraphic = img;
-        btn.onClick.AddListener(() => onClick?.Invoke());
-
-        var lblGO = MakeChild(go, "Lbl");
-        var lblRT = lblGO.GetComponent<RectTransform>();
-        lblRT.anchorMin = Vector2.zero; lblRT.anchorMax = Vector2.one; lblRT.sizeDelta = Vector2.zero;
-        var tmp = lblGO.AddComponent<TextMeshProUGUI>();
-        tmp.text = label; tmp.fontSize = 20f; tmp.fontStyle = FontStyles.Bold;
-        tmp.color = Color.white; tmp.alignment = TextAlignmentOptions.Center;
-    }
-
-    private static GameObject MakeChild(GameObject parent, string name)
-    {
-        var go = new GameObject(name);
-        go.transform.SetParent(parent.transform, false);
-        go.AddComponent<RectTransform>();
-        return go;
+        var btn = new Button(onClick);
+        btn.text = text;
+        btn.style.width               = 180; btn.style.height = 50;
+        btn.style.fontSize            = 20;
+        btn.style.unityFontStyleAndWeight = FontStyle.Bold;
+        btn.style.color               = Color.white;
+        btn.style.borderTopWidth      = 0; btn.style.borderBottomWidth = 0;
+        btn.style.borderLeftWidth     = 0; btn.style.borderRightWidth  = 0;
+        btn.style.borderTopLeftRadius     = 0; btn.style.borderTopRightRadius     = 0;
+        btn.style.borderBottomLeftRadius  = 0; btn.style.borderBottomRightRadius  = 0;
+        UIStyleConfig.ApplySprite(btn, sprite, fallback);
+        return btn;
     }
 }

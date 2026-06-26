@@ -11,6 +11,7 @@ public enum HotkeyAction
     EndTurn,
     Cancel,
     Pause,
+    ResetCamera,
 
     // Monster-selected
     Move,
@@ -63,28 +64,30 @@ public class HotkeyManager : MonoBehaviour
         // Step 1 — start from designer defaults (or hardcoded if none assigned)
         if (defaultConfig != null)
         {
-            _bindings[HotkeyAction.EndTurn] = defaultConfig.endTurn;
-            _bindings[HotkeyAction.Cancel]  = defaultConfig.cancel;
-            _bindings[HotkeyAction.Pause]   = defaultConfig.pause;
-            _bindings[HotkeyAction.Move]    = defaultConfig.move;
-            _bindings[HotkeyAction.Attack]  = defaultConfig.attack;
-            _bindings[HotkeyAction.Info]    = defaultConfig.info;
-            _bindings[HotkeyAction.Attack1] = defaultConfig.attack1;
-            _bindings[HotkeyAction.Attack2] = defaultConfig.attack2;
-            _bindings[HotkeyAction.Attack3] = defaultConfig.attack3;
+            _bindings[HotkeyAction.EndTurn]     = defaultConfig.endTurn;
+            _bindings[HotkeyAction.Cancel]      = defaultConfig.cancel;
+            _bindings[HotkeyAction.Pause]       = defaultConfig.pause;
+            _bindings[HotkeyAction.ResetCamera] = defaultConfig.resetCamera;
+            _bindings[HotkeyAction.Move]        = defaultConfig.move;
+            _bindings[HotkeyAction.Attack]      = defaultConfig.attack;
+            _bindings[HotkeyAction.Info]        = defaultConfig.info;
+            _bindings[HotkeyAction.Attack1]     = defaultConfig.attack1;
+            _bindings[HotkeyAction.Attack2]     = defaultConfig.attack2;
+            _bindings[HotkeyAction.Attack3]     = defaultConfig.attack3;
         }
         else
         {
             Debug.LogWarning("[HotkeyManager] No HotkeyConfig assigned — using hardcoded defaults.");
-            _bindings[HotkeyAction.EndTurn] = Key.Space;
-            _bindings[HotkeyAction.Cancel]  = Key.Backspace;
-            _bindings[HotkeyAction.Pause]   = Key.Escape;
-            _bindings[HotkeyAction.Move]    = Key.M;
-            _bindings[HotkeyAction.Attack]  = Key.T;
-            _bindings[HotkeyAction.Info]    = Key.I;
-            _bindings[HotkeyAction.Attack1] = Key.Digit1;
-            _bindings[HotkeyAction.Attack2] = Key.Digit2;
-            _bindings[HotkeyAction.Attack3] = Key.Digit3;
+            _bindings[HotkeyAction.EndTurn]     = Key.Space;
+            _bindings[HotkeyAction.Cancel]      = Key.Backspace;
+            _bindings[HotkeyAction.Pause]       = Key.Escape;
+            _bindings[HotkeyAction.ResetCamera] = Key.Home;
+            _bindings[HotkeyAction.Move]        = Key.M;
+            _bindings[HotkeyAction.Attack]      = Key.T;
+            _bindings[HotkeyAction.Info]        = Key.I;
+            _bindings[HotkeyAction.Attack1]     = Key.Digit1;
+            _bindings[HotkeyAction.Attack2]     = Key.Digit2;
+            _bindings[HotkeyAction.Attack3]     = Key.Digit3;
         }
 
         // Step 2 — layer player overrides on top

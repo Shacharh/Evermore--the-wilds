@@ -64,6 +64,26 @@ public class TypeMatchupTable : ScriptableObject
     }
 
     /// <summary>
+    /// Returns the raw <see cref="TypeEffectiveness"/> enum value for an attack of
+    /// <paramref name="attackType"/> hitting a monster of <paramref name="defenderType"/>.
+    /// Falls back to <see cref="TypeEffectiveness.Normal"/> if the table is missing.
+    /// </summary>
+    public TypeEffectiveness GetEffectivenessEnum(AttackEnum.ElementType defenderType,
+                                                  AttackEnum.ElementType attackType)
+    {
+        int row = (int)defenderType;
+        int col = (int)attackType;
+
+        if (table == null || row >= table.Length || table[row] == null)
+            return TypeEffectiveness.Normal;
+
+        if (col >= table[row].effectiveness.Length)
+            return TypeEffectiveness.Normal;
+
+        return table[row].effectiveness[col];
+    }
+
+    /// <summary>
     /// Resizes the table to match the current number of ElementType values.
     /// Called automatically by OnValidate and by the custom editor.
     /// Existing values are preserved; new cells default to Normal.

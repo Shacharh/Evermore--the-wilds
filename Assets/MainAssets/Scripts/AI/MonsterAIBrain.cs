@@ -257,11 +257,13 @@ public class MonsterAIBrain
         if (selfHPPercent < _sp.lowHPCautionThreshold)
             score -= _sp.lowHPCautionPenalty + (p != null ? p.lowHPCautionPenalty : 0f);
 
-        // ── Enemy close bonus: flat bonus when attacking a nearby target ──────
+        // ── In-range bonus: reward using an attack within its own range ──────
+        // Uses Mathf.Max(threshold, attack.Range) so ranged attacks score the
+        // bonus when used at a distance that makes sense for them, not just 1.
         if (fromTile != null && target.CurrentTile != null)
         {
             int dist = ctx.Grid.GetDistanceBetweenTiles(fromTile, target.CurrentTile);
-            if (dist <= _sp.enemyCloseThreshold)
+            if (dist <= Mathf.Max(_sp.enemyCloseThreshold, attack.Range))
                 score += _sp.enemyCloseBonus + (p != null ? p.enemyCloseBonus : 0f);
         }
 

@@ -24,6 +24,7 @@ public class PlayerTurnController : TurnController
     protected override void OnTurnEnded()
     {
         IsActive = false;
+        ControlsHint.Dismiss();   // hide the controls overlay after the first turn ends
     }
 
     // -- AP Actions (called by InputManager) -----------------------------------

@@ -77,6 +77,7 @@ public class AttackInfoPanel : MonoBehaviour
         string shapeStr = attack.TargetShape.ToString();
 
         var sb = new System.Text.StringBuilder();
+        sb.AppendLine($"TYPE   {attack.Element}");
 
         AttackEffect primary = attack.Effects != null && attack.Effects.Count > 0
             ? attack.Effects[0] : null;

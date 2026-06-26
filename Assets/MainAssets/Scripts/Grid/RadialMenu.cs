@@ -164,9 +164,25 @@ public class RadialMenu : MonoBehaviour
         // Clone the UXML template — structure and styling come from the asset
         var container = cardTemplate.CloneTree();
 
-        // Set the label text (only C# responsibility)
+        // Set the label text — attack cards get the element type as a coloured second line.
+        // Using the existing card-label avoids adding elements that fight the UXML layout.
         var lbl = container.Q<Label>("card-label");
-        if (lbl != null) lbl.text = label.ToUpper();
+        if (lbl != null)
+        {
+            if (attackData != null)
+            {
+                lbl.style.whiteSpace = WhiteSpace.Normal;
+                string hex = ColorUtility.ToHtmlStringRGB(ElementColor(attackData.Element));
+                lbl.text = label.ToUpper()
+                           + "\n<size=9><color=#" + hex + ">"
+                           + attackData.Element.ToString().ToUpper()
+                           + "</color></size>";
+            }
+            else
+            {
+                lbl.text = label.ToUpper();
+            }
+        }
 
         // Wire events on the inner .menu-card element
         var card = container.Q(className: "menu-card");
@@ -194,13 +210,19 @@ public class RadialMenu : MonoBehaviour
         card.RegisterCallback<PointerEnterEvent>(_ =>
         {
             IsHoveringButton = true;
-            if (attackData != null) AttackInfoPanel.Show(attackData);
+            if (attackData != null)
+            {
+                AttackInfoPanel.Show(attackData);
+                inputManager.PreviewAttackRange(attackData);
+            }
         });
 
         card.RegisterCallback<PointerLeaveEvent>(_ =>
         {
             IsHoveringButton = false;
             AttackInfoPanel.Hide();
+            if (attackData != null)
+                inputManager.ClearAttackRangePreview();
         });
 
         card.RegisterCallback<PointerUpEvent>(evt =>
@@ -244,4 +266,17 @@ public class RadialMenu : MonoBehaviour
         _list?.Clear();
         Destroy(gameObject);
     }
+
+    private static Color ElementColor(AttackEnum.ElementType element) => element switch
+    {
+        AttackEnum.ElementType.Fire     => new Color(1.00f, 0.40f, 0.15f),
+        AttackEnum.ElementType.Water    => new Color(0.25f, 0.65f, 1.00f),
+        AttackEnum.ElementType.Wind     => new Color(0.55f, 0.90f, 0.75f),
+        AttackEnum.ElementType.Earth    => new Color(0.70f, 0.50f, 0.20f),
+        AttackEnum.ElementType.Poison   => new Color(0.65f, 0.25f, 0.85f),
+        AttackEnum.ElementType.Electric => new Color(1.00f, 0.90f, 0.10f),
+        AttackEnum.ElementType.Plant    => new Color(0.30f, 0.80f, 0.30f),
+        AttackEnum.ElementType.Metal    => new Color(0.80f, 0.85f, 0.90f),
+        _                               => Color.white
+    };
 }

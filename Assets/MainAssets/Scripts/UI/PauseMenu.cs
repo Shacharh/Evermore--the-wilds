@@ -132,14 +132,14 @@ public class PauseMenu : MonoBehaviour
         if (keyBindBtn != null)
         {
             UIStyleConfig.ApplySprite(keyBindBtn, s.buttonSprite, s.keyBindButtonColor);
-            keyBindBtn.clicked += OpenKeyBindings;
+            keyBindBtn.clicked += () => { AudioManager.PlayUIClick(); OpenKeyBindings(); };
         }
 
         var resumeBtn = docRoot.Q<Button>("resume-button");
         if (resumeBtn != null)
         {
             UIStyleConfig.ApplySprite(resumeBtn, s.buttonSprite, s.resumeButtonColor);
-            resumeBtn.clicked += Close;
+            resumeBtn.clicked += () => { AudioManager.PlayUIClick(); Close(); };
         }
     }
 }
