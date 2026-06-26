@@ -1,10 +1,11 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UIElements;
-using System.Collections;
 
 /// <summary>
 /// Small controls reference shown in the bottom-left corner at battle start.
-/// Auto-dismisses after the player ends their first turn (or after a timeout).
+/// Key labels are read from HotkeyManager so they always match the actual bindings.
+/// Auto-dismisses after the player ends their first turn, or after 20 seconds.
 /// Auto-created singleton — no scene setup needed.
 /// </summary>
 public class ControlsHint : MonoBehaviour
@@ -18,12 +19,18 @@ public class ControlsHint : MonoBehaviour
         new GameObject("ControlsHint").AddComponent<ControlsHint>();
     }
 
-    // How many seconds before it fades on its own even if the player never acts.
     private const float AutoDismissSeconds = 20f;
 
-    private UIDocument    _doc;
+    private UIDocument _doc;
     private VisualElement _panel;
-    private bool          _dismissed;
+    private bool _dismissed;
+
+    // Key label references so Start() can fill them from HotkeyManager
+    private Label _endTurnKey;
+    private Label _cancelKey;
+    private Label _moveKey;
+    private Label _attackKey;
+    private Label _infoKey;
 
     private void Awake()
     {
@@ -34,12 +41,17 @@ public class ControlsHint : MonoBehaviour
         StartCoroutine(AutoDismiss());
     }
 
+    private void Start()
+    {
+        // HotkeyManager.Instance is guaranteed to exist by now (all Awakes have run).
+        RefreshKeyLabels();
+    }
+
     private void OnDestroy()
     {
         if (Instance == this) Instance = null;
     }
 
-    // Called by PlayerTurnController when the player ends their first turn.
     public static void Dismiss() => Instance?.DoDismiss();
 
     private void DoDismiss()
@@ -67,19 +79,30 @@ public class ControlsHint : MonoBehaviour
         if (_panel != null) _panel.style.display = DisplayStyle.None;
     }
 
+    private void RefreshKeyLabels()
+    {
+        var hk = HotkeyManager.Instance;
+        if (hk == null) return;
+
+        if (_endTurnKey != null) _endTurnKey.text = hk.GetDisplayName(HotkeyAction.EndTurn);
+        if (_cancelKey  != null) _cancelKey.text  = hk.GetDisplayName(HotkeyAction.Cancel);
+        if (_moveKey    != null) _moveKey.text    = hk.GetDisplayName(HotkeyAction.Move);
+        if (_attackKey  != null) _attackKey.text  = hk.GetDisplayName(HotkeyAction.Attack);
+        if (_infoKey    != null) _infoKey.text    = hk.GetDisplayName(HotkeyAction.Info);
+    }
+
     private void BuildUI()
     {
         var s = UIStyleConfig.Load();
         _doc = gameObject.AddComponent<UIDocument>();
         _doc.panelSettings = s?.panelSettings;
-        _doc.sortingOrder  = 50;   // below HUD (100) so it never covers anything important
+        _doc.sortingOrder  = 50;
 
         var root = _doc.rootVisualElement;
         root.pickingMode = PickingMode.Ignore;
         root.style.position = Position.Absolute;
         root.style.left = 0; root.style.top = 0; root.style.right = 0; root.style.bottom = 0;
 
-        // Panel — anchored bottom-left
         _panel = new VisualElement();
         _panel.pickingMode = PickingMode.Ignore;
         _panel.style.position      = Position.Absolute;
@@ -92,40 +115,43 @@ public class ControlsHint : MonoBehaviour
         _panel.style.borderBottomLeftRadius = 5; _panel.style.borderBottomRightRadius = 5;
         _panel.style.flexDirection = FlexDirection.Column;
 
-        // Header
         var header = new Label("CONTROLS");
         header.pickingMode = PickingMode.Ignore;
         header.style.fontSize                = 10;
         header.style.unityFontStyleAndWeight = FontStyle.Bold;
         header.style.color                   = new Color(0.55f, 0.55f, 0.65f, 1f);
         header.style.marginBottom            = 5;
-        header.style.unityTextAlign          = TextAnchor.MiddleLeft;
         _panel.Add(header);
 
-        // Control rows
-        AddRow("Click monster",    "Select & act");
-        AddRow("SPACE",            "End turn");
-        AddRow("Right-click / ESC","Cancel");
-        AddRow("Q",                "Move");
-        AddRow("E",                "Attack");
+        // Rows — key labels stored so Start() can fill them from HotkeyManager
+        _endTurnKey = AddRow("Space",     "End turn");
+        _cancelKey  = AddRow("Backspace", "Cancel / back");
+        _moveKey    = AddRow("M",         "Move (when selected)");
+        _attackKey  = AddRow("T",         "Attack (when selected)");
+        _infoKey    = AddRow("I",         "Monster info");
+        AddRow("Click monster", "Select & open menu", isStatic: true);
 
         root.Add(_panel);
     }
 
-    private void AddRow(string key, string action)
+    // Returns the key-label so the caller can store it for later update.
+    // isStatic rows (like "Click monster") don't need a stored reference.
+    private Label AddRow(string defaultKey, string action, bool isStatic = false)
     {
         var row = new VisualElement();
         row.pickingMode = PickingMode.Ignore;
         row.style.flexDirection = FlexDirection.Row;
         row.style.marginBottom  = 3;
 
-        var keyLabel = new Label(key);
+        var keyLabel = new Label(defaultKey);
         keyLabel.pickingMode = PickingMode.Ignore;
         keyLabel.style.fontSize                = 13;
-        keyLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
-        keyLabel.style.color                   = new Color(0.9f, 0.85f, 0.5f, 1f);
-        keyLabel.style.width                   = 130;
-        keyLabel.style.unityTextAlign          = TextAnchor.MiddleLeft;
+        keyLabel.style.unityFontStyleAndWeight = isStatic ? FontStyle.Normal : FontStyle.Bold;
+        keyLabel.style.color = isStatic
+            ? new Color(0.75f, 0.75f, 0.75f, 1f)
+            : new Color(0.9f, 0.85f, 0.5f, 1f);
+        keyLabel.style.width         = 140;
+        keyLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
 
         var sep = new Label("→");
         sep.pickingMode = PickingMode.Ignore;
@@ -133,17 +159,17 @@ public class ControlsHint : MonoBehaviour
         sep.style.color       = new Color(0.5f, 0.5f, 0.5f, 1f);
         sep.style.marginLeft  = 4;
         sep.style.marginRight = 6;
-        sep.style.unityTextAlign = TextAnchor.MiddleLeft;
 
         var actionLabel = new Label(action);
         actionLabel.pickingMode = PickingMode.Ignore;
         actionLabel.style.fontSize    = 13;
         actionLabel.style.color       = new Color(0.85f, 0.85f, 0.85f, 1f);
-        actionLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
 
         row.Add(keyLabel);
         row.Add(sep);
         row.Add(actionLabel);
         _panel.Add(row);
+
+        return keyLabel;
     }
 }

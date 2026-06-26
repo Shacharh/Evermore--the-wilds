@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 /// <summary>
@@ -46,7 +47,7 @@ public class MoveCostHint : MonoBehaviour
     {
         if (!_visible || _panel == null) return;
 
-        Vector2 mp = Input.mousePosition;
+        Vector2 mp = Mouse.current?.position.ReadValue() ?? Vector2.zero;
 
         // Try the proper UIToolkit conversion first (handles Y-flip + PanelSettings scale).
         // Falls back to a manual Y-flip when the panel isn't initialized yet — this keeps
