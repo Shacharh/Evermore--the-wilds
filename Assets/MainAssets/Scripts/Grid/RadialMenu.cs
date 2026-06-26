@@ -174,9 +174,9 @@ public class RadialMenu : MonoBehaviour
                 lbl.style.whiteSpace = WhiteSpace.Normal;
                 string hex = ColorUtility.ToHtmlStringRGB(ElementColor(attackData.Element));
                 lbl.text = label.ToUpper()
-                           + "\n<color=#" + hex + "><b>"
+                           + "\n<size=9><color=#" + hex + ">"
                            + attackData.Element.ToString().ToUpper()
-                           + "</b></color>";
+                           + "</color></size>";
             }
             else
             {
