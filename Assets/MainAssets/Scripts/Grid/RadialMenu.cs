@@ -164,9 +164,25 @@ public class RadialMenu : MonoBehaviour
         // Clone the UXML template — structure and styling come from the asset
         var container = cardTemplate.CloneTree();
 
-        // Set the label text (only C# responsibility)
+        // Set the label text — attack cards get the element type as a coloured second line.
+        // Using the existing card-label avoids adding elements that fight the UXML layout.
         var lbl = container.Q<Label>("card-label");
-        if (lbl != null) lbl.text = label.ToUpper();
+        if (lbl != null)
+        {
+            if (attackData != null)
+            {
+                lbl.style.whiteSpace = WhiteSpace.Normal;
+                string hex = ColorUtility.ToHtmlStringRGB(ElementColor(attackData.Element));
+                lbl.text = label.ToUpper()
+                           + "\n<color=#" + hex + "><b>"
+                           + attackData.Element.ToString().ToUpper()
+                           + "</b></color>";
+            }
+            else
+            {
+                lbl.text = label.ToUpper();
+            }
+        }
 
         // Wire events on the inner .menu-card element
         var card = container.Q(className: "menu-card");
@@ -189,20 +205,6 @@ public class RadialMenu : MonoBehaviour
             {
                 apLbl.style.display = DisplayStyle.None;
             }
-        }
-
-        // Element type badge — coloured text badge below the attack name, attack cards only
-        if (attackData != null)
-        {
-            var typeLbl = new Label(attackData.Element.ToString().ToUpper());
-            typeLbl.pickingMode = PickingMode.Ignore;
-            typeLbl.style.fontSize                = 10;
-            typeLbl.style.unityFontStyleAndWeight = FontStyle.Bold;
-            typeLbl.style.color                   = ElementColor(attackData.Element);
-            typeLbl.style.unityTextAlign          = TextAnchor.MiddleCenter;
-            typeLbl.style.marginTop               = 2;
-            typeLbl.style.width                   = new UnityEngine.UIElements.Length(100, UnityEngine.UIElements.LengthUnit.Percent);
-            card.Add(typeLbl);
         }
 
         card.RegisterCallback<PointerEnterEvent>(_ =>
