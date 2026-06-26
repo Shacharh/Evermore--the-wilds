@@ -4847,6 +4847,7 @@ GameObject:
   - component: {fileID: 1963163667128691551}
   - component: {fileID: 3164244961246082612}
   - component: {fileID: 7944932218030406918}
+  - component: {fileID: -6003220668601511623}
   m_Layer: 0
   m_Name: PS_Armor_UP
   m_TagString: Untagged
@@ -9676,6 +9677,24 @@ ParticleSystemRenderer:
   m_MeshWeighting1: 1
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
+--- !u!114 &-6003220668601511623
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5754035605952724130}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cbf2c9116c01ae6438b090e4410490f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VFXShooter
+  mode: 1
+  speed: 10
+  faceDirection: 1
+  beamDuration: 0.4
+  stretchBeam: 0
+  follow: 0
 --- !u!1 &5941331058954688357
 GameObject:
   m_ObjectHideFlags: 0
