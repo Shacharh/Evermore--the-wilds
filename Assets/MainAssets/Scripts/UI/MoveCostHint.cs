@@ -49,23 +49,20 @@ public class MoveCostHint : MonoBehaviour
 
         Vector2 mp = Mouse.current?.position.ReadValue() ?? Vector2.zero;
 
-        // Try the proper UIToolkit conversion first (handles Y-flip + PanelSettings scale).
-        // Falls back to a manual Y-flip when the panel isn't initialized yet — this keeps
-        // the tooltip following the cursor even on the very first visible frame.
-        var uiPanel = _doc?.rootVisualElement?.panel;
-        if (uiPanel != null)
-        {
-            Vector2 uiPos = RuntimePanelUtils.ScreenToPanel(uiPanel, mp);
-            _panel.style.left = uiPos.x + 16;
-            _panel.style.top  = uiPos.y + 16;
-        }
-        else
-        {
-            // UIDocument not yet registered with a panel (e.g. first frame, or
-            // PanelSettings not assigned). Use raw Y-flip so cursor-follow still works.
-            _panel.style.left = mp.x + 16;
-            _panel.style.top  = Screen.height - mp.y + 16;
-        }
+        // Mouse.position: X left→right, Y bottom→top (Unity/Input System screen space).
+        // UIToolkit:      X left→right, Y top→bottom — must flip Y explicitly.
+        // Scale by the ratio of panel size to screen size to handle any reference resolution
+        // set in PanelSettings (e.g. 1920×1080 reference on a 2560×1440 screen).
+        var root = _doc?.rootVisualElement;
+        Rect rect = (root != null && root.contentRect.width > 0)
+            ? root.contentRect
+            : new Rect(0, 0, Screen.width, Screen.height);
+
+        float scaleX = rect.width  / Screen.width;
+        float scaleY = rect.height / Screen.height;
+
+        _panel.style.left = mp.x * scaleX + 16;
+        _panel.style.top  = (Screen.height - mp.y) * scaleY + 16;
     }
 
     private void OnDestroy()
