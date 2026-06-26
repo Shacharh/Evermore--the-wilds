@@ -191,6 +191,20 @@ public class RadialMenu : MonoBehaviour
             }
         }
 
+        // Element type badge — coloured text badge below the attack name, attack cards only
+        if (attackData != null)
+        {
+            var typeLbl = new Label(attackData.Element.ToString().ToUpper());
+            typeLbl.pickingMode = PickingMode.Ignore;
+            typeLbl.style.fontSize                = 10;
+            typeLbl.style.unityFontStyleAndWeight = FontStyle.Bold;
+            typeLbl.style.color                   = ElementColor(attackData.Element);
+            typeLbl.style.unityTextAlign          = TextAnchor.MiddleCenter;
+            typeLbl.style.marginTop               = 2;
+            typeLbl.style.width                   = new UnityEngine.UIElements.Length(100, UnityEngine.UIElements.LengthUnit.Percent);
+            card.Add(typeLbl);
+        }
+
         card.RegisterCallback<PointerEnterEvent>(_ =>
         {
             IsHoveringButton = true;
@@ -250,4 +264,17 @@ public class RadialMenu : MonoBehaviour
         _list?.Clear();
         Destroy(gameObject);
     }
+
+    private static Color ElementColor(AttackEnum.ElementType element) => element switch
+    {
+        AttackEnum.ElementType.Fire     => new Color(1.00f, 0.40f, 0.15f),
+        AttackEnum.ElementType.Water    => new Color(0.25f, 0.65f, 1.00f),
+        AttackEnum.ElementType.Wind     => new Color(0.55f, 0.90f, 0.75f),
+        AttackEnum.ElementType.Earth    => new Color(0.70f, 0.50f, 0.20f),
+        AttackEnum.ElementType.Poison   => new Color(0.65f, 0.25f, 0.85f),
+        AttackEnum.ElementType.Electric => new Color(1.00f, 0.90f, 0.10f),
+        AttackEnum.ElementType.Plant    => new Color(0.30f, 0.80f, 0.30f),
+        AttackEnum.ElementType.Metal    => new Color(0.80f, 0.85f, 0.90f),
+        _                               => Color.white
+    };
 }

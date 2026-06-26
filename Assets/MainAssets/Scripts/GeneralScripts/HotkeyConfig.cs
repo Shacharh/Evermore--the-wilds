@@ -22,6 +22,9 @@ public class HotkeyConfig : ScriptableObject
     [Tooltip("Open the pause menu.")]
     public Key pause   = Key.Escape;
 
+    [Tooltip("Reset the camera orbit angle back to the default north-facing position.")]
+    public Key resetCamera = Key.Home;
+
     [Header("When a friendly monster is selected")]
     [Tooltip("Enter movement mode for the selected monster.")]
     public Key move   = Key.M;

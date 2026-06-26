@@ -31,6 +31,7 @@ public class ControlsHint : MonoBehaviour
     private Label _moveKey;
     private Label _attackKey;
     private Label _infoKey;
+    private Label _resetCamKey;
 
     private void Awake()
     {
@@ -84,11 +85,12 @@ public class ControlsHint : MonoBehaviour
         var hk = HotkeyManager.Instance;
         if (hk == null) return;
 
-        if (_endTurnKey != null) _endTurnKey.text = hk.GetDisplayName(HotkeyAction.EndTurn);
-        if (_cancelKey  != null) _cancelKey.text  = hk.GetDisplayName(HotkeyAction.Cancel);
-        if (_moveKey    != null) _moveKey.text    = hk.GetDisplayName(HotkeyAction.Move);
-        if (_attackKey  != null) _attackKey.text  = hk.GetDisplayName(HotkeyAction.Attack);
-        if (_infoKey    != null) _infoKey.text    = hk.GetDisplayName(HotkeyAction.Info);
+        if (_endTurnKey  != null) _endTurnKey.text  = hk.GetDisplayName(HotkeyAction.EndTurn);
+        if (_cancelKey   != null) _cancelKey.text   = hk.GetDisplayName(HotkeyAction.Cancel);
+        if (_moveKey     != null) _moveKey.text     = hk.GetDisplayName(HotkeyAction.Move);
+        if (_attackKey   != null) _attackKey.text   = hk.GetDisplayName(HotkeyAction.Attack);
+        if (_infoKey     != null) _infoKey.text     = hk.GetDisplayName(HotkeyAction.Info);
+        if (_resetCamKey != null) _resetCamKey.text = hk.GetDisplayName(HotkeyAction.ResetCamera);
     }
 
     private void BuildUI()
@@ -131,11 +133,13 @@ public class ControlsHint : MonoBehaviour
         _panel.Add(header);
 
         // Rows — key labels stored so Start() can fill them from HotkeyManager
-        _endTurnKey = AddRow("Space",     "End turn");
-        _cancelKey  = AddRow("Backspace", "Cancel / back");
-        _moveKey    = AddRow("M",         "Move (when selected)");
-        _attackKey  = AddRow("T",         "Attack (when selected)");
-        _infoKey    = AddRow("I",         "Monster info");
+        _endTurnKey  = AddRow("Space",     "End turn");
+        _cancelKey   = AddRow("Backspace", "Cancel / back");
+        _moveKey     = AddRow("M",         "Move (when selected)");
+        _attackKey   = AddRow("T",         "Attack (when selected)");
+        _infoKey     = AddRow("I",         "Monster info");
+        _resetCamKey = AddRow("Home",      "Reset camera angle");
+        AddRow("Right-drag", "Rotate camera", isStatic: true);
         AddRow("Click monster", "Select & open menu", isStatic: true);
 
         root.Add(_panel);
