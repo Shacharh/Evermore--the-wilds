@@ -59,6 +59,10 @@ public class EnemyTurnController : TurnController
     [Tooltip("Speed at which enemy monsters slide to their new tile (world units per second).")]
     [SerializeField] private float moveSpeed = 5f;
 
+    // -- Camera ----------------------------------------------------------------
+
+    private CameraController _cameraController;
+
     // -- Brain -----------------------------------------------------------------
 
     private MonsterAIBrain _brain;
@@ -75,6 +79,7 @@ public class EnemyTurnController : TurnController
         if (gridManager == null)
             gridManager = FindFirstObjectByType<GridManager>();
 
+        _cameraController = FindFirstObjectByType<CameraController>();
         _brain = new MonsterAIBrain(gameStateScorePoints);
         AITurnQueueDebug.SetEnabled(showTurnDebugPanel, debugPanelHeight);
     }
@@ -266,6 +271,9 @@ public class EnemyTurnController : TurnController
 
             AITurnQueueDebug.SetActiveIndex(i);
 
+            // Focus the camera on this monster BEFORE the delay so it has time to pan there.
+            _cameraController?.FocusOnMonster(monster.transform.position);
+
             yield return new WaitForSeconds(actionDelay);
             yield return StartCoroutine(ExecuteAction(monster, action));
         }
@@ -275,6 +283,7 @@ public class EnemyTurnController : TurnController
             if (m != null) m.MarkActed();
 
         AITurnQueueDebug.ClearActiveIndex();
+        _cameraController?.ReleaseFocus();
         Debug.Log("[EnemyAI] All actions complete — ending turn.");
         ForceEndTurn();
     }
@@ -326,6 +335,10 @@ public class EnemyTurnController : TurnController
             monster.transform.root.rotation = Quaternion.LookRotation(dir);
 
         monster.ExecuteAttack(new List<Monster> { target }, attackIndex, attackData.IsDirect);
+
+        // Briefly pan to the target so the player can see the damage result.
+        if (target.IsAlive)
+            _cameraController?.UpdateFocusTarget(target.transform.position);
 
         Debug.Log($"[EnemyAI] {monster.name} used '{attackData.DisplayName}' " +
                   $"on {target.name}! (cost {apCost} AP)");
@@ -392,6 +405,7 @@ public class EnemyTurnController : TurnController
             {
                 t += Time.deltaTime * moveSpeed / Mathf.Max(dist, 0.01f);
                 monster.transform.position = Vector3.Lerp(start, end, Mathf.SmoothStep(0f, 1f, t));
+                _cameraController?.UpdateFocusTarget(monster.transform.position);
                 yield return null;
             }
 

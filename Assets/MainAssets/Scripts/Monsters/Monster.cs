@@ -629,7 +629,23 @@ public class Monster : MonoBehaviour
         }
         else
         {
-            BattleMessage.Show($"{attacker.customeName} → {effectTarget.customeName}: -{damage} HP  " +
+            // Build type-effectiveness prefix (empty for Normal)
+            string effectivenessPrefix = "";
+            TypeMatchupTable matchupTable = GameInitializer.Instance?.typeMatchupTable;
+            if (matchupTable != null && effectTarget.Data != null)
+            {
+                var eff = matchupTable.GetEffectivenessEnum(effectTarget.Data.elementType, attackData.Element);
+                effectivenessPrefix = eff switch
+                {
+                    TypeEffectiveness.SuperEffective => "Super Effective!\n",
+                    TypeEffectiveness.Effective      => "Effective!\n",
+                    TypeEffectiveness.Weak           => "Not Very Effective...\n",
+                    TypeEffectiveness.SuperWeak      => "Barely Effective...\n",
+                    _                                => ""
+                };
+            }
+
+            BattleMessage.Show($"{effectivenessPrefix}{attacker.customeName} → {effectTarget.customeName}: -{damage} HP  " +
                                $"({effectTarget.currentHP}/{effectTarget.MaxHP})", 3.5f);
             Debug.Log($"[{effectTarget.gameObject.name}] took {damage} damage — " +
                       $"HP: {effectTarget.currentHP}/{effectTarget.MaxHP}");
