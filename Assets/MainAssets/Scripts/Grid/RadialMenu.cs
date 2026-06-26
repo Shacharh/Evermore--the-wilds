@@ -194,13 +194,19 @@ public class RadialMenu : MonoBehaviour
         card.RegisterCallback<PointerEnterEvent>(_ =>
         {
             IsHoveringButton = true;
-            if (attackData != null) AttackInfoPanel.Show(attackData);
+            if (attackData != null)
+            {
+                AttackInfoPanel.Show(attackData);
+                inputManager.PreviewAttackRange(attackData);
+            }
         });
 
         card.RegisterCallback<PointerLeaveEvent>(_ =>
         {
             IsHoveringButton = false;
             AttackInfoPanel.Hide();
+            if (attackData != null)
+                inputManager.ClearAttackRangePreview();
         });
 
         card.RegisterCallback<PointerUpEvent>(evt =>

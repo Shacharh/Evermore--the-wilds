@@ -1,7 +1,6 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
+using UnityEngine.UIElements;
 
 /// <summary>
 /// Screen-space toast overlay for brief battle feedback messages.
@@ -11,6 +10,7 @@ using TMPro;
 ///
 /// Auto-created singleton — no prefab or scene setup needed.
 /// Appears in the upper-center of the screen, fades in then out.
+/// Uses UI Toolkit — resolution-independent at any screen size.
 /// </summary>
 public class BattleMessage : MonoBehaviour
 {
@@ -27,9 +27,9 @@ public class BattleMessage : MonoBehaviour
 
     // ── UI references ─────────────────────────────────────────────────────────
 
-    private TextMeshProUGUI messageText;
-    private CanvasGroup     canvasGroup;
-    private Coroutine       activeCoroutine;
+    private VisualElement _root;
+    private Label         _label;
+    private Coroutine     _activeCoroutine;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -39,7 +39,6 @@ public class BattleMessage : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
         BuildUI();
-        canvasGroup.alpha = 0f;
     }
 
     private void OnDestroy()
@@ -58,9 +57,9 @@ public class BattleMessage : MonoBehaviour
 
     private void ShowMessage(string message, float duration)
     {
-        messageText.text = message;
-        if (activeCoroutine != null) StopCoroutine(activeCoroutine);
-        activeCoroutine = StartCoroutine(FadeRoutine(duration));
+        _label.text = message;
+        if (_activeCoroutine != null) StopCoroutine(_activeCoroutine);
+        _activeCoroutine = StartCoroutine(FadeRoutine(duration));
     }
 
     // ── Fade Coroutine ────────────────────────────────────────────────────────
@@ -74,10 +73,10 @@ public class BattleMessage : MonoBehaviour
         while (t < fadeInTime)
         {
             t += Time.deltaTime;
-            canvasGroup.alpha = Mathf.Clamp01(t / fadeInTime);
+            _root.style.opacity = Mathf.Clamp01(t / fadeInTime);
             yield return null;
         }
-        canvasGroup.alpha = 1f;
+        _root.style.opacity = 1f;
 
         yield return new WaitForSeconds(displayDuration);
 
@@ -85,60 +84,48 @@ public class BattleMessage : MonoBehaviour
         while (t < fadeOutTime)
         {
             t += Time.deltaTime;
-            canvasGroup.alpha = Mathf.Clamp01(1f - t / fadeOutTime);
+            _root.style.opacity = Mathf.Clamp01(1f - t / fadeOutTime);
             yield return null;
         }
-        canvasGroup.alpha = 0f;
+        _root.style.opacity = 0f;
     }
 
     // ── UI Construction ───────────────────────────────────────────────────────
 
     private void BuildUI()
     {
-        var canvasGO = new GameObject("MessageCanvas");
-        canvasGO.transform.SetParent(transform);
+        var s   = UIStyleConfig.Load();
+        var doc = gameObject.AddComponent<UIDocument>();
+        doc.panelSettings = s?.panelSettings;
+        doc.sortingOrder  = 700;
 
-        var canvas = canvasGO.AddComponent<Canvas>();
-        canvas.renderMode   = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 700;
+        _root = doc.rootVisualElement;
+        _root.pickingMode = PickingMode.Ignore;
+        _root.style.opacity      = 0f;
+        _root.style.position     = Position.Absolute;
+        _root.style.left = 0; _root.style.top = 0; _root.style.right = 0; _root.style.bottom = 0;
+        // Center the panel horizontally, place it near the top
+        _root.style.alignItems     = Align.Center;
+        _root.style.justifyContent = Justify.FlexStart;
+        _root.style.paddingTop     = new StyleLength(new Length(7f, LengthUnit.Percent));
 
-        var scaler = canvasGO.AddComponent<CanvasScaler>();
-        scaler.uiScaleMode         = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
-        scaler.matchWidthOrHeight  = 0.5f;
+        var panel = new VisualElement();
+        panel.pickingMode = PickingMode.Ignore;
+        panel.style.backgroundColor       = new Color(0.04f, 0.04f, 0.10f, 0.90f);
+        panel.style.paddingTop            = 12; panel.style.paddingBottom = 12;
+        panel.style.paddingLeft           = 24; panel.style.paddingRight  = 24;
+        panel.style.borderTopLeftRadius    = 6; panel.style.borderTopRightRadius    = 6;
+        panel.style.borderBottomLeftRadius = 6; panel.style.borderBottomRightRadius = 6;
 
-        canvasGO.AddComponent<GraphicRaycaster>();
+        _label = new Label();
+        _label.pickingMode = PickingMode.Ignore;
+        _label.style.fontSize                = 26;
+        _label.style.unityFontStyleAndWeight = FontStyle.Bold;
+        _label.style.color                   = new Color(1f, 0.85f, 0.2f, 1f);
+        _label.style.unityTextAlign          = TextAnchor.MiddleCenter;
+        _label.style.whiteSpace              = WhiteSpace.NoWrap;
 
-        canvasGroup = canvasGO.AddComponent<CanvasGroup>();
-        canvasGroup.interactable   = false;
-        canvasGroup.blocksRaycasts = false;
-
-        var panelGO = new GameObject("Panel");
-        panelGO.transform.SetParent(canvasGO.transform, false);
-
-        var panelRT = panelGO.AddComponent<RectTransform>();
-        panelRT.anchorMin        = new Vector2(0.5f, 0.8f);
-        panelRT.anchorMax        = new Vector2(0.5f, 0.8f);
-        panelRT.pivot            = new Vector2(0.5f, 0.5f);
-        panelRT.anchoredPosition = Vector2.zero;
-        panelRT.sizeDelta        = new Vector2(680f, 72f);
-
-        panelGO.AddComponent<Image>().color = new Color(0.04f, 0.04f, 0.10f, 0.90f);
-
-        var textGO = new GameObject("Text");
-        textGO.transform.SetParent(panelGO.transform, false);
-
-        var textRT = textGO.AddComponent<RectTransform>();
-        textRT.anchorMin = Vector2.zero;
-        textRT.anchorMax = Vector2.one;
-        textRT.offsetMin = new Vector2(14f, 6f);
-        textRT.offsetMax = new Vector2(-14f, -6f);
-
-        messageText                   = textGO.AddComponent<TextMeshProUGUI>();
-        messageText.fontSize          = 26f;
-        messageText.color             = new Color(1f, 0.85f, 0.2f, 1f);
-        messageText.alignment         = TextAlignmentOptions.Center;
-        messageText.fontStyle         = FontStyles.Bold;
-        messageText.textWrappingMode  = TMPro.TextWrappingModes.NoWrap;
+        panel.Add(_label);
+        _root.Add(panel);
     }
 }

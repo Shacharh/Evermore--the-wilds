@@ -1,24 +1,20 @@
-﻿using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
+using UnityEngine;
+using UnityEngine.UIElements;
 
 /// <summary>
-/// Small persistent overlay that shows the AP cost of moving to the currently
-/// hovered tile while the player is in movement mode.
-///
-/// Appears in the top-left corner (away from the monster info panel which sits
-/// bottom-right). Instantly shows/hides â€” no fade animation â€” because it must
-/// update every frame as the player hovers different tiles.
+/// Small tooltip that follows the mouse cursor and shows the AP cost of moving
+/// to the currently hovered tile while the player is in movement mode.
 ///
 /// Usage (from InputManager):
 ///   MoveCostHint.Show("Move cost: 2 AP");
 ///   MoveCostHint.Hide();
 ///
-/// Auto-created singleton â€” no prefab or scene setup needed.
+/// Auto-created singleton — no prefab or scene setup needed.
+/// Uses UI Toolkit — resolution-independent at any screen size.
 /// </summary>
 public class MoveCostHint : MonoBehaviour
 {
-    // â”€â”€ Singleton â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Singleton ─────────────────────────────────────────────────────────────
 
     public static MoveCostHint Instance { get; private set; }
 
@@ -29,12 +25,14 @@ public class MoveCostHint : MonoBehaviour
         new GameObject("MoveCostHint").AddComponent<MoveCostHint>();
     }
 
-    // â”€â”€ UI References â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── UI References ─────────────────────────────────────────────────────────
 
-    private GameObject      panelRoot;
-    private TextMeshProUGUI hintText;
+    private UIDocument    _doc;
+    private VisualElement _panel;
+    private Label         _label;
+    private bool          _visible;
 
-    // â”€â”€ Lifecycle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     private void Awake()
     {
@@ -42,7 +40,31 @@ public class MoveCostHint : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
         BuildUI();
-        panelRoot.SetActive(false);
+    }
+
+    private void Update()
+    {
+        if (!_visible || _panel == null) return;
+
+        Vector2 mp = Input.mousePosition;
+
+        // Try the proper UIToolkit conversion first (handles Y-flip + PanelSettings scale).
+        // Falls back to a manual Y-flip when the panel isn't initialized yet — this keeps
+        // the tooltip following the cursor even on the very first visible frame.
+        var uiPanel = _doc?.rootVisualElement?.panel;
+        if (uiPanel != null)
+        {
+            Vector2 uiPos = RuntimePanelUtils.ScreenToPanel(uiPanel, mp);
+            _panel.style.left = uiPos.x + 16;
+            _panel.style.top  = uiPos.y + 16;
+        }
+        else
+        {
+            // UIDocument not yet registered with a panel (e.g. first frame, or
+            // PanelSettings not assigned). Use raw Y-flip so cursor-follow still works.
+            _panel.style.left = mp.x + 16;
+            _panel.style.top  = Screen.height - mp.y + 16;
+        }
     }
 
     private void OnDestroy()
@@ -50,79 +72,61 @@ public class MoveCostHint : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
-    // â”€â”€ Public API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Public API ────────────────────────────────────────────────────────────
 
-    /// <summary>Shows the hint panel with the given text. Safe to call every frame.</summary>
+    /// <summary>Shows the hint at the current mouse position with the given text.</summary>
     public static void Show(string text)
     {
         if (Instance == null) return;
-        Instance.hintText.text = text;
-        Instance.panelRoot.SetActive(true);
+        Instance._label.text = text;
+        Instance._panel.style.display = DisplayStyle.Flex;
+        Instance._visible = true;
     }
 
-    /// <summary>Hides the hint panel.</summary>
+    /// <summary>Hides the hint.</summary>
     public static void Hide()
     {
         if (Instance == null) return;
-        Instance.panelRoot.SetActive(false);
+        Instance._panel.style.display = DisplayStyle.None;
+        Instance._visible = false;
     }
 
-    // â”€â”€ UI Construction â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── UI Construction ───────────────────────────────────────────────────────
 
     private void BuildUI()
     {
-        // Root canvas â€” ScreenSpaceOverlay, sort order 600 (above game world, below battle messages)
-        var canvasGO = new GameObject("MoveCostCanvas");
-        canvasGO.transform.SetParent(transform);
+        var s = UIStyleConfig.Load();
+        _doc = gameObject.AddComponent<UIDocument>();
+        _doc.panelSettings = s?.panelSettings;
+        _doc.sortingOrder  = 600;
 
-        var canvas = canvasGO.AddComponent<Canvas>();
-        canvas.renderMode   = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 600;
+        var root = _doc.rootVisualElement;
+        root.pickingMode = PickingMode.Ignore;
+        root.style.position = Position.Absolute;
+        root.style.left = 0; root.style.top = 0; root.style.right = 0; root.style.bottom = 0;
 
-        var scaler = canvasGO.AddComponent<CanvasScaler>();
-        scaler.uiScaleMode         = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
-        scaler.matchWidthOrHeight  = 0.5f;
+        // Panel — position driven every frame in Update()
+        _panel = new VisualElement();
+        _panel.pickingMode = PickingMode.Ignore;
+        _panel.style.position = Position.Absolute;
+        _panel.style.left     = 0;
+        _panel.style.top      = 0;
+        _panel.style.backgroundColor       = new Color(0.04f, 0.10f, 0.04f, 0.92f);
+        _panel.style.paddingTop            = 8;  _panel.style.paddingBottom = 8;
+        _panel.style.paddingLeft           = 14; _panel.style.paddingRight  = 14;
+        _panel.style.borderTopLeftRadius    = 4; _panel.style.borderTopRightRadius    = 4;
+        _panel.style.borderBottomLeftRadius = 4; _panel.style.borderBottomRightRadius = 4;
+        _panel.style.display = DisplayStyle.None;
 
-        // Non-interactive â€” just a display label
-        var cg = canvasGO.AddComponent<CanvasGroup>();
-        cg.interactable   = false;
-        cg.blocksRaycasts = false;
+        _label = new Label();
+        _label.pickingMode = PickingMode.Ignore;
+        _label.style.fontSize                = 22;
+        _label.style.unityFontStyleAndWeight = FontStyle.Bold;
+        _label.style.color                   = new Color(0.6f, 1f, 0.6f, 1f);
+        _label.style.unityTextAlign          = TextAnchor.MiddleCenter;
+        _label.style.whiteSpace              = WhiteSpace.NoWrap;
 
-        // â”€â”€ Panel â€” top-left corner, 260 Ã— 52 px in 1920Ã—1080 reference space â”€
-        panelRoot = MakeChild(canvasGO, "HintPanel");
-        var rt = panelRoot.GetComponent<RectTransform>();
-        rt.anchorMin        = new Vector2(0f, 1f);
-        rt.anchorMax        = new Vector2(0f, 1f);
-        rt.pivot            = new Vector2(0f, 1f);
-        rt.anchoredPosition = new Vector2(20f, -20f);   // 20 px from top-left edge
-        rt.sizeDelta        = new Vector2(280f, 52f);
-
-        var bg = panelRoot.AddComponent<Image>();
-        bg.color = new Color(0.04f, 0.10f, 0.04f, 0.92f);   // dark green tint
-
-        // â”€â”€ Text â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        var textGO = MakeChild(panelRoot, "Text");
-        var textRT = textGO.GetComponent<RectTransform>();
-        textRT.anchorMin = Vector2.zero;
-        textRT.anchorMax = Vector2.one;
-        textRT.offsetMin = new Vector2(12f, 6f);
-        textRT.offsetMax = new Vector2(-12f, -6f);
-
-        hintText                        = textGO.AddComponent<TextMeshProUGUI>();
-        hintText.fontSize               = 22f;
-        hintText.color                  = new Color(0.6f, 1f, 0.6f, 1f);  // light green
-        hintText.alignment              = TextAlignmentOptions.Center;
-        hintText.fontStyle              = FontStyles.Bold;
-        hintText.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
-    }
-
-    private static GameObject MakeChild(GameObject parent, string name)
-    {
-        var go = new GameObject(name);
-        go.transform.SetParent(parent.transform, false);
-        go.AddComponent<RectTransform>();
-        return go;
+        _panel.Add(_label);
+        root.Add(_panel);
     }
 }
-

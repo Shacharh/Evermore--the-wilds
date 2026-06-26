@@ -277,14 +277,16 @@ public class Monster : MonoBehaviour
         if (attack == null)
             throw new System.ArgumentException("Attack cannot be null");
 
-        MonsterAttack monsterAttack = new MonsterAttack(attack);
-
-        if (learnedAttacks.Contains(monsterAttack))
-            throw new System.ArgumentException("Cannot learn the same attack twice");
+        // Prefab serialization can pre-populate learnedAttacks before MonsterSetup runs,
+        // leading to duplicates when the same attack is added again at runtime.
+        // Guard by AttackData reference so object-inequality doesn't bypass the check.
+        if (learnedAttacks.Exists(ma => ma.data == attack))
+            return;
 
         if (learnedAttacks.Count >= MaxAttacks)
             throw new System.ArgumentException($"{gameObject.name} cannot learn more than {MaxAttacks} attacks");
 
+        MonsterAttack monsterAttack = new MonsterAttack(attack);
         learnedAttacks.Add(monsterAttack);
         Debug.Log($"{gameObject.name} learned attack: {attack.DisplayName}");
     }
