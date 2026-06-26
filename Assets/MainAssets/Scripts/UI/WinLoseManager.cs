@@ -109,6 +109,7 @@ public class WinLoseManager : MonoBehaviour
         _reasonLabel.text = reason;
         SetOverlayVisible(true);
         Time.timeScale = 0f;
+        if (victory) AudioManager.PlayVictory(); else AudioManager.PlayDefeat();
     }
 
     private void SetOverlayVisible(bool v)

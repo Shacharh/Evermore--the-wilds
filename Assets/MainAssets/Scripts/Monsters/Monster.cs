@@ -618,23 +618,22 @@ public class Monster : MonoBehaviour
         effectTarget.currentHP = newHP;
         effectTarget.OnHPChanged?.Invoke(effectTarget.currentHP, effectTarget.MaxHP);
 
-        if (damage > 0)
-            FloatingDamageNumber.Spawn(effectTarget.transform.position, damage);
-
         if (damage <= 0)
         {
+            AudioManager.PlayMiss();
             BattleMessage.Show($"{effectTarget.customeName} dodged the attack!", 2.5f);
             Debug.Log($"[{effectTarget.gameObject.name}] dodged — HP unchanged: " +
                       $"{effectTarget.currentHP}/{effectTarget.MaxHP}");
         }
         else
         {
-            // Build type-effectiveness prefix (empty for Normal)
+            // Compute type effectiveness before showing the floating number so both use the same value.
+            TypeEffectiveness eff = TypeEffectiveness.Normal;
             string effectivenessPrefix = "";
             TypeMatchupTable matchupTable = GameInitializer.Instance?.typeMatchupTable;
             if (matchupTable != null && effectTarget.Data != null)
             {
-                var eff = matchupTable.GetEffectivenessEnum(effectTarget.Data.elementType, attackData.Element);
+                eff = matchupTable.GetEffectivenessEnum(effectTarget.Data.elementType, attackData.Element);
                 effectivenessPrefix = eff switch
                 {
                     TypeEffectiveness.SuperEffective => "Super Effective!\n",
@@ -644,6 +643,9 @@ public class Monster : MonoBehaviour
                     _                                => ""
                 };
             }
+
+            FloatingDamageNumber.Spawn(effectTarget.transform.position, damage, effectiveness: eff);
+            AudioManager.PlayAttackSFX(attackData);
 
             BattleMessage.Show($"{effectivenessPrefix}{attacker.customeName} → {effectTarget.customeName}: -{damage} HP  " +
                                $"({effectTarget.currentHP}/{effectTarget.MaxHP})", 3.5f);
@@ -676,6 +678,7 @@ public class Monster : MonoBehaviour
     {
         currentHP = 0;
         ReturnAllVFX();
+        AudioManager.PlayDeath();
         OnDied?.Invoke(this);
         StartCoroutine(DieCoroutine());
     }

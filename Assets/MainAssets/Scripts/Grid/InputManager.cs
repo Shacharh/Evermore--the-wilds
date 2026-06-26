@@ -938,7 +938,7 @@ public class InputManager : MonoBehaviour
             attackingMonster   = null;
             selectedAttackData = null;
             if (selectedTile != null) { selectedTile.SetSelected(false); selectedTile = null; }
-            playerTurnController?.CheckAutoEndTurn();
+            StartCoroutine(DelayedAutoEndTurn());
             return;
         }
 
@@ -1140,7 +1140,7 @@ public class InputManager : MonoBehaviour
         AttackInfoPanel.Hide();
         cameraController?.ReleaseFocus();
         ExitTargetSelection();
-        playerTurnController?.CheckAutoEndTurn();
+        StartCoroutine(DelayedAutoEndTurn());
     }
 
     void ExitTargetSelection()
@@ -1194,6 +1194,14 @@ public class InputManager : MonoBehaviour
         cameraController?.ReleaseFocus();
         Debug.Log($"[InputManager] Info for {monster.name} — " +
                   $"HP {monster.CurrentHP}/{monster.MaxHP}");
+    }
+
+    // Waits one frame + a short buffer so BattleMessage, VFX and camera restore
+    // all get a head start before the enemy turn begins.
+    private System.Collections.IEnumerator DelayedAutoEndTurn()
+    {
+        yield return new WaitForSeconds(0.5f);
+        playerTurnController?.CheckAutoEndTurn();
     }
 
     void OnDestroy()
