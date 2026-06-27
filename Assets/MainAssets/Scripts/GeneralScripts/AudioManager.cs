@@ -23,6 +23,7 @@ public class AudioManager : MonoBehaviour
     private SFXConfig config;
 
     private AudioSource _sfxSource;
+    private AudioSource _musicSource;
 
     // ── Lifecycle ──────────────────────────────────────────────────────────────
 
@@ -38,7 +39,12 @@ public class AudioManager : MonoBehaviour
 
         _sfxSource              = gameObject.AddComponent<AudioSource>();
         _sfxSource.playOnAwake  = false;
-        _sfxSource.spatialBlend = 0f; // 2D — no positional audio needed for a turn-based game
+        _sfxSource.spatialBlend = 0f;
+
+        _musicSource             = gameObject.AddComponent<AudioSource>();
+        _musicSource.playOnAwake = false;
+        _musicSource.spatialBlend = 0f;
+        _musicSource.loop        = true;
     }
 
     private void OnDestroy()
@@ -83,6 +89,34 @@ public class AudioManager : MonoBehaviour
     /// <summary>Play any arbitrary clip at the configured SFX volume.</summary>
     public static void PlaySFX(AudioClip clip) => Play(clip);
 
+    /// <summary>
+    /// Play a single footstep tick for unit movement.
+    /// PlayerMovement calls this on a timed interval while the player is moving.
+    /// </summary>
+    public static void PlayMovementStep() => Play(Instance?.config?.movementClip);
+
+    /// <summary>How many seconds between footstep sounds (read from SFXConfig).</summary>
+    public static float MovementStepInterval =>
+        Instance?.config != null ? Instance.config.movementStepInterval : 0.4f;
+
+    /// <summary>
+    /// Start the menu background music loop.
+    /// Call this from your main-menu scene (e.g. via MenuSceneAudio component).
+    /// </summary>
+    public static void PlayMenuMusic()  => PlayMusic(Instance?.config?.menuMusicClip);
+
+    /// <summary>
+    /// Start the in-game background music loop.
+    /// Assign <c>gameMusicClip</c> on SFXConfig, then call this when entering the game scene.
+    /// </summary>
+    public static void PlayGameMusic()  => PlayMusic(Instance?.config?.gameMusicClip);
+
+    /// <summary>Stop whichever music track is currently playing.</summary>
+    public static void StopMusic()
+    {
+        if (Instance?._musicSource != null) Instance._musicSource.Stop();
+    }
+
     // ── Internal ───────────────────────────────────────────────────────────────
 
     private static void Play(AudioClip clip)
@@ -90,5 +124,14 @@ public class AudioManager : MonoBehaviour
         if (Instance == null || clip == null) return;
         Instance._sfxSource.volume = Instance.config != null ? Instance.config.sfxVolume : 0.8f;
         Instance._sfxSource.PlayOneShot(clip);
+    }
+
+    private static void PlayMusic(AudioClip clip)
+    {
+        if (Instance == null || clip == null) return;
+        if (Instance._musicSource.clip == clip && Instance._musicSource.isPlaying) return;
+        Instance._musicSource.clip   = clip;
+        Instance._musicSource.volume = Instance.config != null ? Instance.config.musicVolume : 0.7f;
+        Instance._musicSource.Play();
     }
 }

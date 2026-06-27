@@ -10,7 +10,7 @@
 /* ── Panel root — sprite applied at runtime ──────────────────────────────── */
 .mip-panel {
     position: absolute;
-    right:  24px;
+    left:   24px;
     bottom: 24px;
     width:  420px;
 

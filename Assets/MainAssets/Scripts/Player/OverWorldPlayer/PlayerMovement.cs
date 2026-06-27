@@ -6,6 +6,7 @@ public class PlayerMovement : MonoBehaviour
     public float turnSmoothTime = 0.1f;
 
     private float turnSmoothVelocity;
+    private float _stepTimer;
 
     [SerializeField] private PlayerState state;
     [SerializeField] private PlayerInputHandler input;
@@ -20,7 +21,18 @@ public class PlayerMovement : MonoBehaviour
     {
         Vector3 direction = new Vector3(input.Move.x, 0f, input.Move.y).normalized;
 
-        if (direction.magnitude < 0.1f) return;
+        if (direction.magnitude < 0.1f)
+        {
+            _stepTimer = 0f; // reset so first step plays immediately on next move
+            return;
+        }
+
+        _stepTimer -= Time.deltaTime;
+        if (_stepTimer <= 0f)
+        {
+            AudioManager.PlayMovementStep();
+            _stepTimer = AudioManager.MovementStepInterval;
+        }
 
         float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg + state.cameraTransform.eulerAngles.y;
 

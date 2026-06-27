@@ -35,12 +35,27 @@ public class SFXConfig : ScriptableObject
     [Tooltip("Optional hover sound when the cursor enters a button or card.")]
     public AudioClip uiHoverClip;
 
+    [Header("Movement")]
+    [Tooltip("Footstep / movement sound played while any unit is walking.")]
+    public AudioClip movementClip;
+
+    [Range(0.1f, 2f)]
+    [Tooltip("Seconds between each footstep sound while moving.")]
+    public float movementStepInterval = 0.4f;
+
+    [Header("Music")]
+    [Tooltip("Background music loop for the main menu scene.")]
+    public AudioClip menuMusicClip;
+
+    [Tooltip("Background music loop for combat / overworld scenes (optional — can be set per-scene via AudioManager.PlayGameMusic).")]
+    public AudioClip gameMusicClip;
+
     [Header("Volume")]
     [Range(0f, 1f)]
     [Tooltip("Master volume for all sound effects.")]
     public float sfxVolume = 0.8f;
 
     [Range(0f, 1f)]
-    [Tooltip("Volume for background music (controlled by AudioManager's music source).")]
+    [Tooltip("Volume for background music.")]
     public float musicVolume = 0.7f;
 }

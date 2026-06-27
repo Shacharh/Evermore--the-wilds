@@ -22,6 +22,7 @@ public class AttackDataEditor : Editor
     private SerializedProperty inDirectHitPrecent;
     private SerializedProperty vfxPrefab;
     private SerializedProperty vfxTarget;
+    private SerializedProperty sfxClip;
 
     private ReorderableList effectsList;
 
@@ -44,6 +45,7 @@ public class AttackDataEditor : Editor
         inDirectHitPrecent = serializedObject.FindProperty("inDirectHitPrecent");
         vfxPrefab = serializedObject.FindProperty("vfxPrefab");
         vfxTarget = serializedObject.FindProperty("vfxTarget");
+        sfxClip   = serializedObject.FindProperty("sfxClip");
 
         // Create the ReorderableList
         effectsList = new ReorderableList(serializedObject, effects, true, true, true, true);
@@ -262,6 +264,10 @@ public class AttackDataEditor : Editor
         EditorGUILayout.LabelField("VFX", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(vfxPrefab);
         EditorGUILayout.PropertyField(vfxTarget);
+
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Audio", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(sfxClip, new GUIContent("SFX Clip", "Played when this attack hits. Leave empty to use the generic hit sound from SFXConfig."));
 
         serializedObject.ApplyModifiedProperties();
     }
