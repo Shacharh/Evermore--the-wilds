@@ -14,8 +14,10 @@ public class DevPanel : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (Instance != null) return;
         new GameObject("DevPanel").AddComponent<DevPanel>();
+#endif
     }
 
     private const int StatusTurns = 3;
