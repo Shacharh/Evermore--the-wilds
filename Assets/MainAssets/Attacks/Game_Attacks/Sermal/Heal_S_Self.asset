@@ -49,3 +49,4 @@ MonoBehaviour:
   inDirectHitPrecent: 0
   vfxPrefab: {fileID: 5441865888027216215, guid: e874c04cddf699f47aed8611af544d61, type: 3}
   vfxTarget: 1
+  sfxClip: {fileID: 8300000, guid: 04358a75319ff7049bedfe28f401bf1e, type: 3}

@@ -19,7 +19,7 @@ MonoBehaviour:
   effects:
   - category: 0
     value: 125
-    stageCount: 0
+    stageCount: 1
     selfInflicted: 0
     buffType: 0
     chance: 0
@@ -29,7 +29,7 @@ MonoBehaviour:
     statusEffect: {fileID: 0}
   - category: 3
     value: 150
-    stageCount: 0
+    stageCount: 1
     selfInflicted: 0
     buffType: 0
     chance: 70
@@ -49,3 +49,4 @@ MonoBehaviour:
   inDirectHitPrecent: 0
   vfxPrefab: {fileID: 8881737119817912412, guid: 6735e61ed703b62458c2c851ba1bc872, type: 3}
   vfxTarget: 1
+  sfxClip: {fileID: 8300000, guid: 4a17bed41b8ae0949adbc6d9f066de99, type: 3}

@@ -14,10 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SFXConfig
   genericHitClip: {fileID: 0}
   missClip: {fileID: 0}
-  monsterDeathClip: {fileID: 0}
+  monsterDeathClip: {fileID: 8300000, guid: 7dee4aa4d2ea32c49bd40f49c1d37ab4, type: 3}
   victoryClip: {fileID: 8300000, guid: 1a006fabf5b32e74cab4ae0ec2e6ee5a, type: 3}
   defeatClip: {fileID: 8300000, guid: 90c75b6e00f7f8747833b491eb38a748, type: 3}
   uiClickClip: {fileID: 8300000, guid: 061521ff247fdbd47aad59f1b6d58e6f, type: 3}
   uiHoverClip: {fileID: 8300000, guid: 7f138b09a905c5743bedf8d6ace675e9, type: 3}
-  sfxVolume: 0.8
+  movementClip: {fileID: 8300000, guid: 0fa486e937c1dd44faa33a8b47559ec0, type: 3}
+  movementStepInterval: 0.1
+  menuMusicClip: {fileID: 0}
+  gameMusicClip: {fileID: 0}
+  sfxVolume: 1
   musicVolume: 0.7
