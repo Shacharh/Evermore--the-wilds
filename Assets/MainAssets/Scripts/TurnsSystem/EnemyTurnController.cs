@@ -288,7 +288,9 @@ public class EnemyTurnController : TurnController
 
         AITurnQueueDebug.ClearActiveIndex();
         _cameraController?.ReleaseFocus();
-        Debug.Log("[EnemyAI] All actions complete — ending turn.");
+        Debug.Log("[EnemyAI] All actions complete — waiting for animations.");
+        yield return WaitForPendingAnimations();
+        Debug.Log("[EnemyAI] Animations done — ending turn.");
         ForceEndTurn();
     }
 

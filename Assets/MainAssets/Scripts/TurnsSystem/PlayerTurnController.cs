@@ -127,6 +127,12 @@ public class PlayerTurnController : TurnController
     {
         if (!IsActive) return;
         Debug.Log("[PlayerTurnController] Player manually ended turn.");
+        StartCoroutine(EndTurnWhenReady());
+    }
+
+    private System.Collections.IEnumerator EndTurnWhenReady()
+    {
+        yield return WaitForPendingAnimations();
         ForceEndTurn();
     }
 }

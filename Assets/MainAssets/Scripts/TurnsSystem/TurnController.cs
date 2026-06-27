@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -141,6 +142,19 @@ public abstract class TurnController : MonoBehaviour
 
     public bool AnyMonsterCanAct()
         => monsters.Any(m => !m.HasActed);
+
+    // -- Animation Gate --------------------------------------------------------
+
+    /// <summary>
+    /// Yields until every monster on this side has finished its attack animation
+    /// (i.e. the hit-event has fired and damage has been applied).
+    /// Prevents attack events from bleeding across the turn boundary.
+    /// </summary>
+    public IEnumerator WaitForPendingAnimations()
+    {
+        yield return new WaitUntil(
+            () => monsters.All(m => m == null || !m.IsAttackAnimating));
+    }
 
     // -- Force-end Helper ------------------------------------------------------
 

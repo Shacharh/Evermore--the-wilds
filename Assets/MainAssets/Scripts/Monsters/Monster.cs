@@ -185,6 +185,9 @@ public class Monster : MonoBehaviour
     /// <summary>True while the monster is alive.</summary>
     public bool IsAlive => currentHP > 0;
 
+    /// <summary>True from the moment an attack animation starts until its hit-event fires.</summary>
+    public bool IsAttackAnimating => _awaitingAnimationHit;
+
     /// <summary>Fired whenever HP changes. Parameters: (currentHP, maxHP).</summary>
     public event System.Action<int, int> OnHPChanged;
 
@@ -678,6 +681,7 @@ public class Monster : MonoBehaviour
     private void HandleDeath()
     {
         currentHP = 0;
+        _awaitingAnimationHit = false; // don't let a dying monster block WaitForPendingAnimations
         ReturnAllVFX();
         AudioManager.PlayDeath();
         OnDied?.Invoke(this);

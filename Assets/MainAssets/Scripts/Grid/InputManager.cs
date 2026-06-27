@@ -1207,11 +1207,12 @@ public class InputManager : MonoBehaviour
                   $"HP {monster.CurrentHP}/{monster.MaxHP}");
     }
 
-    // Waits one frame + a short buffer so BattleMessage, VFX and camera restore
-    // all get a head start before the enemy turn begins.
+    // Waits for all player attack animations to fire their hit-events before
+    // ending the turn, so no damage can bleed into the enemy's turn.
     private System.Collections.IEnumerator DelayedAutoEndTurn()
     {
-        yield return new WaitForSeconds(0.5f);
+        if (playerTurnController != null)
+            yield return StartCoroutine(playerTurnController.WaitForPendingAnimations());
         playerTurnController?.CheckAutoEndTurn();
     }
 
