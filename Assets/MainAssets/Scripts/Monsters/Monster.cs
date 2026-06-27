@@ -424,6 +424,8 @@ public class Monster : MonoBehaviour
             return;
         }
 
+        AudioManager.PlayAttackSFX(attackData);
+
         foreach (Monster target in targets)
         {
             for (int i = 0; i < attackData.Effects.Count; i++)
@@ -645,7 +647,6 @@ public class Monster : MonoBehaviour
             }
 
             FloatingDamageNumber.Spawn(effectTarget.transform.position, damage, effectiveness: eff);
-            AudioManager.PlayAttackSFX(attackData);
 
             BattleMessage.Show($"{effectivenessPrefix}{attacker.customeName} → {effectTarget.customeName}: -{damage} HP  " +
                                $"({effectTarget.currentHP}/{effectTarget.MaxHP})", 3.5f);
