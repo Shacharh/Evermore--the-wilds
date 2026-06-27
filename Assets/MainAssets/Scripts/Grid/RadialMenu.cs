@@ -230,6 +230,7 @@ public class RadialMenu : MonoBehaviour
             if (Time.realtimeSinceStartup - _createdAt < ClickGuardSeconds) return;
             if (evt.button != 0) return;
             evt.StopPropagation();
+            AudioManager.PlayUIClick();
             OnActionSelected(actionType);
         });
 
