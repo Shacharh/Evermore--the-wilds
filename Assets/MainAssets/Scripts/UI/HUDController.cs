@@ -77,6 +77,9 @@ public class HUDController : MonoBehaviour
             _endTurnBtn.clicked += playerTurnController.OnEndTurnButtonPressed;
 
         RefreshAP(playerTurnController.CurrentAP, playerTurnController.MaxAP);
+        // Sync button state immediately — onTurnStart may have already fired
+        // before HUD subscribed (Start() ordering race on scene load/reload).
+        SetEndTurnInteractable(playerTurnController.IsActive);
     }
 
     // ── Callbacks ─────────────────────────────────────────────────────────────
