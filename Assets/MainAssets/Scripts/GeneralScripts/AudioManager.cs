@@ -25,6 +25,18 @@ public class AudioManager : MonoBehaviour
     private AudioSource _sfxSource;
     private AudioSource _musicSource;
 
+    // Cached config values — used in Update to detect changes without re-applying every frame.
+    private float _cachedSfxVolume      = -1f;
+    private float _cachedSfxVolumeMax   = -1f;
+    private float _cachedMusicVolume    = -1f;
+    private float _cachedMusicVolumeMax = -1f;
+
+    // Square-law curve: perceived loudness scales with t², matching the dB falloff curve.
+    // t is normalised 0–1 (the UI shows 0–100 but divides before calling these).
+    // The ceiling comes from SFXConfig so the design team can tune it without touching code.
+    private float SFXLinear(float t)   => t <= 0f ? 0f : t * t * (config != null ? config.sfxVolumeMax   : 1.0f);
+    private float MusicLinear(float t) => t <= 0f ? 0f : t * t * (config != null ? config.musicVolumeMax : 0.3f);
+
     // ── Lifecycle ──────────────────────────────────────────────────────────────
 
     private void Awake()
@@ -41,10 +53,41 @@ public class AudioManager : MonoBehaviour
         _sfxSource.playOnAwake  = false;
         _sfxSource.spatialBlend = 0f;
 
-        _musicSource             = gameObject.AddComponent<AudioSource>();
-        _musicSource.playOnAwake = false;
+        _musicSource              = gameObject.AddComponent<AudioSource>();
+        _musicSource.playOnAwake  = false;
         _musicSource.spatialBlend = 0f;
-        _musicSource.loop        = true;
+        _musicSource.loop         = true;
+
+        ApplyVolumes();
+    }
+
+    // Applies the converted (square-law + cap) volumes to every AudioSource on this GameObject.
+    // Called on startup so manually-placed Inspector sources are capped from the first frame,
+    // not only after the player touches the slider.
+    private void ApplyVolumes()
+    {
+        if (config == null) return;
+        _sfxSource.volume = SFXLinear(config.sfxVolume);
+        float musicLinear = MusicLinear(config.musicVolume);
+        foreach (AudioSource src in GetComponents<AudioSource>())
+            if (src != _sfxSource)
+                src.volume = musicLinear;
+
+        _cachedSfxVolume      = config.sfxVolume;
+        _cachedSfxVolumeMax   = config.sfxVolumeMax;
+        _cachedMusicVolume    = config.musicVolume;
+        _cachedMusicVolumeMax = config.musicVolumeMax;
+    }
+
+    private void Update()
+    {
+        if (config == null) return;
+        if (config.sfxVolume      == _cachedSfxVolume      &&
+            config.sfxVolumeMax   == _cachedSfxVolumeMax   &&
+            config.musicVolume    == _cachedMusicVolume     &&
+            config.musicVolumeMax == _cachedMusicVolumeMax) return;
+
+        ApplyVolumes();
     }
 
     private void OnDestroy()
@@ -114,26 +157,31 @@ public class AudioManager : MonoBehaviour
     /// <summary>Exposes the SFXConfig so the pause menu can read current volumes.</summary>
     public static SFXConfig Config => Instance?.config;
 
-    /// <summary>Set SFX volume at runtime and persist it to SFXConfig.</summary>
-    public static void SetSFXVolume(float volume)
+    /// <summary>
+    /// Set SFX volume from a 0–100 slider value.
+    /// Internally converts via square-law curve to a linear AudioSource volume.
+    /// </summary>
+    public static void SetSFXVolume(float slider100)
     {
         if (Instance?.config == null) return;
-        Instance.config.sfxVolume = Mathf.Clamp01(volume);
-        Instance._sfxSource.volume = Instance.config.sfxVolume;
+        Instance.config.sfxVolume  = Mathf.Clamp01(slider100 / 100f);
+        Instance._sfxSource.volume = Instance.SFXLinear(Instance.config.sfxVolume);
     }
 
-    /// <summary>Set music volume at runtime and persist it to SFXConfig.</summary>
-    public static void SetMusicVolume(float volume)
+    /// <summary>
+    /// Set music volume from a 0–100 slider value.
+    /// Internally converts via square-law curve and caps at MaxMusicLinear (0.3).
+    /// Updates every non-SFX AudioSource on this GameObject (covers manually-placed sources too).
+    /// </summary>
+    public static void SetMusicVolume(float slider100)
     {
         if (Instance?.config == null) return;
-        Instance.config.musicVolume = Mathf.Clamp01(volume);
-        // Update every AudioSource on this GameObject except the SFX one —
-        // this covers both the code-created _musicSource and any AudioSource
-        // the audio designer attached manually in the Inspector.
+        Instance.config.musicVolume = Mathf.Clamp01(slider100 / 100f);
+        float linear = Instance.MusicLinear(Instance.config.musicVolume);
         foreach (AudioSource src in Instance.GetComponents<AudioSource>())
         {
             if (src != Instance._sfxSource)
-                src.volume = Instance.config.musicVolume;
+                src.volume = linear;
         }
     }
 
@@ -148,7 +196,7 @@ public class AudioManager : MonoBehaviour
     private static void Play(AudioClip clip)
     {
         if (Instance == null || clip == null) return;
-        Instance._sfxSource.volume = Instance.config != null ? Instance.config.sfxVolume : 0.8f;
+        Instance._sfxSource.volume = Instance.SFXLinear(Instance.config?.sfxVolume ?? 0.8f);
         Instance._sfxSource.PlayOneShot(clip);
     }
 
@@ -157,7 +205,7 @@ public class AudioManager : MonoBehaviour
         if (Instance == null || clip == null) return;
         if (Instance._musicSource.clip == clip && Instance._musicSource.isPlaying) return;
         Instance._musicSource.clip   = clip;
-        Instance._musicSource.volume = Instance.config != null ? Instance.config.musicVolume : 0.7f;
+        Instance._musicSource.volume = Instance.MusicLinear(Instance.config?.musicVolume ?? 0.7f);
         Instance._musicSource.Play();
     }
 }

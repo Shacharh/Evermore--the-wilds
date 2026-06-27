@@ -101,16 +101,18 @@ public class PauseMenu : MonoBehaviour
 
         if (_sfxSlider != null)
         {
-            _sfxSlider.SetValueWithoutNotify(cfg.sfxVolume);
+            float sfxPos = cfg.sfxVolume * 100f;
+            _sfxSlider.SetValueWithoutNotify(sfxPos);
             if (_sfxValueLabel != null)
-                _sfxValueLabel.text = Mathf.RoundToInt(cfg.sfxVolume * 100) + "%";
+                _sfxValueLabel.text = Mathf.RoundToInt(sfxPos).ToString();
         }
 
         if (_musicSlider != null)
         {
-            _musicSlider.SetValueWithoutNotify(cfg.musicVolume);
+            float musicPos = cfg.musicVolume * 100f;
+            _musicSlider.SetValueWithoutNotify(musicPos);
             if (_musicValueLabel != null)
-                _musicValueLabel.text = Mathf.RoundToInt(cfg.musicVolume * 100) + "%";
+                _musicValueLabel.text = Mathf.RoundToInt(musicPos).ToString();
         }
     }
 
@@ -168,7 +170,7 @@ public class PauseMenu : MonoBehaviour
             {
                 AudioManager.SetSFXVolume(evt.newValue);
                 if (_sfxValueLabel != null)
-                    _sfxValueLabel.text = Mathf.RoundToInt(evt.newValue * 100) + "%";
+                    _sfxValueLabel.text = Mathf.RoundToInt(evt.newValue).ToString();
             });
 
         if (_musicSlider != null)
@@ -176,7 +178,7 @@ public class PauseMenu : MonoBehaviour
             {
                 AudioManager.SetMusicVolume(evt.newValue);
                 if (_musicValueLabel != null)
-                    _musicValueLabel.text = Mathf.RoundToInt(evt.newValue * 100) + "%";
+                    _musicValueLabel.text = Mathf.RoundToInt(evt.newValue).ToString();
             });
 
         // Wire buttons — apply sprite if set, then wire click

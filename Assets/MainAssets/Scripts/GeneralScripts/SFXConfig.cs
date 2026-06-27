@@ -50,12 +50,21 @@ public class SFXConfig : ScriptableObject
     [Tooltip("Background music loop for combat / overworld scenes (optional — can be set per-scene via AudioManager.PlayGameMusic).")]
     public AudioClip gameMusicClip;
 
-    [Header("Volume")]
+    [Header("Volume — Caps (set by design team)")]
     [Range(0f, 1f)]
-    [Tooltip("Master volume for all sound effects.")]
+    [Tooltip("Hard ceiling for SFX volume. The in-game slider's '100' maps to this value.")]
+    public float sfxVolumeMax = 1.0f;
+
+    [Range(0f, 1f)]
+    [Tooltip("Hard ceiling for music volume. The in-game slider's '100' maps to this value.")]
+    public float musicVolumeMax = 0.3f;
+
+    [Header("Volume — Player Preferences (0–1, driven by the in-game slider)")]
+    [Range(0f, 1f)]
+    [Tooltip("Normalised slider position saved at runtime. Do not edit by hand.")]
     public float sfxVolume = 0.8f;
 
     [Range(0f, 1f)]
-    [Tooltip("Volume for background music.")]
+    [Tooltip("Normalised slider position saved at runtime. Do not edit by hand.")]
     public float musicVolume = 0.7f;
 }
