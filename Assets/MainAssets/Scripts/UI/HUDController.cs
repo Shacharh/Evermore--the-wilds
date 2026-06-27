@@ -76,10 +76,15 @@ public class HUDController : MonoBehaviour
         if (_endTurnBtn != null)
             _endTurnBtn.clicked += playerTurnController.OnEndTurnButtonPressed;
 
-        RefreshAP(playerTurnController.CurrentAP, playerTurnController.MaxAP);
-        // Sync button state immediately — onTurnStart may have already fired
-        // before HUD subscribed (Start() ordering race on scene load/reload).
-        SetEndTurnInteractable(playerTurnController.IsActive);
+        // Only sync immediately if the turn is already running (late connection).
+        // If called during the startup window (before BeginTurn fires), skip the
+        // RefreshAP call — the imminent onAPChanged / onTurnStart events will do it,
+        // and showing "0 / max" while waiting would be misleading.
+        if (playerTurnController.IsActive)
+        {
+            RefreshAP(playerTurnController.CurrentAP, playerTurnController.MaxAP);
+            SetEndTurnInteractable(true);
+        }
     }
 
     // ── Callbacks ─────────────────────────────────────────────────────────────
