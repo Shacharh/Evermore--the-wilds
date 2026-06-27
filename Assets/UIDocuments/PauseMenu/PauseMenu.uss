@@ -84,6 +84,54 @@
     border-color: rgba(80, 220, 130, 255);
 }
 
+/* ── Audio slider rows ───────────────────────────────────────────────────── */
+.pm-slider-row {
+    flex-direction: row;
+    align-items: center;
+    width: 420px;
+    height: 36px;
+    margin-bottom: 8px;
+}
+
+.pm-slider-label {
+    width: 56px;
+    font-size: 17px;
+    color: rgba(224, 224, 224, 255);
+    -unity-text-align: middle-left;
+}
+
+.pm-slider {
+    flex-grow: 1;
+    margin-left: 6px;
+    margin-right: 6px;
+}
+
+.pm-slider .unity-base-slider__tracker {
+    background-color: rgba(51, 51, 77, 255);
+    border-radius: 3px;
+    height: 6px;
+}
+
+.pm-slider .unity-base-slider__dragger {
+    width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    background-color: rgba(120, 140, 220, 255);
+    border-width: 0;
+    margin-top: -6px;
+}
+
+.pm-slider .unity-base-slider__dragger:hover {
+    background-color: rgba(160, 180, 255, 255);
+}
+
+.pm-slider-value {
+    width: 42px;
+    font-size: 15px;
+    color: rgba(160, 160, 200, 255);
+    -unity-text-align: middle-right;
+}
+
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
 .pm-button {
     width:  280px;

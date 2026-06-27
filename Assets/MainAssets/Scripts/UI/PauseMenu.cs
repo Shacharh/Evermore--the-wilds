@@ -23,6 +23,10 @@ public class PauseMenu : MonoBehaviour
     private UIDocument    _uiDoc;
     private VisualElement _overlay;
     private Toggle        _edgeScrollToggle;
+    private Slider        _sfxSlider;
+    private Slider        _musicSlider;
+    private Label         _sfxValueLabel;
+    private Label         _musicValueLabel;
 
     // ── State ──────────────────────────────────────────────────────────────────
 
@@ -61,8 +65,12 @@ public class PauseMenu : MonoBehaviour
         _overlay.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
         Time.timeScale = visible ? 0f : 1f;
 
-        if (visible && _edgeScrollToggle != null)
-            _edgeScrollToggle.value = GameSettings.EdgeScrollEnabled;
+        if (visible)
+        {
+            if (_edgeScrollToggle != null)
+                _edgeScrollToggle.value = GameSettings.EdgeScrollEnabled;
+            RefreshAudioSliders();
+        }
     }
 
     private void OpenKeyBindings()
@@ -84,6 +92,26 @@ public class PauseMenu : MonoBehaviour
         _overlay.style.display = DisplayStyle.Flex;
         if (_edgeScrollToggle != null)
             _edgeScrollToggle.value = GameSettings.EdgeScrollEnabled;
+    }
+
+    private void RefreshAudioSliders()
+    {
+        var cfg = AudioManager.Config;
+        if (cfg == null) return;
+
+        if (_sfxSlider != null)
+        {
+            _sfxSlider.SetValueWithoutNotify(cfg.sfxVolume);
+            if (_sfxValueLabel != null)
+                _sfxValueLabel.text = Mathf.RoundToInt(cfg.sfxVolume * 100) + "%";
+        }
+
+        if (_musicSlider != null)
+        {
+            _musicSlider.SetValueWithoutNotify(cfg.musicVolume);
+            if (_musicValueLabel != null)
+                _musicValueLabel.text = Mathf.RoundToInt(cfg.musicVolume * 100) + "%";
+        }
     }
 
     // ── UI Construction ────────────────────────────────────────────────────────
@@ -126,6 +154,30 @@ public class PauseMenu : MonoBehaviour
             _edgeScrollToggle.RegisterValueChangedCallback(
                 evt => GameSettings.EdgeScrollEnabled = evt.newValue);
         }
+
+        // Wire audio sliders
+        _sfxSlider      = docRoot.Q<Slider>("sfx-volume-slider");
+        _musicSlider    = docRoot.Q<Slider>("music-volume-slider");
+        _sfxValueLabel  = docRoot.Q<Label>("sfx-volume-value");
+        _musicValueLabel = docRoot.Q<Label>("music-volume-value");
+
+        RefreshAudioSliders();
+
+        if (_sfxSlider != null)
+            _sfxSlider.RegisterValueChangedCallback(evt =>
+            {
+                AudioManager.SetSFXVolume(evt.newValue);
+                if (_sfxValueLabel != null)
+                    _sfxValueLabel.text = Mathf.RoundToInt(evt.newValue * 100) + "%";
+            });
+
+        if (_musicSlider != null)
+            _musicSlider.RegisterValueChangedCallback(evt =>
+            {
+                AudioManager.SetMusicVolume(evt.newValue);
+                if (_musicValueLabel != null)
+                    _musicValueLabel.text = Mathf.RoundToInt(evt.newValue * 100) + "%";
+            });
 
         // Wire buttons — apply sprite if set, then wire click
         var keyBindBtn = docRoot.Q<Button>("keybindings-button");

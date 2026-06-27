@@ -24,6 +24,26 @@
 
             <ui:VisualElement class="pm-divider" />
 
+            <ui:Label class="pm-section-label" text="Audio" />
+
+            <!-- SFX volume slider -->
+            <ui:VisualElement class="pm-slider-row">
+                <ui:Label class="pm-slider-label" text="SFX" />
+                <ui:Slider name="sfx-volume-slider" class="pm-slider"
+                           low-value="0" high-value="1" />
+                <ui:Label name="sfx-volume-value" class="pm-slider-value" text="80%" />
+            </ui:VisualElement>
+
+            <!-- Music volume slider -->
+            <ui:VisualElement class="pm-slider-row">
+                <ui:Label class="pm-slider-label" text="Music" />
+                <ui:Slider name="music-volume-slider" class="pm-slider"
+                           low-value="0" high-value="1" />
+                <ui:Label name="music-volume-value" class="pm-slider-value" text="70%" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="pm-divider" />
+
             <ui:Button name="keybindings-button" class="pm-button pm-keybind-btn" text="Key Bindings" />
 
             <ui:VisualElement class="pm-divider-small" />

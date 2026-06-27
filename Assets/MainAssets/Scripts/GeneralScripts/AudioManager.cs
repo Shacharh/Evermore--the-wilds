@@ -111,6 +111,32 @@ public class AudioManager : MonoBehaviour
     /// </summary>
     public static void PlayGameMusic()  => PlayMusic(Instance?.config?.gameMusicClip);
 
+    /// <summary>Exposes the SFXConfig so the pause menu can read current volumes.</summary>
+    public static SFXConfig Config => Instance?.config;
+
+    /// <summary>Set SFX volume at runtime and persist it to SFXConfig.</summary>
+    public static void SetSFXVolume(float volume)
+    {
+        if (Instance?.config == null) return;
+        Instance.config.sfxVolume = Mathf.Clamp01(volume);
+        Instance._sfxSource.volume = Instance.config.sfxVolume;
+    }
+
+    /// <summary>Set music volume at runtime and persist it to SFXConfig.</summary>
+    public static void SetMusicVolume(float volume)
+    {
+        if (Instance?.config == null) return;
+        Instance.config.musicVolume = Mathf.Clamp01(volume);
+        // Update every AudioSource on this GameObject except the SFX one —
+        // this covers both the code-created _musicSource and any AudioSource
+        // the audio designer attached manually in the Inspector.
+        foreach (AudioSource src in Instance.GetComponents<AudioSource>())
+        {
+            if (src != Instance._sfxSource)
+                src.volume = Instance.config.musicVolume;
+        }
+    }
+
     /// <summary>Stop whichever music track is currently playing.</summary>
     public static void StopMusic()
     {
