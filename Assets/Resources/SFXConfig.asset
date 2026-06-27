@@ -23,5 +23,7 @@ MonoBehaviour:
   movementStepInterval: 0.1
   menuMusicClip: {fileID: 0}
   gameMusicClip: {fileID: 0}
+  sfxVolumeMax: 1
+  musicVolumeMax: 0.166
   sfxVolume: 1
-  musicVolume: 0.7
+  musicVolume: 0.278
