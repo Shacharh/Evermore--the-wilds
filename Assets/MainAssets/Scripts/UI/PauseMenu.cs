@@ -195,5 +195,27 @@ public class PauseMenu : MonoBehaviour
             UIStyleConfig.ApplySprite(resumeBtn, s.buttonSprite, s.resumeButtonColor);
             resumeBtn.clicked += () => { AudioManager.PlayUIClick(); Close(); };
         }
+
+        // Quit button — look for it in UXML first; create programmatically if absent.
+        var quitBtn = docRoot.Q<Button>("quit-button");
+        if (quitBtn == null)
+        {
+            quitBtn = new Button();
+            quitBtn.name = "quit-button";
+            quitBtn.text = "QUIT";
+            quitBtn.style.marginTop = 8;
+            (docRoot.Q("panel-root") ?? _overlay)?.Add(quitBtn);
+        }
+        UIStyleConfig.ApplySprite(quitBtn, s.buttonSprite, new Color(0.45f, 0.12f, 0.12f, 1f));
+        quitBtn.clicked += () => { AudioManager.PlayUIClick(); QuitGame(); };
+    }
+
+    private static void QuitGame()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
     }
 }

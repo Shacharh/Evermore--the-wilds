@@ -729,6 +729,8 @@ public class InputManager : MonoBehaviour
 
         GameObject monsterObj = movingMonster.gameObject;
 
+        cameraController?.FocusOnMonster(monsterObj.transform.position);
+
         // Start walk animation
         movingMonster.TriggerMovementAnimationStart();
 
@@ -753,6 +755,7 @@ public class InputManager : MonoBehaviour
                 t += Time.deltaTime * movementSpeed / Mathf.Max(distance, 0.01f);
                 monsterObj.transform.position =
                     Vector3.Lerp(startPos, endPos, Mathf.SmoothStep(0f, 1f, t));
+                cameraController?.UpdateFocusTarget(monsterObj.transform.position);
                 yield return null;
             }
 
@@ -762,6 +765,7 @@ public class InputManager : MonoBehaviour
         }
 
         movingMonster.TriggerMovementAnimationEnd();
+        cameraController?.ReleaseFocus();
 
         Debug.Log($"[InputManager] {movingMonster.name} moved to {destinationTile.GridPosition}. " +
                   $"AP remaining: {playerTurnController?.CurrentAP}");
