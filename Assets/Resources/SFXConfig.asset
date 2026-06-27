@@ -15,9 +15,9 @@ MonoBehaviour:
   genericHitClip: {fileID: 0}
   missClip: {fileID: 0}
   monsterDeathClip: {fileID: 0}
-  victoryClip: {fileID: 0}
-  defeatClip: {fileID: 0}
-  uiClickClip: {fileID: 0}
-  uiHoverClip: {fileID: 0}
+  victoryClip: {fileID: 8300000, guid: 1a006fabf5b32e74cab4ae0ec2e6ee5a, type: 3}
+  defeatClip: {fileID: 8300000, guid: 90c75b6e00f7f8747833b491eb38a748, type: 3}
+  uiClickClip: {fileID: 8300000, guid: 061521ff247fdbd47aad59f1b6d58e6f, type: 3}
+  uiHoverClip: {fileID: 8300000, guid: 7f138b09a905c5743bedf8d6ace675e9, type: 3}
   sfxVolume: 0.8
   musicVolume: 0.7
