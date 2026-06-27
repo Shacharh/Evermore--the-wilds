@@ -188,6 +188,12 @@ public class Monster : MonoBehaviour
     /// <summary>True from the moment an attack animation starts until its hit-event fires.</summary>
     public bool IsAttackAnimating => _awaitingAnimationHit;
 
+    /// <summary>
+    /// Emergency clear for the animation-pending flag. Called by WaitForPendingAnimations
+    /// when an animation event times out. Does NOT apply damage.
+    /// </summary>
+    public void ForceStopAttackAnimation() => _awaitingAnimationHit = false;
+
     /// <summary>Fired whenever HP changes. Parameters: (currentHP, maxHP).</summary>
     public event System.Action<int, int> OnHPChanged;
 

@@ -149,11 +149,29 @@ public abstract class TurnController : MonoBehaviour
     /// Yields until every monster on this side has finished its attack animation
     /// (i.e. the hit-event has fired and damage has been applied).
     /// Prevents attack events from bleeding across the turn boundary.
+    /// Times out after <paramref name="timeout"/> seconds and force-clears any
+    /// stuck flags so a missing animation event can never freeze the game.
     /// </summary>
-    public IEnumerator WaitForPendingAnimations()
+    public IEnumerator WaitForPendingAnimations(float timeout = 5f)
     {
-        yield return new WaitUntil(
-            () => monsters.All(m => m == null || !m.IsAttackAnimating));
+        float elapsed = 0f;
+        while (!monsters.All(m => m == null || !m.IsAttackAnimating))
+        {
+            elapsed += Time.deltaTime;
+            if (elapsed >= timeout)
+            {
+                foreach (var m in monsters)
+                {
+                    if (m != null && m.IsAttackAnimating)
+                    {
+                        Debug.LogWarning($"[{GetType().Name}] Animation event never fired on {m.name} — force-clearing flag.");
+                        m.ForceStopAttackAnimation();
+                    }
+                }
+                break;
+            }
+            yield return null;
+        }
     }
 
     // -- Force-end Helper ------------------------------------------------------
