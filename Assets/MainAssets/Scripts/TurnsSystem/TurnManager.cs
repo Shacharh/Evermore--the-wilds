@@ -71,26 +71,74 @@ public class TurnManager : MonoBehaviour
 
     // -- Lifecycle -------------------------------------------------------------
 
+    private bool _gameStarted = false;
+
     private void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
-
+        Debug.Log($"[TurnManager] Awake — frame {Time.frameCount}");
         EnsureControllers();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
     }
 
     private void Start()
     {
+        Time.timeScale = 1f; // safety: WinLoseManager sets timeScale=0 on defeat/victory
+        Debug.Log($"[TurnManager] Start — frame {Time.frameCount}, timeScale={Time.timeScale}");
         StartCoroutine(BeginGame());
     }
 
     // -- Game Start Sequence ---------------------------------------------------
 
+    /// <summary>
+    /// Called by WinLoseManager after a scene reload.
+    /// TurnManager survives reloads (shares a DontDestroyOnLoad GO with WinLoseManager),
+    /// so Start()/BeginGame() never run again. This resets state and restarts the game loop.
+    /// </summary>
+    public void RestartGame()
+    {
+        Debug.Log($"[TurnManager] RestartGame — frame {Time.frameCount}");
+        _gameStarted      = false;
+        TurnNumber        = 1;
+        transitionInProgress = false;
+
+        // Re-discover controllers — old scene's PTC/ETC are destroyed, new ones exist.
+        playerController = null;
+        enemyController  = null;
+        EnsureControllers();
+
+        StartCoroutine(BeginGame());
+    }
+
+    /// <summary>
+    /// Fallback for game 1 startup only — does nothing if already started.
+    /// </summary>
+    public void EnsureGameStarted()
+    {
+        if (!_gameStarted)
+        {
+            Debug.LogWarning("[TurnManager] EnsureGameStarted — kicking off BeginGame.");
+            StartCoroutine(BeginGame());
+        }
+    }
+
     private IEnumerator BeginGame()
     {
-        // MonsterSpawner uses Invoke(0.2 s) to spawn — wait long enough so all
-        // monsters exist and their Start() methods have run before we discover them.
-        yield return new WaitForSeconds(0.5f);
+        if (_gameStarted) { yield break; }
+        _gameStarted = true;
+        Debug.Log($"[TurnManager] BeginGame started — frame {Time.frameCount}, timeScale={Time.timeScale}");
+
+        // WaitUntil monsters exist — immune to both timeScale=0 and long loading frames.
+        // MonsterSpawner.Invoke fires at 0.2s scaled time; WaitUntil polls every frame.
+        yield return new WaitUntil(() => FindObjectsByType<Monster>(FindObjectsSortMode.None).Length > 0);
+        yield return null; // one extra frame so Monster.Start() has run
+
+        Debug.Log($"[TurnManager] BeginGame after wait — frame {Time.frameCount}");
 
         // Auto-discover monsters (only fills rosters that were left empty in Inspector)
         playerController?.AutoDiscoverMonsters();
@@ -126,12 +174,14 @@ public class TurnManager : MonoBehaviour
         if (owner == TurnOwner.Player)
         {
             Debug.Log($"[TurnManager] == PLAYER TURN {TurnNumber} ==");
+            TurnIndicator.Show(isPlayer: true, TurnNumber);
             playerController?.StartTurn();
             onPlayerTurnStart?.Invoke();
         }
         else
         {
             Debug.Log($"[TurnManager] == ENEMY TURN {TurnNumber} ==");
+            TurnIndicator.Show(isPlayer: false, TurnNumber);
             enemyController?.StartTurn();
             onEnemyTurnStart?.Invoke();
         }

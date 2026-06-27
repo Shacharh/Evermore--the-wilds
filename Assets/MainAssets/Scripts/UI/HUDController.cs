@@ -28,6 +28,10 @@ public class HUDController : MonoBehaviour
     private Button        _endTurnBtn;
     private bool          _eventsWired;
 
+    // True once we have received a real AP value (or connected to an already-active turn).
+    // Prevents showing "0 / max" during the brief startup window before BeginTurn fires.
+    private bool          _apInitialized;
+
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     private void Start()
@@ -36,9 +40,44 @@ public class HUDController : MonoBehaviour
         var oldCanvas = GetComponentInParent<Canvas>();
         if (oldCanvas != null) oldCanvas.enabled = false;
 
+        Debug.Log($"[HUDController] Start — frame {Time.frameCount}, instance {GetInstanceID()}");
         BuildUI();
         SetEndTurnInteractable(false);
         StartCoroutine(RetryConnect());
+    }
+
+    // Every LateUpdate, verify the HUD state matches PlayerTurnController's actual state.
+    // Also detects if the subscribed PTC was destroyed mid-scene-transition and reconnects.
+    private void LateUpdate()
+    {
+        // If PTC was destroyed (scene-reload race: HUD subscribed to the old PTC before it
+        // was torn down), reset and let RetryConnect pick up the new one.
+        if (_eventsWired && playerTurnController == null)
+        {
+            Debug.LogWarning("[HUDController] Subscribed PTC was destroyed — resetting to reconnect to new scene's PTC.");
+            _eventsWired = false;
+            _apInitialized = false;
+            StartCoroutine(RetryConnect());
+            return;
+        }
+
+        if (!_eventsWired || playerTurnController == null) return;
+
+        bool shouldBeActive = playerTurnController.IsActive;
+
+        if (_endTurnBtn != null && _endTurnBtn.enabledSelf != shouldBeActive)
+        {
+            Debug.LogWarning($"[HUDController] End Turn button desynced " +
+                             $"(was {_endTurnBtn.enabledSelf}, should be {shouldBeActive}) — correcting.");
+            SetEndTurnInteractable(shouldBeActive);
+        }
+
+        if (shouldBeActive && _apText != null && _apText.text == "-- / --")
+        {
+            Debug.LogWarning("[HUDController] AP text desynced on active turn — correcting.");
+            _apInitialized = true;
+            RefreshAP(playerTurnController.CurrentAP, playerTurnController.MaxAP);
+        }
     }
 
     private void OnDestroy()
@@ -54,11 +93,15 @@ public class HUDController : MonoBehaviour
     /// <summary>Polls every 0.25 s until PlayerTurnController is available.</summary>
     private System.Collections.IEnumerator RetryConnect()
     {
+        int attempt = 0;
         while (!_eventsWired)
         {
+            attempt++;
+            Debug.Log($"[HUDController] RetryConnect attempt {attempt} — frame {Time.frameCount}, timeScale={Time.timeScale}");
             TryConnectController();
             yield return new UnityEngine.WaitForSeconds(0.25f);
         }
+        Debug.Log($"[HUDController] RetryConnect done after {attempt} attempt(s) — frame {Time.frameCount}");
     }
 
     private void TryConnectController()
@@ -76,12 +119,17 @@ public class HUDController : MonoBehaviour
         if (_endTurnBtn != null)
             _endTurnBtn.clicked += playerTurnController.OnEndTurnButtonPressed;
 
-        // Only sync immediately if the turn is already running (late connection).
-        // If called during the startup window (before BeginTurn fires), skip the
-        // RefreshAP call — the imminent onAPChanged / onTurnStart events will do it,
-        // and showing "0 / max" while waiting would be misleading.
+        Debug.Log($"[HUDController] Connected to PlayerTurnController — " +
+                  $"IsActive={playerTurnController.IsActive}, " +
+                  $"CurrentAP={playerTurnController.CurrentAP}, frame={Time.frameCount}");
+
+        // If connecting AFTER BeginTurn has already fired (late Start()-ordering on scene reload),
+        // the onAPChanged / onTurnStart events were already sent and won't fire again — sync now.
+        // If connecting during the startup window (IsActive=false), leave the HUD at "--/--";
+        // the imminent onAPChanged / onTurnStart events will update it correctly.
         if (playerTurnController.IsActive)
         {
+            _apInitialized = true;
             RefreshAP(playerTurnController.CurrentAP, playerTurnController.MaxAP);
             SetEndTurnInteractable(true);
         }
@@ -89,19 +137,33 @@ public class HUDController : MonoBehaviour
 
     // ── Callbacks ─────────────────────────────────────────────────────────────
 
-    private void OnAPChanged(int newAP)  => RefreshAP(newAP, playerTurnController.MaxAP);
-    private void OnPlayerTurnStart()     => SetEndTurnInteractable(true);
-    private void OnPlayerTurnEnd()       => SetEndTurnInteractable(false);
+    private void OnAPChanged(int newAP)
+    {
+        _apInitialized = true;
+        RefreshAP(newAP, playerTurnController.MaxAP);
+    }
+
+    private void OnPlayerTurnStart()
+    {
+        Debug.Log($"[HUDController] OnPlayerTurnStart — frame {Time.frameCount}");
+        SetEndTurnInteractable(true);
+    }
+
+    private void OnPlayerTurnEnd()
+    {
+        Debug.Log($"[HUDController] OnPlayerTurnEnd — frame {Time.frameCount}");
+        SetEndTurnInteractable(false);
+    }
 
     // ── UI Updates ────────────────────────────────────────────────────────────
 
     private void RefreshAP(int current, int max)
     {
-        float ratio = max > 0 ? (float)current / max : 0f;
+        float ratio = (_apInitialized && max > 0) ? (float)current / max : 0f;
         if (_apFill != null)
             _apFill.style.width = new StyleLength(new Length(ratio * 100f, LengthUnit.Percent));
         if (_apText != null)
-            _apText.text = $"{current} / {max}";
+            _apText.text = _apInitialized ? $"{current} / {max}" : "-- / --";
     }
 
     private void SetEndTurnInteractable(bool interactable)
@@ -156,7 +218,7 @@ public class HUDController : MonoBehaviour
         _apFill = new VisualElement();
         _apFill.pickingMode = PickingMode.Ignore;
         _apFill.style.height          = new StyleLength(new Length(100f, LengthUnit.Percent));
-        _apFill.style.width           = new StyleLength(new Length(50f,  LengthUnit.Percent));
+        _apFill.style.width           = new StyleLength(new Length(0f,   LengthUnit.Percent));
         _apFill.style.backgroundColor = new Color(0.25f, 0.65f, 1f, 0.95f);
         barOuter.Add(_apFill);
 

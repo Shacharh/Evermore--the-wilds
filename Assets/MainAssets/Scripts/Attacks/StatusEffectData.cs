@@ -37,4 +37,7 @@ public class StatusEffectData : ScriptableObject
     // Dispel Rules
     public bool Dispel => dispel;
     public bool DispelAll => dispelAll;
+
+    /// <summary>Dev/QA use only — sets the status ID at runtime for test-injected instances.</summary>
+    public void DevInit(AttackEnum.StatusEffect statusId) => id = statusId;
 }

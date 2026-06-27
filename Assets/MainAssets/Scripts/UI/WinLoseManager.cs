@@ -34,6 +34,7 @@ public class WinLoseManager : MonoBehaviour
     // ── State ─────────────────────────────────────────────────────────────────
 
     private bool          _gameOver;
+    private bool          _pendingRestart; // true when LateSubscribe is a post-reload restart
     private VisualElement _overlayEl;
     private Label         _titleLabel;
     private Label         _reasonLabel;
@@ -53,12 +54,28 @@ public class WinLoseManager : MonoBehaviour
 
     private IEnumerator LateSubscribe()
     {
-        yield return new WaitForSeconds(0.7f);
+        // WaitUntil monsters exist — immune to both timeScale=0 and long loading frames.
+        yield return new WaitUntil(() => FindObjectsByType<Monster>(FindObjectsSortMode.None).Length > 0);
+        yield return null; // extra frame so Monster.Start() has run
 
-        if (TurnManager.Instance != null)
+        var tm = TurnManager.Instance;
+        if (tm != null)
         {
-            TurnManager.Instance.onNewRound.RemoveListener(OnNewRound);
-            TurnManager.Instance.onNewRound.AddListener(OnNewRound);
+            tm.onNewRound.RemoveListener(OnNewRound);
+            tm.onNewRound.AddListener(OnNewRound);
+
+            if (_pendingRestart)
+            {
+                // Scene reloaded: TurnManager survived as DDOL (shares our GO).
+                // Its _gameStarted=true and its controller refs are dead — restart fully.
+                _pendingRestart = false;
+                tm.RestartGame();
+            }
+            else
+            {
+                // Game 1 startup: BeginGame should already be running from TurnManager.Start.
+                tm.EnsureGameStarted();
+            }
         }
 
         foreach (var m in FindObjectsByType<Monster>(FindObjectsSortMode.None))
@@ -67,7 +84,18 @@ public class WinLoseManager : MonoBehaviour
 
     // ── Event handlers ────────────────────────────────────────────────────────
 
-    private void OnMonsterDied(Monster m) { if (!_gameOver) CheckConditions(); }
+    private void OnMonsterDied(Monster m)
+    {
+        if (!_gameOver) StartCoroutine(DelayedConditionCheck());
+    }
+
+    // Wait for death animation to finish before showing win/lose overlay.
+    // WaitForSecondsRealtime so timeScale=0 cannot block it.
+    private IEnumerator DelayedConditionCheck()
+    {
+        yield return new WaitForSecondsRealtime(1.0f);
+        if (!_gameOver) CheckConditions();
+    }
 
     private void OnNewRound(int round)
     {
@@ -129,6 +157,7 @@ public class WinLoseManager : MonoBehaviour
     private void OnSceneReloaded(Scene scene, LoadSceneMode mode)
     {
         SceneManager.sceneLoaded -= OnSceneReloaded;
+        _pendingRestart = true;
         StartCoroutine(LateSubscribe());
     }
 

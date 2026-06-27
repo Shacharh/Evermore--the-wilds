@@ -110,6 +110,9 @@ public abstract class TurnController : MonoBehaviour
 
     public bool CanAfford(int cost) => CurrentAP >= cost;
 
+    /// <summary>Add AP up to the cap. Used by DevPanel for QA testing.</summary>
+    public void GainAP(int amount) => SetAP(CurrentAP + amount);
+
     // -- Auto-end Conditions ---------------------------------------------------
 
     /// <summary>

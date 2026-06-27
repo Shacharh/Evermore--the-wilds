@@ -397,6 +397,17 @@ public class EnemyTurnController : TurnController
         {
             if (monster == null) yield break;
 
+            // Guard against flying monsters pathing through an occupied tile.
+            // FindPath (isFlying=true) allows intermediate tiles to be non-walkable,
+            // but SlideAlongPath must not physically enter an occupied tile.
+            if (!nextTile.IsWalkable())
+            {
+                Debug.LogWarning($"[EnemyAI] {monster.name} path blocked at " +
+                                 $"{nextTile.GridPosition} (occupied by " +
+                                 $"{nextTile.OccupyingObject?.name ?? "unknown"}) — stopping mid-path.");
+                break;
+            }
+
             previousTile.ClearOccupation();
             nextTile.SetOccupation(Tile.OccupationType.Monster, monster.gameObject);
 
