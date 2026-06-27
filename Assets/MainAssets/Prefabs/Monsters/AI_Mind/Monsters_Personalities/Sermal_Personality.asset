@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Sermal_Personality
   m_EditorClassIdentifier: Assembly-CSharp::MonsterPersonality
   killShotBonus: 5
-  damageEfficiencyMultiplier: 5
+  damageEfficiencyMultiplier: 1
   focusFireBonus: 10
   freezeBonus: 0
   dotBonus: 15
@@ -25,7 +25,7 @@ MonoBehaviour:
   survivalInstinctBonus: 20
   enemyCloseBonus: 10
   attackFrozenBonus: 5
-  allyHealBonus: 100
+  allyHealBonus: 300
   guaranteedAppearanceEnabled: 0
   guaranteedEveryXActions: 3
   guaranteedExactSlotEnabled: 0

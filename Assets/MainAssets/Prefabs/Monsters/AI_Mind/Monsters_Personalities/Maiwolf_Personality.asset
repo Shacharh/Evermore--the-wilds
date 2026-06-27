@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Maiwolf_Personality
   m_EditorClassIdentifier: Assembly-CSharp::MonsterPersonality
   killShotBonus: 20
-  damageEfficiencyMultiplier: 15
+  damageEfficiencyMultiplier: 1
   focusFireBonus: 5
   freezeBonus: 10
   dotBonus: 10

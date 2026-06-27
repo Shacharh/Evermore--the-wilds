@@ -23,13 +23,13 @@ MonoBehaviour:
   firstActorFatigueLimit: 3
   firstActorFatiguePenalty: 80
   repetitionPenalty: 35
-  killShotBonus: 50
-  damageEfficiencyMultiplier: 10
-  focusFireBonus: 22
+  killShotBonus: 45
+  damageEfficiencyMultiplier: 1
+  focusFireBonus: 10
   freezeBonus: 40
   dotBonus: 20
   shockBonus: 15
-  aggressionBonus: 25
+  aggressionBonus: 50
   multiTargetBonus: 15
   obstructionPenalty: 15
   lowHPCautionPenalty: 30
@@ -39,4 +39,4 @@ MonoBehaviour:
   attackFrozenBonus: 35
   freezeBonusTurnDuration: 2
   allyLowHPThreshold: 0.5
-  allyHealBonus: 125
+  allyHealBonus: 150
