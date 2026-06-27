@@ -136,6 +136,10 @@ public class InputManager : MonoBehaviour
         HandleTileHovering();
         HandleHotkeys();
 
+        // Re-acquire camera if it was null during Awake (scene-reload timing race)
+        if (mainCamera == null)
+            mainCamera = Camera.main;
+
         // Auto-find PlayerTurnController if TurnManager created it after Awake
         if (playerTurnController == null)
             playerTurnController = FindFirstObjectByType<PlayerTurnController>();
@@ -289,6 +293,9 @@ public class InputManager : MonoBehaviour
 
     void OnLeftClick(InputAction.CallbackContext context)
     {
+        if (mainCamera == null) mainCamera = Camera.main;
+        if (mainCamera == null) return;
+
         if (Time.time - menuOpenTime < MenuClickDelay) return;
         if (IsPointerOverUIElement()) return;
 

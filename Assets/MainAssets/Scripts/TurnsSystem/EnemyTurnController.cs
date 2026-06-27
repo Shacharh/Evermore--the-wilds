@@ -127,7 +127,7 @@ public class EnemyTurnController : TurnController
         {
             if (m != null && m.CurrentTile == null)
             {
-                Tile found = gridManager.GetTileAtWorldPosition(m.transform.root.position);
+                Tile found = gridManager.FindTileOccupiedBy(m.gameObject);
                 if (found != null)
                 {
                     m.CurrentTile = found;
