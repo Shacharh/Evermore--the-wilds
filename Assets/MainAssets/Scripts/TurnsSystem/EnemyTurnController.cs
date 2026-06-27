@@ -275,6 +275,10 @@ public class EnemyTurnController : TurnController
             _cameraController?.FocusOnMonster(monster.transform.position);
 
             yield return new WaitForSeconds(actionDelay);
+
+            // Re-check: monster may have died during the delay (e.g. from a delayed animation event).
+            if (monster == null || !monster.IsAlive) continue;
+
             yield return StartCoroutine(ExecuteAction(monster, action));
         }
 
@@ -389,6 +393,8 @@ public class EnemyTurnController : TurnController
         Tile previousTile = fromTile;
         foreach (Tile nextTile in path)
         {
+            if (monster == null) yield break;
+
             previousTile.ClearOccupation();
             nextTile.SetOccupation(Tile.OccupationType.Monster, monster.gameObject);
 
@@ -403,17 +409,20 @@ public class EnemyTurnController : TurnController
             float t    = 0f;
             while (t < 1f)
             {
+                if (monster == null) yield break;
                 t += Time.deltaTime * moveSpeed / Mathf.Max(dist, 0.01f);
                 monster.transform.position = Vector3.Lerp(start, end, Mathf.SmoothStep(0f, 1f, t));
                 _cameraController?.UpdateFocusTarget(monster.transform.position);
                 yield return null;
             }
 
+            if (monster == null) yield break;
             monster.transform.position = end;
             monster.CurrentTile        = nextTile;
             previousTile               = nextTile;
         }
 
+        if (monster == null) yield break;
         monster.TriggerMovementAnimationEnd();
         Debug.Log($"[EnemyAI] {monster.name} moved to {path[path.Count - 1].GridPosition}.");
     }
