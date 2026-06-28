@@ -136,6 +136,10 @@ public class InputManager : MonoBehaviour
         HandleTileHovering();
         HandleHotkeys();
 
+        // Re-acquire camera if it was null during Awake (scene-reload timing race)
+        if (mainCamera == null)
+            mainCamera = Camera.main;
+
         // Auto-find PlayerTurnController if TurnManager created it after Awake
         if (playerTurnController == null)
             playerTurnController = FindFirstObjectByType<PlayerTurnController>();
@@ -289,6 +293,9 @@ public class InputManager : MonoBehaviour
 
     void OnLeftClick(InputAction.CallbackContext context)
     {
+        if (mainCamera == null) mainCamera = Camera.main;
+        if (mainCamera == null) return;
+
         if (Time.time - menuOpenTime < MenuClickDelay) return;
         if (IsPointerOverUIElement()) return;
 
@@ -722,6 +729,8 @@ public class InputManager : MonoBehaviour
 
         GameObject monsterObj = movingMonster.gameObject;
 
+        cameraController?.FocusOnMonster(monsterObj.transform.position);
+
         // Start walk animation
         movingMonster.TriggerMovementAnimationStart();
 
@@ -746,6 +755,7 @@ public class InputManager : MonoBehaviour
                 t += Time.deltaTime * movementSpeed / Mathf.Max(distance, 0.01f);
                 monsterObj.transform.position =
                     Vector3.Lerp(startPos, endPos, Mathf.SmoothStep(0f, 1f, t));
+                cameraController?.UpdateFocusTarget(monsterObj.transform.position);
                 yield return null;
             }
 
@@ -755,6 +765,7 @@ public class InputManager : MonoBehaviour
         }
 
         movingMonster.TriggerMovementAnimationEnd();
+        cameraController?.ReleaseFocus();
 
         Debug.Log($"[InputManager] {movingMonster.name} moved to {destinationTile.GridPosition}. " +
                   $"AP remaining: {playerTurnController?.CurrentAP}");
@@ -1196,11 +1207,12 @@ public class InputManager : MonoBehaviour
                   $"HP {monster.CurrentHP}/{monster.MaxHP}");
     }
 
-    // Waits one frame + a short buffer so BattleMessage, VFX and camera restore
-    // all get a head start before the enemy turn begins.
+    // Waits for all player attack animations to fire their hit-events before
+    // ending the turn, so no damage can bleed into the enemy's turn.
     private System.Collections.IEnumerator DelayedAutoEndTurn()
     {
-        yield return new WaitForSeconds(0.5f);
+        if (playerTurnController != null)
+            yield return StartCoroutine(playerTurnController.WaitForPendingAnimations());
         playerTurnController?.CheckAutoEndTurn();
     }
 

@@ -210,6 +210,6 @@ MonoBehaviour:
   mode: 1
   speed: 10
   faceDirection: 1
-  beamDuration: 10
+  beamDuration: 2.5
   stretchBeam: 0
   follow: 1

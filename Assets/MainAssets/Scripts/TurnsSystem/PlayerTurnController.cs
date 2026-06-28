@@ -91,7 +91,7 @@ public class PlayerTurnController : TurnController
             return false;
         }
 
-        if (!SpendAP(cost)) return false; // SpendAP also calls CheckAutoEndTurn
+        if (!SpendAP(cost)) return false;
 
         monster.MarkActed(); // kept for logging / enemy-AI bookkeeping; no longer blocks re-use
         return true;
@@ -127,6 +127,12 @@ public class PlayerTurnController : TurnController
     {
         if (!IsActive) return;
         Debug.Log("[PlayerTurnController] Player manually ended turn.");
+        StartCoroutine(EndTurnWhenReady());
+    }
+
+    private System.Collections.IEnumerator EndTurnWhenReady()
+    {
+        yield return WaitForPendingAnimations();
         ForceEndTurn();
     }
 }

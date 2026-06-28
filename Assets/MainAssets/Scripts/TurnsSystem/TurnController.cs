@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -109,6 +110,9 @@ public abstract class TurnController : MonoBehaviour
 
     public bool CanAfford(int cost) => CurrentAP >= cost;
 
+    /// <summary>Add AP up to the cap. Used by DevPanel for QA testing.</summary>
+    public void GainAP(int amount) => SetAP(CurrentAP + amount);
+
     // -- Auto-end Conditions ---------------------------------------------------
 
     /// <summary>
@@ -141,6 +145,37 @@ public abstract class TurnController : MonoBehaviour
 
     public bool AnyMonsterCanAct()
         => monsters.Any(m => !m.HasActed);
+
+    // -- Animation Gate --------------------------------------------------------
+
+    /// <summary>
+    /// Yields until every monster on this side has finished its attack animation
+    /// (i.e. the hit-event has fired and damage has been applied).
+    /// Prevents attack events from bleeding across the turn boundary.
+    /// Times out after <paramref name="timeout"/> seconds and force-clears any
+    /// stuck flags so a missing animation event can never freeze the game.
+    /// </summary>
+    public IEnumerator WaitForPendingAnimations(float timeout = 5f)
+    {
+        float elapsed = 0f;
+        while (!monsters.All(m => m == null || !m.IsAttackAnimating))
+        {
+            elapsed += Time.deltaTime;
+            if (elapsed >= timeout)
+            {
+                foreach (var m in monsters)
+                {
+                    if (m != null && m.IsAttackAnimating)
+                    {
+                        Debug.LogWarning($"[{GetType().Name}] Animation event never fired on {m.name} — force-clearing flag.");
+                        m.ForceStopAttackAnimation();
+                    }
+                }
+                break;
+            }
+            yield return null;
+        }
+    }
 
     // -- Force-end Helper ------------------------------------------------------
 

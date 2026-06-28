@@ -67,6 +67,10 @@ public class EnemyTurnController : TurnController
 
     private MonsterAIBrain _brain;
 
+    // -- Cached player list (kept alive for PerformMove's safety check) --------
+
+    private List<Monster> _playerTargets = new List<Monster>();
+
     // -- First-Actor Fatigue State ---------------------------------------------
 
     private Monster _lastFirstActor      = null;
@@ -119,7 +123,8 @@ public class EnemyTurnController : TurnController
     {
         Debug.Log("[EnemyAI] Starting AI turn...");
 
-        List<Monster> playerTargets = CollectPlayerTargets();
+        _playerTargets              = CollectPlayerTargets();
+        List<Monster> playerTargets = _playerTargets;
         List<Monster> allyMonsters  = CollectAllyMonsters();
 
         // Late-bind CurrentTile for any monster that lost it between turns.
@@ -127,7 +132,7 @@ public class EnemyTurnController : TurnController
         {
             if (m != null && m.CurrentTile == null)
             {
-                Tile found = gridManager.GetTileAtWorldPosition(m.transform.root.position);
+                Tile found = gridManager.FindTileOccupiedBy(m.gameObject);
                 if (found != null)
                 {
                     m.CurrentTile = found;
@@ -275,6 +280,10 @@ public class EnemyTurnController : TurnController
             _cameraController?.FocusOnMonster(monster.transform.position);
 
             yield return new WaitForSeconds(actionDelay);
+
+            // Re-check: monster may have died during the delay (e.g. from a delayed animation event).
+            if (monster == null || !monster.IsAlive) continue;
+
             yield return StartCoroutine(ExecuteAction(monster, action));
         }
 
@@ -284,7 +293,9 @@ public class EnemyTurnController : TurnController
 
         AITurnQueueDebug.ClearActiveIndex();
         _cameraController?.ReleaseFocus();
-        Debug.Log("[EnemyAI] All actions complete — ending turn.");
+        Debug.Log("[EnemyAI] All actions complete — waiting for animations.");
+        yield return WaitForPendingAnimations();
+        Debug.Log("[EnemyAI] Animations done — ending turn.");
         ForceEndTurn();
     }
 
@@ -356,6 +367,18 @@ public class EnemyTurnController : TurnController
             yield break;
         }
 
+        // Secondary guard: cross-reference against each player monster's CurrentTile.
+        // This catches tile-occupation desyncs (occupation cleared but CurrentTile still set).
+        foreach (var p in _playerTargets)
+        {
+            if (p != null && p.IsAlive && p.CurrentTile == destination)
+            {
+                Debug.LogWarning($"[EnemyAI] {monster.name} destination {destination.GridPosition} " +
+                                 $"is occupied by {p.name} (CurrentTile check) — skipping move.");
+                yield break;
+            }
+        }
+
         // Find the actual BFS path so the monster walks around walls correctly.
         List<Tile> path = gridManager.FindPath(monster.CurrentTile, destination, monster.IsFlying);
         if (path == null || path.Count == 0)
@@ -389,6 +412,27 @@ public class EnemyTurnController : TurnController
         Tile previousTile = fromTile;
         foreach (Tile nextTile in path)
         {
+            if (monster == null) yield break;
+
+            // Guard: never physically enter a tile that is occupied.
+            // Also cross-checks player CurrentTile as backup in case tile.Occupation desynced.
+            bool blockedByOccupation = !nextTile.IsWalkable();
+            bool blockedByPlayer     = false;
+            if (_playerTargets != null)
+                foreach (var pt in _playerTargets)
+                    if (pt != null && pt.IsAlive && pt.CurrentTile == nextTile)
+                        { blockedByPlayer = true; break; }
+
+            if (blockedByOccupation || blockedByPlayer)
+            {
+                string occupant = blockedByPlayer
+                    ? _playerTargets.Find(pt => pt != null && pt.IsAlive && pt.CurrentTile == nextTile)?.name
+                    : nextTile.OccupyingObject?.name ?? "unknown";
+                Debug.LogWarning($"[EnemyAI] {monster.name} path blocked at " +
+                                 $"{nextTile.GridPosition} (occupied by {occupant}) — stopping mid-path.");
+                break;
+            }
+
             previousTile.ClearOccupation();
             nextTile.SetOccupation(Tile.OccupationType.Monster, monster.gameObject);
 
@@ -403,19 +447,30 @@ public class EnemyTurnController : TurnController
             float t    = 0f;
             while (t < 1f)
             {
+                if (monster == null) yield break;
                 t += Time.deltaTime * moveSpeed / Mathf.Max(dist, 0.01f);
                 monster.transform.position = Vector3.Lerp(start, end, Mathf.SmoothStep(0f, 1f, t));
                 _cameraController?.UpdateFocusTarget(monster.transform.position);
                 yield return null;
             }
 
+            if (monster == null) yield break;
             monster.transform.position = end;
             monster.CurrentTile        = nextTile;
             previousTile               = nextTile;
         }
 
+        if (monster == null) yield break;
         monster.TriggerMovementAnimationEnd();
-        Debug.Log($"[EnemyAI] {monster.name} moved to {path[path.Count - 1].GridPosition}.");
+        // Log the tile the monster actually reached (CurrentTile), not the intended destination.
+        // These differ when a mid-path walkability guard broke early.
+        Tile actualTile = monster.CurrentTile;
+        Tile intendedTile = path[path.Count - 1];
+        if (actualTile != intendedTile)
+            Debug.LogWarning($"[EnemyAI] {monster.name} intended {intendedTile.GridPosition} " +
+                             $"but stopped at {actualTile?.GridPosition} (path blocked).");
+        else
+            Debug.Log($"[EnemyAI] {monster.name} moved to {actualTile.GridPosition}.");
     }
 
     // -- Queue Post-Processing ─────────────────────────────────────────────────
