@@ -212,11 +212,12 @@ public class GridManager : MonoBehaviour
             {
                 if (visited.ContainsKey(nb)) continue;
 
-                // Flying: can pass over obstructions but not land on them
-                // (destination walkability is checked separately below)
-                // Grounded: cannot enter obstructed tiles at all
+                // Flying: can pass over terrain obstructions but not through creatures.
+                // Grounded: must enter only fully-walkable tiles at every step.
                 bool canEnter = isFlying
-                    ? (nb == to ? nb.IsWalkable() : true)
+                    ? (nb == to
+                        ? nb.IsWalkable()                                     // destination: must be empty/trap
+                        : nb.Occupation != Tile.OccupationType.Obstruction)   // intermediate: blocked by monsters, not by terrain
                     : nb.IsWalkable();
 
                 if (!canEnter) continue;

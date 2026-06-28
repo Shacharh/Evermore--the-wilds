@@ -86,10 +86,21 @@ public class MonsterAIBrain
         int maxMoveRange  = (apForMovement > 0 && tilesPerAP > 0)
             ? apForMovement * tilesPerAP : 0;
 
+        // Build a set of tiles occupied by living player monsters (tracked via CurrentTile,
+        // which is independent of tile.Occupation and stays correct even if occupation desyncs).
+        var playerOccupied = new HashSet<Tile>();
+        foreach (var p in ctx.PlayerTargets)
+            if (p != null && p.IsAlive && p.CurrentTile != null)
+                playerOccupied.Add(p.CurrentTile);
+
         List<Tile> reachableTiles = maxMoveRange > 0
             ? ctx.Grid.GetTilesInRange(ctx.SelfTile, maxMoveRange,
                 walkableOnly: true, isFlying: ctx.Self.IsFlying)
             : new List<Tile>();
+
+        // Remove any tile a player monster actually stands on — double-check against
+        // CurrentTile so a tile-occupation desync can never produce a suicidal move.
+        reachableTiles.RemoveAll(t => playerOccupied.Contains(t));
 
         bool          isInDanger = IsInDanger(ctx);
         List<Monster> threats    = isInDanger ? GetThreats(ctx) : new List<Monster>();
