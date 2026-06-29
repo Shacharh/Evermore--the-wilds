@@ -34,6 +34,7 @@ public class MonsterInfoPanel : MonoBehaviour
     private Label         _hpLabel;
     private Label         _statsLabel;
     private Label         _stagesLabel;
+    private Label         _statusLabel;
 
     // ── State ──────────────────────────────────────────────────────────────────
 
@@ -57,6 +58,7 @@ public class MonsterInfoPanel : MonoBehaviour
             && _currentMonster != null)
         {
             RefreshStages();
+            RefreshStatuses();
         }
     }
 
@@ -162,6 +164,40 @@ public class MonsterInfoPanel : MonoBehaviour
             $"{StageTag(crtMS)}";
     }
 
+    private void RefreshStatuses()
+    {
+        if (_currentMonster == null || _statusLabel == null) return;
+
+        var statuses = _currentMonster.ActiveStatuses;
+        if (statuses == null || statuses.Count == 0)
+        {
+            _statusLabel.text = "<color=#444455>None</color>";
+            return;
+        }
+
+        var parts = new System.Text.StringBuilder();
+        for (int i = 0; i < statuses.Count; i++)
+        {
+            if (i > 0) parts.Append("  ");
+            var s = statuses[i];
+            string color = StatusColor(s.data.ID);
+            parts.Append($"<color={color}>{s.data.ID}</color>");
+            if (s.remainingTurns > 0)
+                parts.Append($"<color=#888899>({s.remainingTurns})</color>");
+        }
+        _statusLabel.text = parts.ToString();
+    }
+
+    private static string StatusColor(AttackEnum.StatusEffect id) => id switch
+    {
+        AttackEnum.StatusEffect.Burn    => "#FF7744",
+        AttackEnum.StatusEffect.Freeze  => "#66CCFF",
+        AttackEnum.StatusEffect.Shock   => "#FFEE22",
+        AttackEnum.StatusEffect.Poison  => "#BB44FF",
+        AttackEnum.StatusEffect.Sleep   => "#AABBCC",
+        _                               => "#CCCCCC"
+    };
+
     private static string StageTag(int stage)
     {
         if (stage > 0) return $"<color=#66FF44>+{stage}</color>";
@@ -215,5 +251,6 @@ public class MonsterInfoPanel : MonoBehaviour
         _hpLabel     = _root.Q<Label>("hp-label");
         _statsLabel  = _root.Q<Label>("stats-label");
         _stagesLabel = _root.Q<Label>("stages-label");
+        _statusLabel = _root.Q<Label>("status-label");
     }
 }

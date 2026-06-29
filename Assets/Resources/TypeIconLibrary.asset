@@ -20,12 +20,12 @@ MonoBehaviour:
   - elementType: 2
     icon: {fileID: 21300000, guid: deec7399934f99c4b973e9ae5d3733d1, type: 3}
   - elementType: 3
-    icon: {fileID: 0}
+    icon: {fileID: 21300000, guid: 13244addb39f3b842a2c5981392ef3d2, type: 3}
   - elementType: 4
     icon: {fileID: 21300000, guid: a2412e61fc034cb4d8a9047d5ddb10cd, type: 3}
   - elementType: 5
     icon: {fileID: 21300000, guid: d844eedb81ffd9f42aeb31b320da3934, type: 3}
   - elementType: 6
-    icon: {fileID: 0}
+    icon: {fileID: 21300000, guid: f5c1cc878fc0bad41ae33f93095db9fd, type: 3}
   - elementType: 7
-    icon: {fileID: 0}
+    icon: {fileID: 21300000, guid: cec6aa0dd3f589746bb6ecaf11e669e4, type: 3}

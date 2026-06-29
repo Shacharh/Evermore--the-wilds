@@ -19,12 +19,16 @@
                 <ui:Label name="hp-label" class="mip-hp" enable-rich-text="true" picking-mode="Ignore" />
             </ui:VisualElement>
 
-            <!-- Body: STAGE heading + two-column stats -->
+            <!-- Body: STAGE heading + two-column stats + status effects -->
             <ui:VisualElement class="mip-body" picking-mode="Ignore">
                 <ui:Label name="stage-header" class="mip-stage-header" text="STAGE" picking-mode="Ignore" />
                 <ui:VisualElement class="mip-stats-row" picking-mode="Ignore">
                     <ui:Label name="stats-label"  class="mip-stats"  picking-mode="Ignore" />
                     <ui:Label name="stages-label" class="mip-stages" enable-rich-text="true" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement class="mip-status-row" picking-mode="Ignore">
+                    <ui:Label name="status-header" class="mip-status-header" text="STATUS" picking-mode="Ignore" />
+                    <ui:Label name="status-label"  class="mip-status-label" enable-rich-text="true" picking-mode="Ignore" />
                 </ui:VisualElement>
             </ui:VisualElement>
 

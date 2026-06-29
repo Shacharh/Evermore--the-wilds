@@ -129,6 +129,15 @@ public class RadialMenu : MonoBehaviour
     {
         _cardCount = 0;
 
+        Monster m = targetTile.GetMonster();
+
+        // Enemy tiles always show only Info — never expose Move/Attack to the player.
+        if (m != null && m.IsEnemy)
+        {
+            AddCard("Info", RadialActionType.Info);
+            return;
+        }
+
         List<MenuOptionData> options;
         if (menuConfig == null)
         {
@@ -136,10 +145,9 @@ public class RadialMenu : MonoBehaviour
         }
         else
         {
-            Monster m = targetTile.GetMonster();
-            if      (m != null && m.IsEnemy) options = menuConfig.menuConfig.enemyMonsterOptions;
-            else if (m != null)              options = menuConfig.menuConfig.playerMonsterOptions;
-            else                             options = menuConfig.menuConfig.emptyTileOptions;
+            options = m != null
+                ? menuConfig.menuConfig.playerMonsterOptions
+                : menuConfig.menuConfig.emptyTileOptions;
         }
 
         var valid = (options ?? new List<MenuOptionData>())

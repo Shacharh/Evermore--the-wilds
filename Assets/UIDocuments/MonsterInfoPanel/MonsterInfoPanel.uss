@@ -141,6 +141,36 @@
     white-space: normal;
 }
 
+/* ── Status effects ──────────────────────────────────────────────────────── */
+.mip-status-row {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 6px;
+    margin-left: 14px;
+    margin-right: 14px;
+    padding-top: 5px;
+    border-top-width: 1px;
+    border-top-color: rgba(80, 80, 100, 200);
+}
+
+.mip-status-header {
+    font-size: 13px;
+    -unity-font-style: italic;
+    color: rgba(140, 140, 166, 255);
+    white-space: nowrap;
+    margin-right: 8px;
+    min-width: 52px;
+}
+
+.mip-status-label {
+    flex-grow: 1;
+    font-size: 14px;
+    -unity-font-style: bold;
+    color: rgba(224, 224, 224, 255);
+    white-space: normal;
+    -unity-text-align: middle-left;
+}
+
 /* ── Close button ────────────────────────────────────────────────────────── */
 .mip-close-btn {
     align-self: center;
