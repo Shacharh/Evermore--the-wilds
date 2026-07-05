@@ -699,21 +699,33 @@ public class Monster : MonoBehaviour
 
     private System.Collections.IEnumerator DieCoroutine()
     {
-        Debug.Log($"[{gameObject.name}] died — playing shrink animation.");
+        Debug.Log($"[{gameObject.name}] died — waiting for death animation.");
 
-        // Capture tile before position changes
+        // Capture tile now before any position changes.
         Tile myTile = gridManager?.GetTileAtWorldPosition(transform.position);
 
-        // Shrink over 0.6 seconds
-        Vector3 originalScale = transform.localScale;
-        float elapsed = 0f;
-        const float duration = 0.6f;
-
-        while (elapsed < duration)
+        // The death animation trigger was already set by TriggerDeathAnim() just before
+        // HandleDeath() was called. Wait for it to play through before destroying.
+        if (anim != null)
         {
-            elapsed += Time.deltaTime;
-            transform.localScale = Vector3.Lerp(originalScale, Vector3.zero, elapsed / duration);
-            yield return null;
+            yield return null; // one frame for the trigger to register a transition
+
+            float elapsed = 0f;
+            const float timeout = 5f;
+            while (elapsed < timeout)
+            {
+                elapsed += Time.deltaTime;
+                var info = anim.GetCurrentAnimatorStateInfo(0);
+                // Wait at least 0.3s so we don't exit before the transition even starts,
+                // then check whether the current state has fully played through.
+                if (elapsed > 0.3f && info.normalizedTime >= 1f && !anim.IsInTransition(0))
+                    break;
+                yield return null;
+            }
+        }
+        else
+        {
+            yield return new WaitForSeconds(1.5f);
         }
 
         // Clear tile occupation

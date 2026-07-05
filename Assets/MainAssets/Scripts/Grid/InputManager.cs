@@ -131,6 +131,42 @@ public class InputManager : MonoBehaviour
         }
     }
 
+    void Start()
+    {
+        // Monsters placed directly in the scene (not via MonsterSpawner) never have
+        // SetOccupation called, so their tiles appear Empty and can't be clicked or
+        // targeted by attacks. Wait past GridManager generation before registering.
+        StartCoroutine(RegisterScenePlacedMonsters());
+    }
+
+    private System.Collections.IEnumerator RegisterScenePlacedMonsters()
+    {
+        yield return new WaitForSeconds(0.5f);
+
+        if (gridManager == null) yield break;
+
+        var all = FindObjectsByType<Monster>(FindObjectsSortMode.None);
+        foreach (var m in all)
+        {
+            if (m == null || m.CurrentTile != null) continue;
+
+            Tile tile = gridManager.GetTileAtWorldPosition(m.transform.root.position);
+            if (tile == null) continue;
+
+            if (tile.Occupation == Tile.OccupationType.Empty)
+            {
+                tile.SetOccupation(Tile.OccupationType.Monster, m.gameObject);
+                m.CurrentTile = tile;
+                Debug.Log($"[InputManager] Scene-placed monster '{m.name}' registered on tile {tile.GridPosition}.");
+            }
+            else if (tile.OccupyingObject != null &&
+                     tile.OccupyingObject.transform.root == m.transform.root)
+            {
+                m.CurrentTile = tile;
+            }
+        }
+    }
+
     void Update()
     {
         HandleTileHovering();
@@ -235,6 +271,16 @@ public class InputManager : MonoBehaviour
         if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, tileLayerMask))
         {
             Tile hitTile = hit.collider.GetComponent<Tile>();
+
+            // Hit something on the tile layer that isn't actually a Tile (e.g. environment prop).
+            // Clear the hover so the stale tile can't be mistakenly clicked.
+            if (hitTile == null)
+            {
+                if (currentHoveredTile != null) { currentHoveredTile.SetHovered(false); currentHoveredTile = null; }
+                if (currentState == InputState.MovementMode) MoveCostHint.Hide();
+                if (currentState == InputState.TargetSelection) ClearAOEFootprint();
+                return;
+            }
 
             if (hitTile != null && hitTile != currentHoveredTile)
             {
@@ -388,8 +434,9 @@ public class InputManager : MonoBehaviour
             return;
         }
 
-        // Empty tiles have no actions — clear selection and stop
-        if (clickedTile.Occupation == Tile.OccupationType.Empty)
+        // Empty or obstruction tiles have no actions — clear selection and stop
+        if (clickedTile.Occupation == Tile.OccupationType.Empty ||
+            clickedTile.Occupation == Tile.OccupationType.Obstruction)
         {
             if (activeMenu != null) CloseRadialMenu();
             if (selectedTile != null)

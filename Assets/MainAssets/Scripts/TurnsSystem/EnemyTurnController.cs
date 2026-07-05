@@ -138,6 +138,18 @@ public class EnemyTurnController : TurnController
                     m.CurrentTile = found;
                     Debug.Log($"[EnemyAI] {m.name} CurrentTile late-bound to {found.GridPosition}.");
                 }
+                else
+                {
+                    // Monster was placed in the scene without MonsterSpawner — no OccupyingObject set.
+                    // Register it by world position so it can be targeted by attacks and can act.
+                    Tile byPos = gridManager.GetTileAtWorldPosition(m.transform.root.position);
+                    if (byPos != null && byPos.Occupation == Tile.OccupationType.Empty)
+                    {
+                        byPos.SetOccupation(Tile.OccupationType.Monster, m.gameObject);
+                        m.CurrentTile = byPos;
+                        Debug.Log($"[EnemyAI] {m.name} registered on tile {byPos.GridPosition} (world-position bind).");
+                    }
+                }
             }
         }
 
