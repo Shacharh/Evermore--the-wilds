@@ -282,6 +282,7 @@ GameObject:
   - component: {fileID: 1291772032019624359}
   - component: {fileID: 8900255455746139478}
   - component: {fileID: 735031748614082259}
+  - component: {fileID: 2643689253095052034}
   m_Layer: 7
   m_Name: Maiwolf
   m_TagString: Untagged
@@ -349,6 +350,22 @@ MonoBehaviour:
   - Wolf_Claws
   - Earth_Strike
   monster: {fileID: 8900255455746139478}
+--- !u!114 &2643689253095052034
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3818083866190774472}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Outline
+  outlineMode: 0
+  outlineColor: {r: 1, g: 1, b: 1, a: 1}
+  outlineWidth: 0
+  overrideRenderers: []
 --- !u!1 &8782099375881524005
 GameObject:
   m_ObjectHideFlags: 0
@@ -389,6 +406,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1291772032019624359}
     m_Modifications:
+    - target: {fileID: 150855377249319297, guid: 7d78a4f8304df4b4c8e5b5b0f03644a6, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7435625882425418997, guid: 7d78a4f8304df4b4c8e5b5b0f03644a6, type: 3}
       propertyPath: m_Name
       value: Water_Wheel
@@ -452,13 +473,33 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7435625882425418997, guid: 7d78a4f8304df4b4c8e5b5b0f03644a6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8406849552832193980}
   m_SourcePrefab: {fileID: 100100000, guid: 7d78a4f8304df4b4c8e5b5b0f03644a6, type: 3}
 --- !u!4 &7455434122444292752 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7816972371630931535, guid: 7d78a4f8304df4b4c8e5b5b0f03644a6, type: 3}
   m_PrefabInstance: {fileID: 796137823005899999}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &7799343374261950506 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7435625882425418997, guid: 7d78a4f8304df4b4c8e5b5b0f03644a6, type: 3}
+  m_PrefabInstance: {fileID: 796137823005899999}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8406849552832193980
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7799343374261950506}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a833886287ad55a409fdebc7fdf8c75b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OutlineExclude
 --- !u!1001 &8479137846305311671
 PrefabInstance:
   m_ObjectHideFlags: 0
