@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Gust_Of_Wind
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
   id: Gust_Of_Water
-  displayName: Gust Of Wind
+  displayName: Gust Of water
   description: shot a gust of air to an enemy
   element: 1
   effects:
