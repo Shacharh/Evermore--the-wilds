@@ -77,12 +77,21 @@ public class CameraController : MonoBehaviour
     private float _orbitYaw;
     public float OrbitYaw => _orbitYaw;
 
+    // ── Enemy-turn zoom state ──────────────────────────────────────────────────
+    private bool  _enemyTurnZoomActive;
+    private float _enemyTurnSavedZoom;
+    private bool  _subscribedToTurnManager;
+
     // ── Top-down state ─────────────────────────────────────────────────────────
     // Activated by scrolling out past maxZoom. Camera snaps to 90° pitch and locks
     // angle until the user scrolls back in past maxZoom to return to normal mode.
     private bool  _isTopDown;
     private float _topDownAngle = 90f;   // target pitch in top-down mode
     private float _currentAngle;         // smooth working copy of cameraAngle
+
+    [Header("Enemy Turn Zoom")]
+    [Tooltip("Zoom distance used while the enemy takes its turn (shows the full map).")]
+    [SerializeField] private float enemyTurnZoom = 35f;
 
     // ── Focus state ────────────────────────────────────────────────────────────
 
@@ -117,6 +126,14 @@ public class CameraController : MonoBehaviour
     void Update()
     {
         if (cameraTarget == null || cinemachineCamera == null) return;
+
+        // Lazily subscribe to TurnManager once it exists
+        if (!_subscribedToTurnManager && TurnManager.Instance != null)
+        {
+            TurnManager.Instance.onEnemyTurnStart.AddListener(BeginEnemyTurnZoom);
+            TurnManager.Instance.onPlayerTurnStart.AddListener(EndEnemyTurnZoom);
+            _subscribedToTurnManager = true;
+        }
 
         // Reset orbit yaw hotkey — only when the camera is free (not AI-locked).
         if (!_isLocked && HotkeyManager.Instance != null &&
@@ -384,6 +401,32 @@ public class CameraController : MonoBehaviour
 
         cinemachineCamera.transform.position = desiredPosition;
         cinemachineCamera.transform.LookAt(cameraTarget.position);
+    }
+
+    // ── Enemy-turn zoom-out ────────────────────────────────────────────────────
+
+    private void BeginEnemyTurnZoom()
+    {
+        if (_isLocked || _isRestoring || _enemyTurnZoomActive) return;
+        _enemyTurnSavedZoom  = targetZoom;
+        _enemyTurnZoomActive = true;
+        targetZoom           = Mathf.Max(targetZoom, enemyTurnZoom);
+    }
+
+    private void EndEnemyTurnZoom()
+    {
+        if (!_enemyTurnZoomActive) return;
+        targetZoom           = _enemyTurnSavedZoom;
+        _enemyTurnZoomActive = false;
+    }
+
+    private void OnDestroy()
+    {
+        if (_subscribedToTurnManager && TurnManager.Instance != null)
+        {
+            TurnManager.Instance.onEnemyTurnStart.RemoveListener(BeginEnemyTurnZoom);
+            TurnManager.Instance.onPlayerTurnStart.RemoveListener(EndEnemyTurnZoom);
+        }
     }
 
     public void SetGridBounds(int width, int height, float spacing)

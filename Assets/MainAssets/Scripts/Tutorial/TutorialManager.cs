@@ -53,6 +53,7 @@ public class TutorialManager : MonoBehaviour
         P1_WaitMonsterClick,
         P1_WaitInfo,
         P1_InfoOpen,
+        P1_APLesson,          // AP explanation before movement
         P1_WaitMovement,
         P1_WaitMoveTile,
         P1_WaitCamera,
@@ -65,7 +66,10 @@ public class TutorialManager : MonoBehaviour
         P2_ShowMonsterUI,
         P2_WaitHealCommand,
         P2_WaitHealTarget,
+        P2_WaitRestAP,        // end-turn rest lesson after heal
         P2_EnemySpawned,
+        P2_TypeEffectiveness, // element legend + effectiveness colours
+        P2_StatusEffects,     // status effect explanation
         P2_WaitAttackCommand,
         P2_WaitAttackTarget,
         P2_Victory,
@@ -74,6 +78,9 @@ public class TutorialManager : MonoBehaviour
     }
 
     private State _state = State.Idle;
+
+    /// <summary>True while the tutorial FSM is running (not yet Done or Idle).</summary>
+    public bool IsActive => _state != State.Idle && _state != State.Done;
 
     // ── Runtime monster references ────────────────────────────────────────────
     private Monster _pixiventi;
@@ -92,9 +99,22 @@ public class TutorialManager : MonoBehaviour
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
+    // Persists across scene reloads (static). Once the tutorial has been played or
+    // declined in this session, we never ask again — e.g. after a victory restart.
+    private static bool _tutorialPlayed = false;
+
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+
+        if (_tutorialPlayed)
+        {
+            // Tutorial was already played or skipped this session — do nothing.
+            // Don't set Instance so the real battle starts normally.
+            Destroy(gameObject);
+            return;
+        }
+
         Instance = this;
         // Block all normal spawners NOW (before their Start() fires) so the
         // battle doesn't start until the player answers the tutorial prompt.
@@ -136,6 +156,7 @@ public class TutorialManager : MonoBehaviour
             case State.P1_WaitMonsterClick: EnterP1MonsterClick(); break;
             case State.P1_WaitInfo:         EnterP1WaitInfo();     break;
             case State.P1_InfoOpen:         EnterP1InfoOpen();     break;
+            case State.P1_APLesson:         EnterP1APLesson();     break;
             case State.P1_WaitMovement:     EnterP1WaitMovement(); break;
             case State.P1_WaitMoveTile:     EnterP1WaitMoveTile(); break;
             case State.P1_WaitCamera:       EnterP1WaitCamera();   break;
@@ -145,9 +166,12 @@ public class TutorialManager : MonoBehaviour
             case State.P2_Intro:            EnterP2Intro();        break;
             case State.P2_ShowMonsterUI:    EnterP2ShowMonsterUI(); break;
             case State.P2_WaitHealCommand:  EnterP2WaitHealCommand(); break;
-            case State.P2_WaitHealTarget:   EnterP2WaitHealTarget(); break;
-            case State.P2_EnemySpawned:     EnterP2EnemySpawned(); break;
-            case State.P2_WaitAttackCommand:EnterP2WaitAttackCommand(); break;
+            case State.P2_WaitHealTarget:      EnterP2WaitHealTarget();    break;
+            case State.P2_WaitRestAP:          EnterP2WaitRestAP();        break;
+            case State.P2_EnemySpawned:        EnterP2EnemySpawned();      break;
+            case State.P2_TypeEffectiveness:   EnterP2TypeEffectiveness(); break;
+            case State.P2_StatusEffects:       EnterP2StatusEffects();     break;
+            case State.P2_WaitAttackCommand:   EnterP2WaitAttackCommand(); break;
             case State.P2_WaitAttackTarget: EnterP2WaitAttackTarget(); break;
             case State.P2_Victory:          EnterVictory();        break;
         }
@@ -265,7 +289,7 @@ public class TutorialManager : MonoBehaviour
     private void EnterP1WaitInfo()
     {
         StopVibrate();
-        ShowPanel("Here you can command your monster to move or attack!\nHere, try casting the 'Info' command!");
+        ShowPanel("Use [I] for Info, [M] for Movement, or [A] to Attack!\nFor now, press [I] or choose 'Info' to inspect your monster.");
 
         // Allow only monster click + info; block movement and attack
         SetFilter((action, tile) =>
@@ -281,7 +305,18 @@ public class TutorialManager : MonoBehaviour
     private void EnterP1InfoOpen()
     {
         ShowPanel("Here you can view information about this monster.\nTo continue, exit the info screen.");
-        StartCoroutine(WaitForInfoClosed(() => SetState(State.P1_WaitMovement)));
+        StartCoroutine(WaitForInfoClosed(() => SetState(State.P1_APLesson)));
+    }
+
+    private void EnterP1APLesson()
+    {
+        ShowPanel("Every action costs Action Points (AP)!\nYou can see your remaining AP at the bottom of the screen.\nWhen your AP runs out, your turn ends — spend wisely!\n\nClick Continue to try moving.");
+        ShowArrowAtAP();
+        ShowContinueButton(() =>
+        {
+            HideArrow();
+            SetState(State.P1_WaitMovement);
+        });
     }
 
     private void EnterP1WaitMovement()
@@ -299,7 +334,7 @@ public class TutorialManager : MonoBehaviour
 
     private void EnterP1WaitMoveTile()
     {
-        ShowPanel("Here you can see where you can move!\nSee those teal tiles? How about that one?\nMake sure not to spend too much AP!");
+        ShowPanel("Those teal tiles show where you can move!\nMove to the tile with the arrow — the highlighted one!");
         _vibrateCoroutine = StartCoroutine(VibrateTile(targetMoveTile));
         ShowArrowAtTile(targetMoveTile);
 
@@ -415,8 +450,8 @@ public class TutorialManager : MonoBehaviour
     private void EnterP2ShowMonsterUI()
     {
         LockAll();
-        ShowPanel("You can see information about your monsters here!\n[pointing at side panel]\nIt shows HP, Level, and current status — very useful!");
-        StartCoroutine(DelayThen(4f, () => SetState(State.P2_WaitHealCommand)));
+        ShowPanel("The side panel shows all your monsters!\nIt displays HP, level, and current status — keep an eye on it!");
+        ShowContinueButton(() => SetState(State.P2_WaitHealCommand));
     }
 
     private void EnterP2WaitHealCommand()
@@ -454,9 +489,44 @@ public class TutorialManager : MonoBehaviour
 
         StartCoroutine(WaitForMonsterHealed(_nidpettite, () =>
         {
-            ShowPanel("Great! Nídpettite is healed!");
-            StartCoroutine(DelayThen(1.5f, () => SetState(State.P2_EnemySpawned)));
+            // Drain AP so the rest lesson makes sense — Nídpettite's Fire Bolt costs more
+            FindFirstObjectByType<PlayerTurnController>()?.DevSetAP(1);
+            ShowPanel("Nídpettite is healed!");
+            StartCoroutine(DelayThen(1.5f, () => SetState(State.P2_WaitRestAP)));
         }));
+    }
+
+    private void EnterP2WaitRestAP()
+    {
+        ShowPanel("Nídpettite can't use Fire Bolt yet — not enough AP!\nEnd your turn to rest and restore AP.\nYou can also press [Spacebar]!");
+        ShowArrowAtEndTurn();
+
+        SetFilter((action, tile) =>
+        {
+            if (action == InputManager.TutorialAction.EndTurn)      return true;
+            if (action == InputManager.TutorialAction.MonsterClick)  return false;
+            if (action == InputManager.TutorialAction.MovementMode)  return false;
+            if (action == InputManager.TutorialAction.AttackMode)    return false;
+            return true;
+        }, "End your turn to rest and regain AP!");
+
+        StartCoroutine(WaitForPlayerTurnRestarted(() =>
+        {
+            HideArrow();
+            InputManager.TutorialFilter  = null;
+            InputManager.OnBlockedAction = null;
+            ShowPanel("Much better — AP is restored!\nNow Nídpettite is ready to fight.");
+            ShowContinueButton(() => SetState(State.P2_EnemySpawned));
+        }));
+    }
+
+    private IEnumerator WaitForPlayerTurnRestarted(System.Action then)
+    {
+        yield return new WaitForSeconds(0.5f);
+        yield return new WaitUntil(() => TurnManager.Instance != null && TurnManager.Instance.IsEnemyTurn);
+        yield return new WaitUntil(() => TurnManager.Instance != null && TurnManager.Instance.IsPlayerTurn);
+        yield return new WaitForSeconds(0.5f);
+        then?.Invoke();
     }
 
     private void EnterP2EnemySpawned()
@@ -467,7 +537,22 @@ public class TutorialManager : MonoBehaviour
             FindFirstObjectByType<EnemyTurnController>()?.AutoDiscoverMonsters();
             HUDController.RefreshRosters();
         }
-        ShowPanel("Hey! A wild monster has slithered through!\nLet's test Nídpettite's strength on it!\nCommand it to attack with 'Fire Bolt'!");
+        // Enemy roster card now visible top-right — shift panel left to avoid overlap.
+        if (_panelRoot != null) _panelRoot.style.right = 230;
+        LockAll();
+        ShowPanel("Hey! A wild Sermal has slithered in!\nTime to test Nídpettite's power!");
+        ShowContinueButton(() => SetState(State.P2_StatusEffects));
+    }
+
+    private void EnterP2StatusEffects()
+    {
+        ShowPanel("Attacks can also apply Status Effects!\nBurned enemies take damage each turn.\nOther effects can weaken stats or cause misses.\nWatch for status icons next to monster HP bars!\n\nReady to fight?");
+        ShowContinueButton(() => SetState(State.P2_WaitAttackCommand));
+    }
+
+    private void EnterP2WaitAttackCommand()
+    {
+        ShowPanel("Command Nídpettite to attack with 'Fire Bolt'!\nSelect Nídpettite, then choose Attack.");
 
         SetFilter((action, tile) =>
         {
@@ -479,18 +564,30 @@ public class TutorialManager : MonoBehaviour
             return true;
         }, "Command Nídpettite to use Fire Bolt on the enemy!");
 
-        SetState(State.P2_WaitAttackCommand);
+        // Wait until the attack range is visible — THEN teach effectiveness colours
+        // (aura highlights only appear once targeting mode is active).
+        StartCoroutine(WaitForAttackRangeShown(() => SetState(State.P2_TypeEffectiveness)));
     }
 
-    private void EnterP2WaitAttackCommand()
+    private void EnterP2TypeEffectiveness()
     {
-        StartCoroutine(WaitForAttackRangeShown(() => SetState(State.P2_WaitAttackTarget)));
+        // Lock game input (keeps attack-range overlay visible) but Continue button
+        // is a UI element — it is not gated by TutorialFilter.
+        LockAll();
+        ElementLegend.ShowLegend(_uiRoot);
+        ShowPanel("See the Golden Aura on Sermal?\nGold = Super Effective — bonus damage!\nGray = Resisted — reduced damage.\nNídpettite's Fire is super effective here!\n\nOpen the Element Legend for details, then Continue.");
+        ShowContinueButton(() =>
+        {
+            ElementLegend.HideLegend();
+            SetState(State.P2_WaitAttackTarget);
+        });
     }
 
     private void EnterP2WaitAttackTarget()
     {
-        ShowPanel("See that Golden Aura around that snake?\nThat colour means our attack will be Super Effective!\nTime to attack!");
+        ShowPanel("Nídpettite is locked on — finish Sermal!");
 
+        // Attack range is already displayed; only allow selecting Sermal's tile.
         SetFilter((action, tile) =>
         {
             if (action == InputManager.TutorialAction.AttackTarget)
@@ -515,6 +612,7 @@ public class TutorialManager : MonoBehaviour
 
     private void ExitTutorial()
     {
+        _tutorialPlayed = true; // suppress re-ask on scene reload within this session
         InputManager.TutorialFilter  = null;
         InputManager.OnBlockedAction = null;
         _state = State.Done;
@@ -881,7 +979,7 @@ public class TutorialManager : MonoBehaviour
         _fadeOverlay.style.opacity = 0f;
         wrapper.Add(_fadeOverlay);
 
-        // ── Tutorial panel (bottom-left) ──────────────────────────────────
+        // ── Tutorial panel (top-right) ────────────────────────────────────
         _panelRoot = new VisualElement();
         _panelRoot.pickingMode = PickingMode.Ignore;
         _panelRoot.style.position = Position.Absolute;
@@ -899,7 +997,7 @@ public class TutorialManager : MonoBehaviour
 
         _panelText = new Label("");
         _panelText.pickingMode = PickingMode.Ignore;
-        _panelText.style.fontSize   = 16;
+        _panelText.style.fontSize   = 20;
         _panelText.style.color      = Color.white;
         _panelText.style.whiteSpace = WhiteSpace.Normal;
         _panelText.style.unityTextAlign = TextAnchor.UpperLeft;
@@ -962,13 +1060,23 @@ public class TutorialManager : MonoBehaviour
     private void ShowArrowAtEndTurn()
     {
         if (_arrow == null) return;
-        // Position arrow just above the End Turn button (bottom-right area)
-        _arrow.style.right  = 210;
-        _arrow.style.bottom = 90;
-        _arrow.style.left   = StyleKeyword.Auto;
-        _arrow.style.top    = StyleKeyword.Auto;
+        _arrow.style.right   = 210;
+        _arrow.style.bottom  = 90;
+        _arrow.style.left    = StyleKeyword.Auto;
+        _arrow.style.top     = StyleKeyword.Auto;
         _arrow.style.display = DisplayStyle.Flex;
-        // arrow visible
+    }
+
+    private void ShowArrowAtAP()
+    {
+        if (_arrow == null) return;
+        // AP circle sits to the left of the END TURN button (~230px from right edge).
+        // Place the arrow above it so it points down onto the AP circle.
+        _arrow.style.right   = 195;
+        _arrow.style.bottom  = 130;
+        _arrow.style.left    = StyleKeyword.Auto;
+        _arrow.style.top     = StyleKeyword.Auto;
+        _arrow.style.display = DisplayStyle.Flex;
     }
 
     private void ShowArrowAtTile(Vector2Int gridPos)

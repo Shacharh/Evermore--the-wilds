@@ -169,6 +169,19 @@ public class InputManager : MonoBehaviour
         // SetOccupation called, so their tiles appear Empty and can't be clicked or
         // targeted by attacks. Wait past GridManager generation before registering.
         StartCoroutine(RegisterScenePlacedMonsters());
+        Monster.OnRosterChanged += OnMonsterRosterChanged;
+    }
+
+    private Coroutine _registrationCoroutine;
+
+    private void OnMonsterRosterChanged()
+    {
+        // Re-run registration when monsters spawn or die. Critical for the tutorial
+        // path: real game monsters (including Scarobo) spawn AFTER the tutorial ends,
+        // so the initial RegisterScenePlacedMonsters run misses them. Restarting the
+        // coroutine ensures we always register 0.5s after the last spawn event.
+        if (_registrationCoroutine != null) StopCoroutine(_registrationCoroutine);
+        _registrationCoroutine = StartCoroutine(RegisterScenePlacedMonsters());
     }
 
     private System.Collections.IEnumerator RegisterScenePlacedMonsters()
@@ -1384,6 +1397,7 @@ public class InputManager : MonoBehaviour
         if (inputActions     != null) inputActions.Disable();
         if (playerTurnController != null && _subscribedToTurnEnd)
             playerTurnController.onTurnEnd.RemoveListener(OnPlayerTurnEnded);
+        Monster.OnRosterChanged -= OnMonsterRosterChanged;
     }
 
     // -- Turn End Handler ------------------------------------------------------
