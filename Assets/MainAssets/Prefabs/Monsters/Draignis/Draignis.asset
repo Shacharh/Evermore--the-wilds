@@ -15,6 +15,7 @@ MonoBehaviour:
   monsterId: Draignis
   displayName: Draignis
   elementType: 0
+  portrait: {fileID: 21300000, guid: ba1972a9dd5f4264fa973b5d60f1241b, type: 3}
   isFlying: 0
   baseHP: 280
   baseAttack: 200

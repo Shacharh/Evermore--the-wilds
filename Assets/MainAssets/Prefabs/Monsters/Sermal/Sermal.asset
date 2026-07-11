@@ -15,6 +15,7 @@ MonoBehaviour:
   monsterId: Sermal
   displayName: Sermal
   elementType: 4
+  portrait: {fileID: 21300000, guid: e06c149d95ceccd44bfb0d9b3c6ed139, type: 3}
   isFlying: 0
   baseHP: 250
   baseAttack: 125

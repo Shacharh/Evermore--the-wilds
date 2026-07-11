@@ -88,9 +88,12 @@ public class EnemyTurnController : TurnController
         AITurnQueueDebug.SetEnabled(showTurnDebugPanel, debugPanelHeight);
     }
 
+    /// <summary>Set by TutorialManager to suppress enemy AI during tutorial phases.</summary>
+    public static bool TutorialSkipTurn = false;
+
     protected override void OnTurnStarted()
     {
-        if (skipTurnForTesting)
+        if (skipTurnForTesting || TutorialSkipTurn)
         {
             Debug.Log("[EnemyAI] Skip-turn is ON — ending enemy turn immediately.");
             ForceEndTurn();

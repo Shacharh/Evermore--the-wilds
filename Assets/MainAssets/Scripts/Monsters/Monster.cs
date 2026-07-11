@@ -202,6 +202,9 @@ public class Monster : MonoBehaviour
 
     /// <summary>Fired once when HP reaches 0 (before the death animation plays).</summary>
     public event System.Action<Monster> OnDied;
+
+    /// <summary>Fired whenever a monster is added to or removed from the field.</summary>
+    public static event System.Action OnRosterChanged;
     #endregion
 
     #region Public Properties - Calculated Stats
@@ -236,6 +239,8 @@ public class Monster : MonoBehaviour
             LoadPlayerMonster();
         else
             LoadEnemyMonster();
+
+        OnRosterChanged?.Invoke();
 
         Debug.Log($"EXP: {exp}, Level: {level}");
     }
@@ -687,6 +692,13 @@ public class Monster : MonoBehaviour
                   $"HP: {effectTarget.currentHP}/{effectTarget.MaxHP}");
     }
 
+    /// <summary>Dev/tutorial helper — forces HP to a specific value without triggering damage events.</summary>
+    public void DevSetHP(int hp)
+    {
+        currentHP = Mathf.Clamp(hp, 0, MaxHP);
+        OnHPChanged?.Invoke(currentHP, MaxHP);
+    }
+
     private void HandleDeath()
     {
         currentHP = 0;
@@ -737,6 +749,7 @@ public class Monster : MonoBehaviour
         else
             FindFirstObjectByType<PlayerTurnController>()?.RemoveMonster(this);
 
+        OnRosterChanged?.Invoke();
         Destroy(gameObject);
     }
     #endregion

@@ -24,7 +24,6 @@ public class PlayerTurnController : TurnController
     protected override void OnTurnEnded()
     {
         IsActive = false;
-        ControlsHint.Dismiss();   // hide the controls overlay after the first turn ends
     }
 
     // -- AP Actions (called by InputManager) -----------------------------------
@@ -126,6 +125,7 @@ public class PlayerTurnController : TurnController
     public void OnEndTurnButtonPressed()
     {
         if (!IsActive) return;
+        if (!InputManager.TutorialAllow(InputManager.TutorialAction.EndTurn)) return;
         Debug.Log("[PlayerTurnController] Player manually ended turn.");
         StartCoroutine(EndTurnWhenReady());
     }

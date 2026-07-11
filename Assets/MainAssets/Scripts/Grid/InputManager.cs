@@ -59,6 +59,22 @@ public class InputManager : MonoBehaviour
     public static Color PlayerMonsterTileColor { get; private set; } = new Color(0.1f, 1.5f, 0.25f, 1f);
     public static Color EnemyMonsterTileColor  { get; private set; } = new Color(1.5f, 0.1f, 0.1f,  1f);
 
+    // ── Tutorial input filter ─────────────────────────────────────────────────
+    // Set by TutorialManager. When non-null, each attempted action is passed to
+    // the filter; returning false blocks the action and fires OnBlockedAction so
+    // the tutorial can show a redirect message.
+    public enum TutorialAction { MonsterClick, MovementMode, AttackMode, EndTurn, MoveTile, AttackTarget }
+    public static System.Func<TutorialAction, Tile, bool> TutorialFilter   = null;
+    public static System.Action<TutorialAction>           OnBlockedAction  = null;
+
+    public static bool TutorialAllow(TutorialAction action, Tile tile = null)
+    {
+        if (TutorialFilter == null) return true;
+        bool allowed = TutorialFilter(action, tile);
+        if (!allowed) OnBlockedAction?.Invoke(action);
+        return allowed;
+    }
+
     // -- Input Actions ---------------------------------------------------------
 
     private InputAction mousePositionAction;
@@ -235,6 +251,7 @@ public class InputManager : MonoBehaviour
 
         if (endTurnPressed && playerTurnController != null && playerTurnController.IsActive)
         {
+            if (!TutorialAllow(TutorialAction.EndTurn)) return;
             Debug.Log("[InputManager] EndTurn hotkey.");
             playerTurnController.OnEndTurnButtonPressed();
             return;   // don't process other hotkeys the same frame
@@ -263,12 +280,14 @@ public class InputManager : MonoBehaviour
 
                 if (hk != null && hk.WasPressedThisFrame(HotkeyAction.Move))
                 {
+                    if (!TutorialAllow(TutorialAction.MovementMode)) return;
                     Debug.Log("[InputManager] Move hotkey.");
                     HandleMovementAction(savedTile);
                     return;
                 }
                 if (hk != null && hk.WasPressedThisFrame(HotkeyAction.Attack))
                 {
+                    if (!TutorialAllow(TutorialAction.AttackMode)) return;
                     Debug.Log("[InputManager] Attack hotkey.");
                     HandleAbilitiesAction(savedTile);
                     return;
@@ -466,6 +485,8 @@ public class InputManager : MonoBehaviour
             return;
         }
 
+        if (!TutorialAllow(TutorialAction.MonsterClick, clickedTile)) return;
+
         // Empty or obstruction tiles have no actions — clear selection and stop
         if (clickedTile.Occupation == Tile.OccupationType.Empty ||
             clickedTile.Occupation == Tile.OccupationType.Obstruction)
@@ -496,6 +517,7 @@ public class InputManager : MonoBehaviour
 
     void HandleMovementClick(Tile clickedTile)
     {
+        if (!TutorialAllow(TutorialAction.MoveTile, clickedTile)) return;
         if (IsValidMovementDestination(clickedTile))
             StartCoroutine(MoveMonsterToTile(clickedTile));
         else
@@ -505,6 +527,9 @@ public class InputManager : MonoBehaviour
     // -- Right Click -----------------------------------------------------------
 
     void OnRightClick(InputAction.CallbackContext context) => CancelCurrentAction();
+
+    public static void RequestCancel()
+        => FindFirstObjectByType<InputManager>()?.CancelCurrentAction();
 
     void CancelCurrentAction()
     {
@@ -594,8 +619,12 @@ public class InputManager : MonoBehaviour
 
         switch (type)
         {
-            case RadialActionType.Movement:   HandleMovementAction(tile);  break;
-            case RadialActionType.Attack:     HandleAbilitiesAction(tile); break;
+            case RadialActionType.Movement:
+                if (!TutorialAllow(TutorialAction.MovementMode, tile)) return;
+                HandleMovementAction(tile);  break;
+            case RadialActionType.Attack:
+                if (!TutorialAllow(TutorialAction.AttackMode, tile)) return;
+                HandleAbilitiesAction(tile); break;
             case RadialActionType.Info:       HandleInfoAction(tile);      break;
             case RadialActionType.UseAttack0: HandleAttackSelected(0);     break;
             case RadialActionType.UseAttack1: HandleAttackSelected(1);     break;
@@ -635,6 +664,7 @@ public class InputManager : MonoBehaviour
     {
         cameraController?.ReleaseFocus();
         currentState       = InputState.MovementMode;
+        TutorialManager.NotifyMovementModeEntered();
         movingMonster      = monster;
         movementOriginTile = originTile;
 
@@ -1111,6 +1141,7 @@ public class InputManager : MonoBehaviour
 
         cameraController?.ReleaseFocus();
         currentState = InputState.TargetSelection;
+        TutorialManager.NotifyAttackRangeShown();
         Debug.Log($"[InputManager] Targeting '{selectedAttackData.DisplayName}' " +
                   $"({(isDirectional ? "directional" : isAOE ? "AOE" : "single")}) — " +
                   $"{validTargetTiles.Count} aim tile(s) highlighted.");

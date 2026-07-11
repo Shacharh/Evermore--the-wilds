@@ -113,6 +113,12 @@ public abstract class TurnController : MonoBehaviour
     /// <summary>Add AP up to the cap. Used by DevPanel for QA testing.</summary>
     public void GainAP(int amount) => SetAP(CurrentAP + amount);
 
+    /// <summary>Force AP to an exact value, ignoring the current amount. Used by TutorialManager.</summary>
+    public void DevSetAP(int value) => SetAP(value);
+
+    /// <summary>Resets turn state so the next StartTurn() behaves like a fresh game start.</summary>
+    public void ResetForNewGame() => _isFirstTurn = true;
+
     // -- Auto-end Conditions ---------------------------------------------------
 
     /// <summary>

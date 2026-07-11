@@ -14,6 +14,14 @@ public class MonsterSpawner : MonoBehaviour
     [Tooltip("Rotate spawned monsters 180° on Y so they face the opposing side. Enable on the Enemy spawner.")]
     [SerializeField] private bool flipFacing = false;
 
+    /// <summary>
+    /// Set to true before Start() runs to prevent automatic spawning.
+    /// Call ForceSpawnAll() later to release.
+    /// TutorialManager uses this to hold normal monsters until the player
+    /// decides whether to play the tutorial.
+    /// </summary>
+    public static bool HoldSpawn = false;
+
     void Start()
     {
         if (gridManager == null) gridManager = FindFirstObjectByType<GridManager>();
@@ -22,8 +30,12 @@ public class MonsterSpawner : MonoBehaviour
         Invoke(nameof(SpawnAll), 0.2f);
     }
 
+    /// <summary>Manually trigger spawning (used by TutorialManager on "No").</summary>
+    public void ForceSpawnAll() => SpawnAll();
+
     void SpawnAll()
     {
+        if (HoldSpawn) return;
         foreach (var data in monstersToSpawn)
         {
             Tile targetTile = gridManager.GetTile(data.gridPosition.x, data.gridPosition.y);

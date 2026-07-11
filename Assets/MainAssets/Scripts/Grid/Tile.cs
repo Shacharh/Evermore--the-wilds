@@ -27,6 +27,7 @@ public class Tile : MonoBehaviour
     private Renderer tileRenderer;
     private MaterialPropertyBlock propertyBlock;
     private Color originalColor;
+    private Color _naturalColor;   // originalColor before any monster tint is applied
     private Vector3 originalPosition;
     private bool isHovered = false;
 
@@ -114,6 +115,7 @@ public class Tile : MonoBehaviour
         // Store original color
         tileRenderer.GetPropertyBlock(propertyBlock);
         originalColor = propertyBlock.GetColor(BaseColorProperty);
+        _naturalColor         = originalColor;
         currentTargetColor    = originalColor;
         currentTargetHeight   = 0f;
         activeHighlightColor  = originalColor;
@@ -284,6 +286,21 @@ public class Tile : MonoBehaviour
         activeHighlightHeight = 0f;
     }
 
+    // ── Monster Tint (persistent HDR team colour on occupied tiles) ──────────
+
+    public void SetMonsterTint(bool isEnemy)
+    {
+        Color tint         = isEnemy ? InputManager.EnemyMonsterTileColor : InputManager.PlayerMonsterTileColor;
+        originalColor      = Color.Lerp(_naturalColor, tint, 0.55f);
+        currentTargetColor = originalColor;
+    }
+
+    public void ClearMonsterTint()
+    {
+        originalColor      = _naturalColor;
+        currentTargetColor = originalColor;
+    }
+
     // Occupation Management
     public bool SetOccupation(OccupationType type, GameObject occupyingObject = null)
     {
@@ -293,14 +310,22 @@ public class Tile : MonoBehaviour
             return false;
         }
 
-        Occupation = type;
+        Occupation      = type;
         OccupyingObject = occupyingObject;
+
+        if (type == OccupationType.Monster && occupyingObject != null)
+        {
+            Monster m = occupyingObject.GetComponentInChildren<Monster>();
+            if (m != null) SetMonsterTint(m.IsEnemy);
+        }
+
         return true;
     }
 
     public void ClearOccupation()
     {
-        Occupation = OccupationType.Empty;
+        ClearMonsterTint();
+        Occupation      = OccupationType.Empty;
         OccupyingObject = null;
     }
 

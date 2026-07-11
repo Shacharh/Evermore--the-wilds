@@ -38,6 +38,7 @@ public class TurnManager : MonoBehaviour
 
     public int TurnNumber { get; private set; } = 1;
 
+
     // -- Events ----------------------------------------------------------------
 
     [Header("Events")]

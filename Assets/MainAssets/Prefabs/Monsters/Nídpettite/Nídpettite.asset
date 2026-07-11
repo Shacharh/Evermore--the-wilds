@@ -15,6 +15,7 @@ MonoBehaviour:
   monsterId: "N\xEDdpettite"
   displayName: "N\xEDdpettite"
   elementType: 0
+  portrait: {fileID: 21300000, guid: e9d83f9adeacd6b4ba601ec11ce15816, type: 3}
   isFlying: 1
   baseHP: 280
   baseAttack: 280
