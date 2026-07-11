@@ -250,7 +250,7 @@ public class HUDController : MonoBehaviour
         panel.pickingMode = PickingMode.Ignore;
         panel.style.position      = Position.Absolute;
         panel.style.top           = 80;
-        panel.style.bottom        = 90;
+        panel.style.bottom        = 420;
         if (isLeft)  panel.style.left  = 12;
         else         panel.style.right = 12;
         panel.style.flexDirection  = FlexDirection.Column;

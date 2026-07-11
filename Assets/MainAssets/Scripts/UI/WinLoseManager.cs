@@ -39,6 +39,11 @@ public class WinLoseManager : MonoBehaviour
     private Label         _titleLabel;
     private Label         _reasonLabel;
 
+    // Tracks which monsters we've subscribed OnDied to, so we can re-bind after the
+    // tutorial replaces monsters with the real battle roster.
+    private readonly System.Collections.Generic.HashSet<Monster> _subscribedMonsters =
+        new System.Collections.Generic.HashSet<Monster>();
+
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     private void Awake()
@@ -48,6 +53,13 @@ public class WinLoseManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
         BuildUI();
         SetOverlayVisible(false);
+        Monster.OnRosterChanged += RebindMonsterEvents;
+    }
+
+    private void OnDestroy()
+    {
+        Monster.OnRosterChanged -= RebindMonsterEvents;
+        if (Instance == this) Instance = null;
     }
 
     private void Start() => StartCoroutine(LateSubscribe());
@@ -78,14 +90,26 @@ public class WinLoseManager : MonoBehaviour
             }
         }
 
+        RebindMonsterEvents();
+    }
+
+    // Re-subscribes OnDied to every live monster. Called from Monster.OnRosterChanged so
+    // the real battle roster is picked up after tutorial monsters are replaced.
+    private void RebindMonsterEvents()
+    {
+        _subscribedMonsters.RemoveWhere(m => m == null);
         foreach (var m in FindObjectsByType<Monster>(FindObjectsSortMode.None))
-            m.OnDied += OnMonsterDied;
+        {
+            if (_subscribedMonsters.Add(m))
+                m.OnDied += OnMonsterDied;
+        }
     }
 
     // ── Event handlers ────────────────────────────────────────────────────────
 
     private void OnMonsterDied(Monster m)
     {
+        _subscribedMonsters.Remove(m);
         if (!_gameOver) StartCoroutine(DelayedConditionCheck());
     }
 
@@ -108,6 +132,9 @@ public class WinLoseManager : MonoBehaviour
 
     private void CheckConditions()
     {
+        // Tutorial manages its own victory — don't interrupt it.
+        if (TutorialManager.Instance != null && TutorialManager.Instance.IsActive) return;
+
         var tm = TurnManager.Instance;
         if (tm == null) return;
 
