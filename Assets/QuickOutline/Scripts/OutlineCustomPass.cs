@@ -26,8 +26,8 @@ public class OutlineCustomPass : CustomPass
 
     private Material _silhouetteMat;
     private Material _effectMat;
-    private RTHandle _silhouetteRT;      // "all" silhouette mask (ZTest Always)
-    private RTHandle _silhouetteVisRT;   // "visible-only" silhouette mask (ZTest GreaterEqual)
+    private RTHandle _silhouetteRT;       // RGBA8 mask for OutlineAll dilation
+    private RTHandle _monsterDepthMaskRT; // RG float: R=NDC depth, G=presence
 
     // Allocated in Setup, not as a static initializer — MaterialPropertyBlock
     // calls native code and cannot be constructed during serialization.
@@ -43,16 +43,18 @@ public class OutlineCustomPass : CustomPass
             Vector2.one, TextureXR.slices,
             colorFormat: GraphicsFormat.R8G8B8A8_UNorm,
             useDynamicScale: true,
-            name: "OutlineSilhouetteAll");
+            name: "OutlineSilhouetteBuffer");
 
-        _silhouetteVisRT = RTHandles.Alloc(
+        // Float RT for the team-silhouette depth encoding pass.
+        // R = monster NDC depth from our vertex shader.
+        // G = presence flag (1.0 where monster rendered, cleared to 0).
+        // Using R16G16_SFloat — sufficient precision for NDC depth [0..1].
+        _monsterDepthMaskRT = RTHandles.Alloc(
             Vector2.one, TextureXR.slices,
-            colorFormat: GraphicsFormat.R8G8B8A8_UNorm,
+            colorFormat: GraphicsFormat.R16G16_SFloat,
             useDynamicScale: true,
-            name: "OutlineSilhouetteVisible");
+            name: "MonsterDepthMask");
 
-        // OutlineAll dilation pass (pass 0 of effect shader) reads _MaskTex.
-        // Bind once — it always points to _silhouetteRT.
         _effectMat.SetTexture("_MaskTex", _silhouetteRT);
     }
 
@@ -68,62 +70,48 @@ public class OutlineCustomPass : CustomPass
             if (renderers == null || renderers.Length == 0) continue;
 
             if (outline.OutlineMode == Outline.Mode.SilhouetteOnly)
-            {
                 DrawSilhouetteOnly(ctx, outline, renderers);
-            }
             else
-            {
                 DrawOutlineAll(ctx, outline, renderers);
-            }
         }
     }
 
-    // Team-colour fill shown only where the monster is behind scene geometry.
-    // Strategy: two hardware-ZTest passes whose difference = occluded region.
-    //   Pass 0 (ZTest Always)       → _silhouetteRT   : full monster shape
-    //   Pass 1 (ZTest GreaterEqual) → _silhouetteVisRT : visible portion only
-    //   Composite pass 1 of effect shader: All - Visible = occluded → team colour
+    // Team-colour fill, visible only where the monster is occluded by scene geometry.
     //
-    // No depth texture reads. Hardware ZTest is the only depth mechanism used,
-    // so there is no SRV/DSV conflict and no dependency on _CameraDepthTexture.
+    // Step 1 — encode the monster's NDC depth into _monsterDepthMaskRT.
+    //   No DSV is bound: ZTest Always, no depth read/write needed.
+    //
+    // Step 2 — composite onto the camera.
+    //   No DSV is bound: _CameraDepthTexture (HDRP global) is therefore accessible
+    //   as an SRV in the fragment shader without SRV/DSV conflict.
+    //   The composite shader compares the two depths with a threshold to isolate
+    //   only the truly occluded region.
     private void DrawSilhouetteOnly(CustomPassContext ctx, Outline outline, Renderer[] renderers)
     {
-        _mpb.SetColor("_SilhouetteColor", Color.white);
-
-        // ── Step 1: full silhouette (ZTest Always) ──────────────────────────
-        CoreUtils.SetRenderTarget(ctx.cmd, _silhouetteRT, ctx.cameraDepthBuffer,
-            ClearFlag.Color, Color.clear);
-
-        foreach (var r in renderers)
-        {
-            if (r == null) continue;
-            r.SetPropertyBlock(_mpb);
-            int count = SubMeshCount(r);
-            for (int i = 0; i < count; i++)
-                ctx.cmd.DrawRenderer(r, _silhouetteMat, i, 0); // pass 0: ZTest Always
-        }
-
-        // ── Step 2: visible-only silhouette (ZTest GreaterEqual) ────────────
-        // GEqual in HDRP reversed-Z: fragment_depth >= buffer_depth
-        // = fragment is at the same depth as (or closer than) the scene
-        // = the VISIBLE portion of the mesh.
-        CoreUtils.SetRenderTarget(ctx.cmd, _silhouetteVisRT, ctx.cameraDepthBuffer,
-            ClearFlag.Color, Color.clear);
+        // ── Step 1: render monster depth + presence into float RT ────────────
+        // Bind NO depth buffer — ZTest Always, so depth testing is irrelevant,
+        // and we must not bind cameraDepthBuffer as DSV here or the SRV will
+        // be nulled in the composite step.
+        CoreUtils.SetRenderTarget(ctx.cmd, _monsterDepthMaskRT, ClearFlag.Color,
+            new Color(0, 0, 0, 0));
 
         foreach (var r in renderers)
         {
             if (r == null) continue;
-            r.SetPropertyBlock(_mpb);
+            r.SetPropertyBlock(_mpb); // no per-renderer color needed here
             int count = SubMeshCount(r);
             for (int i = 0; i < count; i++)
-                ctx.cmd.DrawRenderer(r, _silhouetteMat, i, 1); // pass 1: ZTest GreaterEqual
+                ctx.cmd.DrawRenderer(r, _silhouetteMat, i, 1); // pass 1: depth encoder
         }
 
-        // ── Step 3: composite occluded region in team colour ─────────────────
-        ctx.cmd.SetGlobalTexture("_SilAllTex",  _silhouetteRT);
-        ctx.cmd.SetGlobalTexture("_SilVisTex",  _silhouetteVisRT);
+        // ── Step 2: composite — draw team colour on occluded pixels ──────────
+        // Render to cameraColorBuffer with NO depth buffer so cameraDepthBuffer
+        // is NOT bound as DSV → _CameraDepthTexture is accessible as SRV.
+        CoreUtils.SetRenderTarget(ctx.cmd, ctx.cameraColorBuffer, ClearFlag.None);
+
+        ctx.cmd.SetGlobalTexture("_MonsterDepthMaskTex", _monsterDepthMaskRT);
         ctx.cmd.SetGlobalColor("_SilhouetteTeamColor", outline.OutlineColor);
-        // Pass 1 of the effect shader: SilhouetteOccluded composite.
+        // Pass 1 of the effect shader: SilhouetteOccluded.
         HDUtils.DrawFullScreen(ctx.cmd, _effectMat, ctx.cameraColorBuffer, null, 1);
     }
 
@@ -146,7 +134,6 @@ public class OutlineCustomPass : CustomPass
 
         ctx.cmd.SetGlobalColor("_OutlineColor", outline.OutlineColor);
         ctx.cmd.SetGlobalInt("_OutlineWidth", Mathf.Max(1, Mathf.RoundToInt(outline.OutlineWidth)));
-        // Pass 0 of the effect shader: OutlineDilation.
         HDUtils.DrawFullScreen(ctx.cmd, _effectMat, ctx.cameraColorBuffer, null, 0);
     }
 
@@ -156,8 +143,8 @@ public class OutlineCustomPass : CustomPass
         CoreUtils.Destroy(_effectMat);
         _silhouetteRT?.Release();
         _silhouetteRT = null;
-        _silhouetteVisRT?.Release();
-        _silhouetteVisRT = null;
+        _monsterDepthMaskRT?.Release();
+        _monsterDepthMaskRT = null;
     }
 
     private static int SubMeshCount(Renderer r)

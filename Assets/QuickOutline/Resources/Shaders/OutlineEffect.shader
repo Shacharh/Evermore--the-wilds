@@ -78,10 +78,14 @@ Shader "Custom/OutlineEffect" {
     }
 
     // Pass 1 — SilhouetteOccluded composite.
-    //   Reads two masks produced by OutlineSilhouette passes 0 and 1:
-    //     _SilAllTex  : full silhouette (ZTest Always)
-    //     _SilVisTex  : visible-only silhouette (ZTest GreaterEqual)
-    //   Occluded region = All - Visible.  Draws it in _SilhouetteTeamColor.
+    //   Reads _MonsterDepthMaskTex (R=monster NDC depth, G=presence flag) filled by
+    //   OutlineSilhouette pass 1, plus _CameraDepthTexture (scene depth from HDRP).
+    //   No depth buffer is bound as DSV, so _CameraDepthTexture is accessible as SRV.
+    //
+    //   A monster pixel is OCCLUDED when its depth is measurably farther than the
+    //   scene depth at that pixel.  kOcclusionThreshold separates:
+    //     visible  : monsterDepth ≈ sceneDepth  (small floating-point difference)
+    //     occluded : monsterDepth >> sceneDepth  (genuine wall/terrain in front)
     Pass {
       Name "SilhouetteOccluded"
       ZTest  Always
@@ -95,11 +99,10 @@ Shader "Custom/OutlineEffect" {
       #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
       #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 
-      // Set via cmd.SetGlobalTexture before DrawFullScreen.
-      TEXTURE2D(_SilAllTex);
-      SAMPLER(sampler_SilAllTex);
-      TEXTURE2D(_SilVisTex);
-      SAMPLER(sampler_SilVisTex);
+      // Filled by C# via cmd.SetGlobalTexture before DrawFullScreen.
+      // R = monster NDC depth from our vertex shader.
+      // G = 1.0 where a monster pixel was rendered, 0 elsewhere.
+      TEXTURE2D_X(_MonsterDepthMaskTex);
 
       // Per-outline team colour, set via cmd.SetGlobalColor.
       float4 _SilhouetteTeamColor;
@@ -115,11 +118,30 @@ Shader "Custom/OutlineEffect" {
       }
 
       float4 frag(Varyings i) : SV_Target {
-        float allA     = SAMPLE_TEXTURE2D(_SilAllTex, sampler_SilAllTex, i.uv).a;
-        float visibleA = SAMPLE_TEXTURE2D(_SilVisTex, sampler_SilVisTex, i.uv).a;
-        // occluded = present in "all" mask but absent in "visible" mask
-        float occluded = saturate(allA - visibleA);
-        return float4(_SilhouetteTeamColor.rgb, occluded * _SilhouetteTeamColor.a);
+        uint2 screenCoord = uint2(i.posCS.xy);
+
+        float2 monsterData  = LOAD_TEXTURE2D_X(_MonsterDepthMaskTex, screenCoord).rg;
+        float  monsterDepth = monsterData.r;
+        float  monsterHere  = monsterData.g;
+
+        // No monster at this pixel — skip.
+        if (monsterHere < 0.5) discard;
+
+        // Scene depth at this pixel from HDRP's depth prepass.
+        // No DSV is bound in this pass, so _CameraDepthTexture is accessible as SRV.
+        float sceneDepth = LoadCameraDepth(screenCoord);
+
+        // HDRP uses reversed-Z: 1.0 = near, 0.0 = far.
+        // Occluded monster: wall is closer (larger sceneDepth), monster is farther
+        // (smaller monsterDepth) → sceneDepth - monsterDepth > 0.
+        // Visible monster: sceneDepth ≈ monsterDepth → difference ≈ 0.
+        // kOcclusionThreshold separates the precision gap (~0.001) from a real wall.
+        const float kOcclusionThreshold = 0.005;
+
+        float depthDiff = sceneDepth - monsterDepth;
+        if (depthDiff <= kOcclusionThreshold) discard;
+
+        return _SilhouetteTeamColor;
       }
       ENDHLSL
     }
