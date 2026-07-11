@@ -41,10 +41,10 @@ MonoBehaviour:
   consumeActionPoints: 7
   guaranteedHit: 0
   accuracy: 90
-  range: 3
+  range: 1
   targetTeam: 0
-  targetShape: 3
-  rangeTargetShapeSize: 3
+  targetShape: 0
+  rangeTargetShapeSize: 1
   isDirect: 1
   inDirectHitPrecent: 0
   vfxPrefab: {fileID: 5049596518742825046, guid: 6b86c6b5fad4111468cfb136878eacc3, type: 3}
