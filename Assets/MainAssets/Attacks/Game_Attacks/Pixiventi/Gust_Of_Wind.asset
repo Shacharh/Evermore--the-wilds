@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5bec574241e95d64f874367ce5a4cc34, type: 3}
   m_Name: Gust_Of_Wind
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
-  id: Gust_Of_Wind
-  displayName: Gust Of Wind
+  id: Gust_Of_Water
+  displayName: Gust Of water
   description: shot a gust of air to an enemy
-  element: 2
+  element: 1
   effects:
   - category: 0
     value: 50
