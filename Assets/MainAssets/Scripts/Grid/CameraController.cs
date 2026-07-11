@@ -34,6 +34,11 @@ public class CameraController : MonoBehaviour
     [Tooltip("How quickly edge-scroll speed ramps up/down (higher = snappier).")]
     [SerializeField] private float edgeScrollAcceleration = 8f;
 
+    [Header("Start Position Offset")]
+    [Tooltip("Added to the grid-center position calculated by SetGridBounds. " +
+             "Tweak Z to shift the view forward/backward, Y for height.")]
+    [SerializeField] private Vector3 targetStartOffset = Vector3.zero;
+
     [Header("Map Bounds (optional)")]
     [Tooltip("Two empty GameObjects that mark the bottom-left and top-right corners " +
              "of the playable area. The camera target is clamped between them so the " +
@@ -70,6 +75,14 @@ public class CameraController : MonoBehaviour
 
     // Orbit yaw (horizontal rotation around the target)
     private float _orbitYaw;
+    public float OrbitYaw => _orbitYaw;
+
+    // ── Top-down state ─────────────────────────────────────────────────────────
+    // Activated by scrolling out past maxZoom. Camera snaps to 90° pitch and locks
+    // angle until the user scrolls back in past maxZoom to return to normal mode.
+    private bool  _isTopDown;
+    private float _topDownAngle = 90f;   // target pitch in top-down mode
+    private float _currentAngle;         // smooth working copy of cameraAngle
 
     // ── Focus state ────────────────────────────────────────────────────────────
 
@@ -85,7 +98,9 @@ public class CameraController : MonoBehaviour
 
     void Awake()
     {
-        targetZoom = currentZoom;
+        currentZoom    = maxZoom;
+        targetZoom     = maxZoom;
+        _currentAngle  = cameraAngle;
 
         if (inputActions != null)
         {
@@ -324,16 +339,39 @@ public class CameraController : MonoBehaviour
         float scrollDelta = zoomAction.ReadValue<float>();
         if (Mathf.Abs(scrollDelta) > 0.1f)
         {
-            targetZoom -= (scrollDelta / 120f) * zoomSpeed;
-            targetZoom  = Mathf.Clamp(targetZoom, minZoom, maxZoom);
+            bool scrollingOut = scrollDelta < 0f;
+
+            if (_isTopDown)
+            {
+                // Any scroll-in while in top-down exits back to normal
+                if (!scrollingOut) _isTopDown = false;
+            }
+            else
+            {
+                targetZoom -= (scrollDelta / 120f) * zoomSpeed;
+                if (targetZoom > maxZoom)
+                {
+                    // Scrolled past the max — enter top-down mode
+                    targetZoom = maxZoom;
+                    _isTopDown = true;
+                }
+                else
+                {
+                    targetZoom = Mathf.Clamp(targetZoom, minZoom, maxZoom);
+                }
+            }
         }
         // currentZoom lerp is handled in Update() so it runs during focus/restore too
     }
 
     private void ApplyCameraPosition()
     {
-        float pitchRad = cameraAngle * Mathf.Deg2Rad;
-        float yawRad   = _orbitYaw   * Mathf.Deg2Rad;
+        // Smoothly transition pitch between normal cameraAngle and 90° top-down
+        float targetAngle = _isTopDown ? _topDownAngle : cameraAngle;
+        _currentAngle = Mathf.Lerp(_currentAngle, targetAngle, Time.deltaTime * focusSpeed);
+
+        float pitchRad = _currentAngle * Mathf.Deg2Rad;
+        float yawRad   = _orbitYaw     * Mathf.Deg2Rad;
 
         float yOffset = currentZoom * Mathf.Sin(pitchRad);
         float hOffset = currentZoom * Mathf.Cos(pitchRad);  // horizontal distance from target
@@ -353,6 +391,6 @@ public class CameraController : MonoBehaviour
         if (cameraTarget == null) return;
         float centerX = (width - 1) * spacing / 2f;
         float centerZ = (height - 1) * spacing / 2f;
-        cameraTarget.position = new Vector3(centerX, 0, centerZ);
+        cameraTarget.position = new Vector3(centerX, 0, centerZ) + targetStartOffset;
     }
 }

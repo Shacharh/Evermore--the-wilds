@@ -44,7 +44,7 @@ GameObject:
   - component: {fileID: 735031748614082259}
   - component: {fileID: 7526859142065577751}
   m_Layer: 7
-  m_Name: "N\xEDdpettite"
+  m_Name: "N\xEDdpettite_Tut"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -82,7 +82,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Monster
   data: {fileID: 11400000, guid: ab838ec2f746d454d83e56daec915847, type: 2}
   enemyMonster: 0
-  level: 40
+  level: 14
   learnedAttacks:
   - data: {fileID: 11400000, guid: d04e95ff7b87b33478e1913334230dcd, type: 2}
   - data: {fileID: 11400000, guid: 9242119da1029b1469789b36b58027c3, type: 2}
@@ -123,9 +123,7 @@ MonoBehaviour:
   outlineMode: 0
   outlineColor: {r: 1, g: 1, b: 1, a: 1}
   outlineWidth: 2
-  precomputeOutline: 0
-  bakeKeys: []
-  bakeValues: []
+  overrideRenderers: []
 --- !u!1 &8081228498352018174
 GameObject:
   m_ObjectHideFlags: 0

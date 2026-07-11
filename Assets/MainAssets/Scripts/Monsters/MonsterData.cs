@@ -7,6 +7,8 @@ public class MonsterData : ScriptableObject
     public string monsterId;
     public string displayName;
     public AttackEnum.ElementType elementType;
+    [Tooltip("2D portrait sprite shown in the battle roster panel (square, transparent background recommended).")]
+    public Sprite portrait;
     [Tooltip("Flying monsters ignore ground obstructions and can pass over them.\n" +
              "They still cannot LAND on an obstructed tile.")]
     public bool isFlying;

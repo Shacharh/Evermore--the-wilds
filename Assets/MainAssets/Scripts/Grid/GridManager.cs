@@ -97,10 +97,14 @@ public class GridManager : MonoBehaviour
     
     void SyncCameraWithGrid()
     {
-        CameraController camController = Camera.main.GetComponent<CameraController>();
+        CameraController camController = FindFirstObjectByType<CameraController>();
         if (camController != null)
         {
             camController.SetGridBounds(gridWidth, gridHeight, tileSpacing);
+        }
+        else
+        {
+            Debug.LogWarning("[GridManager] CameraController not found in scene — camera not centred.");
         }
     }
     

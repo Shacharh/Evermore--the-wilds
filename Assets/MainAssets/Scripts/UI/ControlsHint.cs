@@ -12,12 +12,9 @@ public class ControlsHint : MonoBehaviour
 {
     public static ControlsHint Instance { get; private set; }
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void AutoCreate()
-    {
-        if (Instance != null) return;
-        new GameObject("ControlsHint").AddComponent<ControlsHint>();
-    }
+    // AutoCreate disabled — tutorial replaces the controls hint.
+    // [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    // private static void AutoCreate() { ... }
 
     private const float AutoDismissSeconds = 20f;
 

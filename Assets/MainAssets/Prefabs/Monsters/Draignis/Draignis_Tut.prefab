@@ -44,7 +44,7 @@ GameObject:
   - component: {fileID: 735031748614082259}
   - component: {fileID: 3082427905974271880}
   m_Layer: 7
-  m_Name: Draignis
+  m_Name: Draignis_Tut
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -84,7 +84,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Monster
   data: {fileID: 11400000, guid: 063b196c783d10e40b59fcd52f9a18c1, type: 2}
   enemyMonster: 1
-  level: 40
+  level: 5
   learnedAttacks:
   - data: {fileID: 0}
   - data: {fileID: 11400000, guid: bc673b17201210d4a9331bb96f396b83, type: 2}
@@ -125,9 +125,7 @@ MonoBehaviour:
   outlineMode: 1
   outlineColor: {r: 1, g: 1, b: 1, a: 1}
   outlineWidth: 3.92
-  precomputeOutline: 0
-  bakeKeys: []
-  bakeValues: []
+  overrideRenderers: []
 --- !u!1 &4520182552474242076
 GameObject:
   m_ObjectHideFlags: 0

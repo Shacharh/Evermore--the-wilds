@@ -70,6 +70,11 @@ public class MonsterInfoPanel : MonoBehaviour
 
     // ── Public API ─────────────────────────────────────────────────────────────
 
+    public bool IsVisible => _root != null && _root.style.display == DisplayStyle.Flex;
+
+    public static event System.Action OnOpened;
+    public static event System.Action OnClosed;
+
     public void Show(Monster monster)
     {
         if (monster == null || _root == null) return;
@@ -78,12 +83,14 @@ public class MonsterInfoPanel : MonoBehaviour
         _currentMonster.OnHPChanged += OnHPChanged;
         Refresh();
         _root.style.display = DisplayStyle.Flex;
+        OnOpened?.Invoke();
     }
 
     public void Hide()
     {
         if (_root != null) _root.style.display = DisplayStyle.None;
         UnsubscribeFromMonster();
+        OnClosed?.Invoke();
     }
 
     // ── Private helpers ────────────────────────────────────────────────────────

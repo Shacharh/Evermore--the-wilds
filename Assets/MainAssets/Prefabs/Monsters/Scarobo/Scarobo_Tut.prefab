@@ -44,7 +44,7 @@ GameObject:
   - component: {fileID: 735031748614082259}
   - component: {fileID: 1740951725796481893}
   m_Layer: 7
-  m_Name: Scarobo
+  m_Name: Scarobo_Tut
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -84,7 +84,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Monster
   data: {fileID: 11400000, guid: 0883bdb8fe4abfc47b115186142dc692, type: 2}
   enemyMonster: 0
-  level: 38
+  level: 10
   learnedAttacks:
   - data: {fileID: 11400000, guid: 252e20731444d2541a5b85575d6bd6e4, type: 2}
   - data: {fileID: 11400000, guid: 819202d1ced208e42b62f68416a8aef2, type: 2}
@@ -125,9 +125,7 @@ MonoBehaviour:
   outlineMode: 0
   outlineColor: {r: 1, g: 1, b: 1, a: 1}
   outlineWidth: 2
-  precomputeOutline: 0
-  bakeKeys: []
-  bakeValues: []
+  overrideRenderers: []
 --- !u!1 &8782099375881524005
 GameObject:
   m_ObjectHideFlags: 0

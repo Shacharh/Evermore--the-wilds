@@ -15,6 +15,7 @@ MonoBehaviour:
   monsterId: Maiwolf
   displayName: Maiwolf
   elementType: 3
+  portrait: {fileID: 21300000, guid: 3fb8df82f887ef04ebd3c7a205f840b3, type: 3}
   isFlying: 0
   baseHP: 400
   baseAttack: 200

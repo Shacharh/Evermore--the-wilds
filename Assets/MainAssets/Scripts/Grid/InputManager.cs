@@ -47,6 +47,34 @@ public class InputManager : MonoBehaviour
     [Tooltip("Dim pulse colour B for ally-targeting attacks.")]
     [SerializeField] private Color allyPulseColorB = new Color(0.02f, 0.55f, 0.05f, 0.50f);
 
+    [Header("Monster Tile Tint")]
+    [Tooltip("HDR tile tint for tiles occupied by player monsters.")]
+    [ColorUsage(true, true)]
+    [SerializeField] private Color playerMonsterTileColor = new Color(0.1f, 1.5f, 0.25f, 1f);
+    [Tooltip("HDR tile tint for tiles occupied by enemy monsters.")]
+    [ColorUsage(true, true)]
+    [SerializeField] private Color enemyMonsterTileColor  = new Color(1.5f, 0.1f, 0.1f,  1f);
+
+    // Static accessors so Tile.SetOccupation can read the values without a direct reference.
+    public static Color PlayerMonsterTileColor { get; private set; } = new Color(0.1f, 1.5f, 0.25f, 1f);
+    public static Color EnemyMonsterTileColor  { get; private set; } = new Color(1.5f, 0.1f, 0.1f,  1f);
+
+    // ── Tutorial input filter ─────────────────────────────────────────────────
+    // Set by TutorialManager. When non-null, each attempted action is passed to
+    // the filter; returning false blocks the action and fires OnBlockedAction so
+    // the tutorial can show a redirect message.
+    public enum TutorialAction { MonsterClick, MovementMode, AttackMode, EndTurn, MoveTile, AttackTarget }
+    public static System.Func<TutorialAction, Tile, bool> TutorialFilter   = null;
+    public static System.Action<TutorialAction>           OnBlockedAction  = null;
+
+    public static bool TutorialAllow(TutorialAction action, Tile tile = null)
+    {
+        if (TutorialFilter == null) return true;
+        bool allowed = TutorialFilter(action, tile);
+        if (!allowed) OnBlockedAction?.Invoke(action);
+        return allowed;
+    }
+
     // -- Input Actions ---------------------------------------------------------
 
     private InputAction mousePositionAction;
@@ -98,6 +126,10 @@ public class InputManager : MonoBehaviour
         if (attackRangeColor.a < 0.7f)
             attackRangeColor = new Color(0.9f, 0.05f, 0.05f, 0.85f);
 
+        // Publish monster tile tint colours so Tile.SetOccupation can read them.
+        PlayerMonsterTileColor = playerMonsterTileColor;
+        EnemyMonsterTileColor  = enemyMonsterTileColor;
+
         if (mainCamera == null)
             mainCamera = Camera.main;
 
@@ -128,6 +160,58 @@ public class InputManager : MonoBehaviour
 
                 inputActions.Enable();
             }
+        }
+    }
+
+    void Start()
+    {
+        // Monsters placed directly in the scene (not via MonsterSpawner) never have
+        // SetOccupation called, so their tiles appear Empty and can't be clicked or
+        // targeted by attacks. Wait past GridManager generation before registering.
+        StartCoroutine(RegisterScenePlacedMonsters());
+    }
+
+    private System.Collections.IEnumerator RegisterScenePlacedMonsters()
+    {
+        yield return new WaitForSeconds(0.5f);
+
+        if (gridManager == null) yield break;
+
+        var all = FindObjectsByType<Monster>(FindObjectsSortMode.None);
+        foreach (var m in all)
+        {
+            if (m == null || m.CurrentTile != null) continue;
+
+            Tile tile = gridManager.GetTileAtWorldPosition(m.transform.root.position);
+            if (tile == null) continue;
+
+            if (tile.Occupation == Tile.OccupationType.Empty)
+            {
+                tile.SetOccupation(Tile.OccupationType.Monster, m.gameObject);
+                m.CurrentTile = tile;
+                Debug.Log($"[InputManager] Scene-placed monster '{m.name}' registered on tile {tile.GridPosition}.");
+            }
+            else if (tile.OccupyingObject != null &&
+                     tile.OccupyingObject.transform.root == m.transform.root)
+            {
+                m.CurrentTile = tile;
+            }
+
+            // Scene-placed monsters skip MonsterSpawner, so they have no Outline component.
+            // Add one now so effectiveness colours work during target selection.
+            GameObject root = m.transform.root.gameObject;
+            if (root.GetComponent<Outline>() == null)
+            {
+                var outline = root.AddComponent<Outline>();
+                outline.OutlineWidth = 8f;
+            }
+        }
+
+        // Set correct team colour on every monster's Outline (including spawned ones whose
+        // Outline was added by MonsterSpawner with the default white colour).
+        foreach (var m in all)
+        {
+            if (m != null) RestoreTeamOutline(m);
         }
     }
 
@@ -167,6 +251,7 @@ public class InputManager : MonoBehaviour
 
         if (endTurnPressed && playerTurnController != null && playerTurnController.IsActive)
         {
+            if (!TutorialAllow(TutorialAction.EndTurn)) return;
             Debug.Log("[InputManager] EndTurn hotkey.");
             playerTurnController.OnEndTurnButtonPressed();
             return;   // don't process other hotkeys the same frame
@@ -195,12 +280,14 @@ public class InputManager : MonoBehaviour
 
                 if (hk != null && hk.WasPressedThisFrame(HotkeyAction.Move))
                 {
+                    if (!TutorialAllow(TutorialAction.MovementMode)) return;
                     Debug.Log("[InputManager] Move hotkey.");
                     HandleMovementAction(savedTile);
                     return;
                 }
                 if (hk != null && hk.WasPressedThisFrame(HotkeyAction.Attack))
                 {
+                    if (!TutorialAllow(TutorialAction.AttackMode)) return;
                     Debug.Log("[InputManager] Attack hotkey.");
                     HandleAbilitiesAction(savedTile);
                     return;
@@ -235,6 +322,16 @@ public class InputManager : MonoBehaviour
         if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, tileLayerMask))
         {
             Tile hitTile = hit.collider.GetComponent<Tile>();
+
+            // Hit something on the tile layer that isn't actually a Tile (e.g. environment prop).
+            // Clear the hover so the stale tile can't be mistakenly clicked.
+            if (hitTile == null)
+            {
+                if (currentHoveredTile != null) { currentHoveredTile.SetHovered(false); currentHoveredTile = null; }
+                if (currentState == InputState.MovementMode) MoveCostHint.Hide();
+                if (currentState == InputState.TargetSelection) ClearAOEFootprint();
+                return;
+            }
 
             if (hitTile != null && hitTile != currentHoveredTile)
             {
@@ -388,8 +485,11 @@ public class InputManager : MonoBehaviour
             return;
         }
 
-        // Empty tiles have no actions — clear selection and stop
-        if (clickedTile.Occupation == Tile.OccupationType.Empty)
+        if (!TutorialAllow(TutorialAction.MonsterClick, clickedTile)) return;
+
+        // Empty or obstruction tiles have no actions — clear selection and stop
+        if (clickedTile.Occupation == Tile.OccupationType.Empty ||
+            clickedTile.Occupation == Tile.OccupationType.Obstruction)
         {
             if (activeMenu != null) CloseRadialMenu();
             if (selectedTile != null)
@@ -417,6 +517,7 @@ public class InputManager : MonoBehaviour
 
     void HandleMovementClick(Tile clickedTile)
     {
+        if (!TutorialAllow(TutorialAction.MoveTile, clickedTile)) return;
         if (IsValidMovementDestination(clickedTile))
             StartCoroutine(MoveMonsterToTile(clickedTile));
         else
@@ -426,6 +527,9 @@ public class InputManager : MonoBehaviour
     // -- Right Click -----------------------------------------------------------
 
     void OnRightClick(InputAction.CallbackContext context) => CancelCurrentAction();
+
+    public static void RequestCancel()
+        => FindFirstObjectByType<InputManager>()?.CancelCurrentAction();
 
     void CancelCurrentAction()
     {
@@ -515,8 +619,12 @@ public class InputManager : MonoBehaviour
 
         switch (type)
         {
-            case RadialActionType.Movement:   HandleMovementAction(tile);  break;
-            case RadialActionType.Attack:     HandleAbilitiesAction(tile); break;
+            case RadialActionType.Movement:
+                if (!TutorialAllow(TutorialAction.MovementMode, tile)) return;
+                HandleMovementAction(tile);  break;
+            case RadialActionType.Attack:
+                if (!TutorialAllow(TutorialAction.AttackMode, tile)) return;
+                HandleAbilitiesAction(tile); break;
             case RadialActionType.Info:       HandleInfoAction(tile);      break;
             case RadialActionType.UseAttack0: HandleAttackSelected(0);     break;
             case RadialActionType.UseAttack1: HandleAttackSelected(1);     break;
@@ -556,6 +664,7 @@ public class InputManager : MonoBehaviour
     {
         cameraController?.ReleaseFocus();
         currentState       = InputState.MovementMode;
+        TutorialManager.NotifyMovementModeEntered();
         movingMonster      = monster;
         movementOriginTile = originTile;
 
@@ -1020,6 +1129,7 @@ public class InputManager : MonoBehaviour
             {
                 t.StartPulse(pulseA, pulseB, attackPulseSpeed);
                 t.StartJitter(attackJitterAmplitude, attackJitterFrequency);
+                ApplyEffectivenessOutline(t.GetMonster(), selectedAttackData);
             }
 
             if (validTargetTiles.Count == 0)
@@ -1031,6 +1141,7 @@ public class InputManager : MonoBehaviour
 
         cameraController?.ReleaseFocus();
         currentState = InputState.TargetSelection;
+        TutorialManager.NotifyAttackRangeShown();
         Debug.Log($"[InputManager] Targeting '{selectedAttackData.DisplayName}' " +
                   $"({(isDirectional ? "directional" : isAOE ? "AOE" : "single")}) — " +
                   $"{validTargetTiles.Count} aim tile(s) highlighted.");
@@ -1056,6 +1167,55 @@ public class InputManager : MonoBehaviour
         shape == AttackEnum.AttackTargetShape.line   ||
         shape == AttackEnum.AttackTargetShape.column ||
         shape == AttackEnum.AttackTargetShape.cone;
+
+    /// <summary>
+    /// Maps a TypeEffectiveness rank to an HDR outline colour so the player can
+    /// instantly see how their selected attack matches up against each target.
+    /// </summary>
+    private static Color EffectivenessToOutlineColor(TypeEffectiveness eff) => eff switch
+    {
+        TypeEffectiveness.SuperEffective => new Color(3f,   2.5f, 0f,   1f), // HDR gold
+        TypeEffectiveness.Effective      => new Color(2.5f, 1f,   0f,   1f), // HDR orange
+        TypeEffectiveness.Normal         => new Color(1.5f, 1.5f, 1.5f, 1f), // HDR white
+        TypeEffectiveness.Weak           => new Color(0.3f, 0.6f, 2f,   1f), // HDR blue
+        TypeEffectiveness.SuperWeak      => new Color(0.8f, 0.2f, 2.5f, 1f), // HDR purple
+        _                                => new Color(1.5f, 1.5f, 1.5f, 1f)
+    };
+
+    /// <summary>
+    /// Sets effectiveness outline on a monster. Switches to OutlineAll so it is
+    /// always visible (not just when occluded), and colours by effectiveness tier.
+    /// </summary>
+    private static void ApplyEffectivenessOutline(Monster m, AttackData attackData)
+    {
+        if (m?.Data == null || attackData == null) return;
+        TypeMatchupTable table = GameInitializer.Instance?.typeMatchupTable;
+
+        Outline outline = m.transform.root.GetComponent<Outline>();
+        if (outline == null) return;
+
+        outline.OutlineMode  = Outline.Mode.OutlineAll;
+        outline.OutlineWidth = 8f;
+
+        if (table != null)
+        {
+            TypeEffectiveness eff = table.GetEffectivenessEnum(m.Data.elementType, attackData.Element);
+            outline.OutlineColor = EffectivenessToOutlineColor(eff);
+        }
+    }
+
+    /// <summary>Restores a monster's outline to its default team colour and SilhouetteOnly mode.</summary>
+    private static void RestoreTeamOutline(Monster m)
+    {
+        if (m == null) return;
+        Outline outline = m.transform.root.GetComponent<Outline>();
+        if (outline == null) return;
+
+        outline.OutlineMode  = Outline.Mode.SilhouetteOnly;
+        outline.OutlineColor = m.IsEnemy
+            ? new Color(1f,    0.25f, 0.25f, 1f)  // red  — enemy
+            : new Color(0.25f, 0.85f, 1f,   1f);  // cyan — player
+    }
 
     void ExecutePlayerAttack(Tile targetTile)
     {
@@ -1159,12 +1319,13 @@ public class InputManager : MonoBehaviour
         AttackInfoPanel.Hide();   // Bug fix: panel was staying visible on cancel
         ClearAOEFootprint();
 
-        // Stop pulse + jitter on any target tiles
+        // Stop pulse + jitter on any target tiles; restore team outline colours
         if (validTargetTiles != null)
             foreach (var t in validTargetTiles)
             {
                 t.StopPulse();
                 t.StopJitter();
+                RestoreTeamOutline(t.GetMonster());
             }
 
         gridManager.ClearAllHighlights();

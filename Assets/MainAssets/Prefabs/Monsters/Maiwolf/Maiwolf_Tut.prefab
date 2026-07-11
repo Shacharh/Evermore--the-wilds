@@ -284,7 +284,7 @@ GameObject:
   - component: {fileID: 735031748614082259}
   - component: {fileID: 2643689253095052034}
   m_Layer: 7
-  m_Name: Maiwolf
+  m_Name: Maiwolf_Tut
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -324,7 +324,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Monster
   data: {fileID: 11400000, guid: 24b3530724bbb074296d4b16817d0213, type: 2}
   enemyMonster: 1
-  level: 37
+  level: 5
   learnedAttacks:
   - data: {fileID: 11400000, guid: dae42acfe3d61ef4894549f3a0cbad5a, type: 2}
   - data: {fileID: 11400000, guid: c55195be02be0e046931d8afc71d8627, type: 2}
