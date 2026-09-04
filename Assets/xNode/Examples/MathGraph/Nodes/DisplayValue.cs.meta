@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: 98f6f901f0da53142b79277ea3f42518
+timeCreated: 1507499149
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 104276
+  packageName: xNode
+  packageVersion: 1.8
+  assetPath: Assets/xNode/Examples/MathGraph/Nodes/DisplayValue.cs
+  uploadId: 378812

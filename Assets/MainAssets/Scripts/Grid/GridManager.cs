@@ -260,6 +260,16 @@ public class GridManager : MonoBehaviour
 
     /// <summary>
     /// Returns all tiles reachable within <paramref name="range"/> actual BFS steps
+    /// <summary>Returns every tile in the grid (non-null). Used by area-targeting systems.</summary>
+    public List<Tile> GetAllTiles()
+    {
+        var result = new List<Tile>(gridWidth * gridHeight);
+        for (int x = 0; x < gridWidth; x++)
+        for (int y = 0; y < gridHeight; y++)
+            if (grid[x, y] != null) result.Add(grid[x, y]);
+        return result;
+    }
+
     /// from <paramref name="origin"/>, respecting walls and obstructions.
     /// Replaces the old Manhattan-distance flood which ignored walls.
     /// </summary>

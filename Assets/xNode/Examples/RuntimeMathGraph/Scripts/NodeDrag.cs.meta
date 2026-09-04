@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: d3f4b82da0d484640839efdaf81118b8
+timeCreated: 1525909194
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 104276
+  packageName: xNode
+  packageVersion: 1.8
+  assetPath: Assets/xNode/Examples/RuntimeMathGraph/Scripts/NodeDrag.cs
+  uploadId: 378812

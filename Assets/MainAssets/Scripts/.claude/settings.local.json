@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(Remove-Item \"D:\\\\myunitygames\\\\evermore--the-wilds\\\\assets\\\\mainassets\\\\scripts\\\\Grid\\\\RadialMenuButton.cs\" -Force)",
-      "Bash(Remove-Item \"D:\\\\myunitygames\\\\evermore--the-wilds\\\\assets\\\\mainassets\\\\scripts\\\\Grid\\\\RadialMenuButton.cs.meta\" -Force -ErrorAction SilentlyContinue)"
+      "Bash(Remove-Item \"D:\\\\myunitygames\\\\evermore--the-wilds\\\\assets\\\\mainassets\\\\scripts\\\\Grid\\\\RadialMenuButton.cs.meta\" -Force -ErrorAction SilentlyContinue)",
+      "Bash(git fetch *)",
+      "Bash(git merge *)",
+      "Bash(python -c ' *)",
+      "Bash(python *)"
     ]
   }
 }

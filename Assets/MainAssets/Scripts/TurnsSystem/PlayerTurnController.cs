@@ -13,10 +13,51 @@ public class PlayerTurnController : TurnController
     /// <summary>True while it is the player's turn. InputManager checks this.</summary>
     public bool IsActive { get; private set; }
 
+    // ── AP Debt (Taming Penalty) ───────────────────────────────────────────────
+    /// <summary>Accumulated AP debt from ReallyBad taming answers. Paid off at half-AP-per-turn rate.</summary>
+    public int APDebt { get; private set; }
+
+    public void AddAPDebt(int amount)
+    {
+        if (amount <= 0) return;
+        APDebt += amount;
+        Debug.Log($"[PlayerTurnController] AP debt +{amount} → total {APDebt}.");
+    }
+
+    /// <summary>Spends AP for dialogue initiation. Separate from TrySpendAP so it skips monster freeze checks.</summary>
+    public bool TrySpendAPForDialogue(int cost)
+    {
+        if (!IsActive)
+        {
+            Debug.Log("[PlayerTurnController] Not the player's turn.");
+            return false;
+        }
+        if (cost <= 0) return true;
+        if (!CanAfford(cost))
+        {
+            BattleMessage.Show($"Not enough AP to initiate dialogue! (need {cost}, have {CurrentAP})", 2f);
+            return false;
+        }
+        return SpendAP(cost);
+    }
+
     // -- Turn Lifecycle --------------------------------------------------------
 
     protected override void OnTurnStarted()
     {
+        if (APDebt > 0)
+        {
+            int payment = Mathf.CeilToInt(APPerTurn / 2f);
+            payment = Mathf.Min(payment, Mathf.Min(APDebt, CurrentAP));
+            if (payment > 0)
+            {
+                SpendAP(payment);
+                APDebt -= payment;
+                BattleMessage.Show($"AP Debt: -{payment} AP this turn! ({APDebt} debt remaining)", 2.5f);
+                Debug.Log($"[PlayerTurnController] AP debt payment {payment} — {APDebt} remaining.");
+            }
+        }
+
         IsActive = true;
         Debug.Log("[PlayerTurnController] Player turn — awaiting input.");
     }
@@ -51,6 +92,26 @@ public class PlayerTurnController : TurnController
     /// </summary>
     public bool TrySpendAPForDistanceMove(Monster monster, int apCost)
         => TrySpendAP(monster, apCost, $"move ({apCost} AP)");
+
+    /// <summary>
+    /// Validates and charges a flat AP cost for using an item.
+    /// Items are not tied to a specific monster, so freeze/shock checks are skipped.
+    /// </summary>
+    public bool TrySpendAPForItem(int apCost)
+    {
+        if (!IsActive)
+        {
+            Debug.Log("[PlayerTurnController] Not the player's turn.");
+            return false;
+        }
+        if (apCost <= 0) return true;
+        if (!CanAfford(apCost))
+        {
+            BattleMessage.Show($"Not enough AP to use item! (need {apCost}, have {CurrentAP})", 2f);
+            return false;
+        }
+        return SpendAP(apCost);
+    }
 
     // -- Helpers ---------------------------------------------------------------
 

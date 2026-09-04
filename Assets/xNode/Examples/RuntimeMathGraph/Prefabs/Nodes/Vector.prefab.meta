@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 85f77ac8ea4840c4a982e2197715bf6f
+timeCreated: 1525816131
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 104276
+  packageName: xNode
+  packageVersion: 1.8
+  assetPath: Assets/xNode/Examples/RuntimeMathGraph/Prefabs/Nodes/Vector.prefab
+  uploadId: 378812

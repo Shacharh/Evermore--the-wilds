@@ -18,7 +18,7 @@ public static class GameSettings
     /// </summary>
     public static bool EdgeScrollEnabled
     {
-        get => PlayerPrefs.GetInt(KeyEdgeScroll, 1) == 1;
+        get => PlayerPrefs.GetInt(KeyEdgeScroll, 0) == 1;
         set
         {
             PlayerPrefs.SetInt(KeyEdgeScroll, value ? 1 : 0);

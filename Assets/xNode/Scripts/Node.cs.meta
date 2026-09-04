@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: f26231e5ab9368746948d0ea49e8178a
+timeCreated: 1505419984
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 104276
+  packageName: xNode
+  packageVersion: 1.8
+  assetPath: Assets/xNode/Scripts/Node.cs
+  uploadId: 378812

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 77523c356ccf04f56b53e6527c6b12fd
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 104276
+  packageName: xNode
+  packageVersion: 1.8
+  assetPath: Assets/xNode/LICENSE.md
+  uploadId: 378812

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 243efae3a6b7941ad8f8e54dcf38ce8c
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 104276
+  packageName: xNode
+  packageVersion: 1.8
+  assetPath: Assets/xNode/README.md
+  uploadId: 378812

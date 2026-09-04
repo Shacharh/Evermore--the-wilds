@@ -76,6 +76,44 @@ public class Monster : MonoBehaviour
     private readonly List<(GameObject prefab, GameObject instance)> _activeVFX = new();
     #endregion
 
+    #region Taming State
+    /// <summary>Set permanently after a ReallyBad answer — blocks further dialogue.</summary>
+    public bool CommunicationLocked { get; private set; }
+
+    /// <summary>Tracks how many dialogue sessions have failed; used in acceptance formula.</summary>
+    public int FailedDialogueAttempts { get; private set; }
+
+    /// <summary>True if the last hit this monster received was a critical hit.</summary>
+    public bool WasLastHitCrit { get; set; }
+
+    /// <summary>True if the last hit this monster received was Super Effective.</summary>
+    public bool WasLastHitSuperEffective { get; set; }
+
+    public void LockCommunication()
+    {
+        CommunicationLocked = true;
+        Debug.Log($"[{gameObject.name}] CommunicationLocked = true.");
+    }
+
+    public void IncrementFailedAttempts()
+    {
+        FailedDialogueAttempts++;
+        Debug.Log($"[{gameObject.name}] FailedDialogueAttempts = {FailedDialogueAttempts}.");
+    }
+
+    /// <summary>Flips this monster to the player side (called after a successful taming).</summary>
+    public void TameMonster()
+    {
+        enemyMonster = false;
+        CurrentTile?.SetMonsterTint(false);
+        OnRosterChanged?.Invoke();
+        Debug.Log($"[{gameObject.name}] Tamed — now a player monster.");
+    }
+    #endregion
+
+    // Set by CalculateDamage; read by ApplyDamage to set effectTarget.WasLastHitCrit.
+    private bool _lastCalcWasCrit;
+
     #region Active Effects & Statuses
     private List<ActiveEffect> activeEffects = new List<ActiveEffect>();
     private List<ActiveStatus> activeStatuses = new List<ActiveStatus>();
@@ -160,6 +198,8 @@ public class Monster : MonoBehaviour
     public void ResetForNewTurn()
     {
         HasActed = false;
+        WasLastHitCrit           = false;
+        WasLastHitSuperEffective = false;
         if (_turnsSinceLastFrozen < int.MaxValue) _turnsSinceLastFrozen++;
         OnStartTurn(); // ticks effects and statuses (existing logic below)
     }
@@ -646,6 +686,10 @@ public class Monster : MonoBehaviour
         }
         else
         {
+            // Record crit/SE flags on effectTarget for taming acceptance formula.
+            if (attacker._lastCalcWasCrit)
+                effectTarget.WasLastHitCrit = true;
+
             // Compute type effectiveness before showing the floating number so both use the same value.
             TypeEffectiveness eff = TypeEffectiveness.Normal;
             string effectivenessPrefix = "";
@@ -661,6 +705,8 @@ public class Monster : MonoBehaviour
                     TypeEffectiveness.SuperWeak      => "Barely Effective...\n",
                     _                                => ""
                 };
+                if (eff == TypeEffectiveness.SuperEffective)
+                    effectTarget.WasLastHitSuperEffective = true;
             }
 
             FloatingDamageNumber.Spawn(effectTarget.transform.position, damage, effectiveness: eff);
@@ -908,8 +954,12 @@ public class Monster : MonoBehaviour
         float attackDefenseRatio = (float)Attack / Mathf.Max(1, target.Defense);
         float baseDamage         = ((levelFactor * attackEffect.value * attackDefenseRatio) / 50f) + 2f;
 
-        //if (Random.value < (CritRate / 100f)) baseDamage *= CritMod;
-        if (Random.value < (CritRate / 100f)) baseDamage += baseDamage * (CritMod / 100f);
+        _lastCalcWasCrit = false;
+        if (Random.value < (CritRate / 100f))
+        {
+            baseDamage += baseDamage * (CritMod / 100f);
+            _lastCalcWasCrit = true;
+        }
         if (isRanged)               baseDamage *= attack.InDirectHitPercent;
         baseDamage                             *= obstructionDamageMult;   // 1.0 if unobstructed
 
@@ -1032,6 +1082,55 @@ public class Monster : MonoBehaviour
         activeStatuses.Clear();
         OnStatusChanged?.Invoke();
         Debug.Log($"[DevPanel] {gameObject.name} statuses cleared.");
+    }
+
+    /// <summary>Heals this monster by <paramref name="amount"/> HP, capped at MaxHP. No-op if dead.</summary>
+    public void HealHP(int amount)
+    {
+        if (!IsAlive || amount <= 0) return;
+        int prev = currentHP;
+        currentHP = Mathf.Min(MaxHP, currentHP + amount);
+        int actual = currentHP - prev;
+        if (actual > 0)
+            FloatingDamageNumber.Spawn(transform.position, actual, isHeal: true);
+        OnHPChanged?.Invoke(currentHP, MaxHP);
+        Debug.Log($"[{gameObject.name}] healed {actual} HP — {currentHP}/{MaxHP}");
+    }
+
+    /// <summary>
+    /// Removes all active status effects. Called by healing items with ClearsStatusEffects set.
+    /// </summary>
+    public void ClearAllStatuses()
+    {
+        activeStatuses.Clear();
+        OnStatusChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// Applies a status effect from an item, bypassing the chance roll.
+    /// Respects the existing stack/refresh rules from StatusEffectData.
+    /// </summary>
+    public void ApplyStatusFromItem(StatusEffectData data, int duration)
+    {
+        if (data == null) return;
+
+        for (int i = 0; i < activeStatuses.Count; i++)
+        {
+            if (activeStatuses[i].data == data)
+            {
+                activeStatuses[i].remainingTurns = data.Stacks
+                    ? activeStatuses[i].remainingTurns + duration
+                    : duration;
+                OnStatusChanged?.Invoke();
+                return;
+            }
+        }
+
+        activeStatuses.Add(new ActiveStatus(data, duration));
+        OnStatusChanged?.Invoke();
+        if (data.ID == AttackEnum.StatusEffect.Freeze)
+            NotifyFreezeApplied();
+        Debug.Log($"[{gameObject.name}] status '{data.name}' applied ({duration} turns) via item.");
     }
     #endregion
 

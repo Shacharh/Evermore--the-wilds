@@ -16,8 +16,8 @@ public class TurnIndicator : MonoBehaviour
 {
     public static TurnIndicator Instance { get; private set; }
 
-    // ── Feature flag — flip to true to enable ────────────────────────────────
-    private const bool FeatureEnabled = true;
+    // ── Feature flag — flip to false to disable ──────────────────────────────
+    private static readonly bool FeatureEnabled = true;
     // ─────────────────────────────────────────────────────────────────────────
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]

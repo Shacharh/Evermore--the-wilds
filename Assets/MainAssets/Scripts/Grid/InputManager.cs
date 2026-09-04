@@ -92,7 +92,7 @@ public class InputManager : MonoBehaviour
 
     // -- Input State -----------------------------------------------------------
 
-    private enum InputState { Normal, MovementMode, Moving, AttackSelection, TargetSelection }
+    private enum InputState { Normal, MovementMode, Moving, AttackSelection, TargetSelection, ItemTargetSelection }
     private InputState currentState = InputState.Normal;
 
     /// <summary>True once we have subscribed to playerTurnController.onTurnEnd.</summary>
@@ -115,6 +115,17 @@ public class InputManager : MonoBehaviour
     private System.Collections.Generic.List<Tile> currentAOEFootprint; // footprint on hovered tile
     private System.Collections.Generic.List<Tile> _previewRangeTiles;  // hover preview while in attack menu
     private RadialMenu                           activeAttackMenu;
+
+    [Header("Item Targeting")]
+    [Tooltip("Highlight color for valid item target tiles (healing).")]
+    [SerializeField] private Color itemTargetColor    = new Color(0.05f, 0.75f, 0.35f, 0.75f);
+    [Tooltip("Bright footprint color for area-heal item preview.")]
+    [SerializeField] private Color itemAoeFootprintColor = new Color(0.1f, 1f, 0.5f, 0.85f);
+
+    // Item targeting state
+    private ItemData                              _pendingItemData;
+    private System.Collections.Generic.List<Tile> _itemTargetTiles;
+    private System.Collections.Generic.List<Tile> _itemAoeFootprint;
 
     // -- Lifecycle -------------------------------------------------------------
 
@@ -354,8 +365,9 @@ public class InputManager : MonoBehaviour
                 currentHoveredTile = hitTile;
 
                 if (currentState == InputState.Normal ||
-                    (currentState == InputState.MovementMode   && IsValidMovementDestination(hitTile)) ||
-                    (currentState == InputState.TargetSelection && IsValidTarget(hitTile)))
+                    (currentState == InputState.MovementMode        && IsValidMovementDestination(hitTile)) ||
+                    (currentState == InputState.TargetSelection     && IsValidTarget(hitTile))     ||
+                    (currentState == InputState.ItemTargetSelection && IsValidItemTarget(hitTile)))
                 {
                     currentHoveredTile.SetHovered(true);
                 }
@@ -365,6 +377,13 @@ public class InputManager : MonoBehaviour
                     UpdateAOEFootprint(hitTile);
                 else if (currentState == InputState.TargetSelection)
                     ClearAOEFootprint();   // moved off aim zone — remove stale footprint
+
+                // Item AoE footprint preview
+                if (currentState == InputState.ItemTargetSelection && IsValidItemTarget(hitTile) &&
+                    _pendingItemData?.HealMode == ItemEnum.HealMode.AreaHeal)
+                    UpdateItemAoeFootprint(hitTile);
+                else if (currentState == InputState.ItemTargetSelection)
+                    ClearItemAoeFootprint();
 
                 // Show AP cost hint while in movement mode
                 if (currentState == InputState.MovementMode && IsValidMovementDestination(hitTile)
@@ -396,6 +415,8 @@ public class InputManager : MonoBehaviour
                 MoveCostHint.Hide();
             if (currentState == InputState.TargetSelection)
                 ClearAOEFootprint();
+            if (currentState == InputState.ItemTargetSelection)
+                ClearItemAoeFootprint();
         }
     }
 
@@ -410,7 +431,9 @@ public class InputManager : MonoBehaviour
         if (IsPointerOverUIElement()) return;
 
         // Try to click a monster model directly — if hit, redirect to its tile
-        if (currentState == InputState.Normal || currentState == InputState.TargetSelection)
+        if (currentState == InputState.Normal   ||
+            currentState == InputState.TargetSelection ||
+            currentState == InputState.ItemTargetSelection)
         {
             Vector2 mousePos = mousePositionAction.ReadValue<Vector2>();
             Ray ray = mainCamera.ScreenPointToRay(mousePos);
@@ -425,6 +448,8 @@ public class InputManager : MonoBehaviour
                         HandleNormalClick(hitMonster.CurrentTile);
                     else if (currentState == InputState.TargetSelection)
                         HandleTargetClick(hitMonster.CurrentTile);
+                    else if (currentState == InputState.ItemTargetSelection)
+                        HandleItemTargetClick(hitMonster.CurrentTile);
                     return;
                 }
             }
@@ -453,11 +478,18 @@ public class InputManager : MonoBehaviour
             case InputState.TargetSelection:
                 HandleTargetClick(currentHoveredTile);
                 break;
+
+            case InputState.ItemTargetSelection:
+                HandleItemTargetClick(currentHoveredTile);
+                break;
         }
     }
 
     private bool IsPointerOverUIElement()
     {
+        // Block grid interaction while inventory is open.
+        if (InventoryUI.Instance != null && InventoryUI.Instance.IsOpen) return true;
+
         // UI Toolkit radial menus don't go through EventSystem — check hover state directly.
         if (activeMenu       != null && activeMenu.IsHoveringButton)       return true;
         if (activeAttackMenu != null && activeAttackMenu.IsHoveringButton) return true;
@@ -591,6 +623,11 @@ public class InputManager : MonoBehaviour
                     OpenAttackSubMenu(savedMonster.CurrentTile, savedMonster);
                 break;
             }
+
+            case InputState.ItemTargetSelection:
+                ExitItemTargeting();
+                BattleMessage.Show("Item use cancelled.", 1.5f);
+                break;
         }
     }
 
@@ -642,10 +679,20 @@ public class InputManager : MonoBehaviour
             case RadialActionType.UseAttack0: HandleAttackSelected(0);     break;
             case RadialActionType.UseAttack1: HandleAttackSelected(1);     break;
             case RadialActionType.UseAttack2: HandleAttackSelected(2);     break;
+            case RadialActionType.Dialogue:   HandleDialogueAction(tile);  break;
             default:
                 Debug.LogWarning($"[InputManager] Unknown action type: {type}");
                 break;
         }
+    }
+
+    // -- Dialogue Action -------------------------------------------------------
+
+    private void HandleDialogueAction(Tile tile)
+    {
+        Monster monster = tile?.GetMonster();
+        if (monster == null || !monster.IsEnemy) return;
+        TamingSystem.Instance?.AttemptDialogue(monster);
     }
 
     // -- Movement Action -------------------------------------------------------
@@ -1425,10 +1472,193 @@ public class InputManager : MonoBehaviour
             case InputState.TargetSelection:
                 ExitTargetSelection();
                 break;
+
+            case InputState.ItemTargetSelection:
+                ExitItemTargeting();
+                break;
         }
 
         CloseRadialMenu();   // safe even when activeMenu is null
+        InventoryUI.Instance?.Close();
         cameraController?.ReleaseFocus();
         Debug.Log("[InputManager] Player turn ended — all menus closed.");
+    }
+
+    // -- Item Targeting --------------------------------------------------------
+
+    /// <summary>
+    /// Enters item-targeting mode. Called by InventoryUI after the player selects
+    /// a targeted item. Highlights valid tiles and waits for the player to click one.
+    /// </summary>
+    public void BeginItemTargeting(ItemData item)
+    {
+        if (item == null) return;
+        _pendingItemData = item;
+
+        // Collect valid target tiles based on item type
+        var all = FindObjectsByType<Monster>(FindObjectsSortMode.None);
+        _itemTargetTiles = new System.Collections.Generic.List<Tile>();
+
+        switch (item.Archetype)
+        {
+            case ItemEnum.Archetype.Healing when item.HealMode == ItemEnum.HealMode.Targeted:
+                // Only tiles with living allied monsters
+                foreach (var m in all)
+                    if (!m.IsEnemy && m.IsAlive && m.CurrentTile != null)
+                        _itemTargetTiles.Add(m.CurrentTile);
+                break;
+
+            case ItemEnum.Archetype.Healing when item.HealMode == ItemEnum.HealMode.AreaHeal:
+                // Any walkable tile (player picks AoE center); footprint preview shown on hover
+                _itemTargetTiles = gridManager.GetAllTiles();
+                break;
+
+            case ItemEnum.Archetype.BuffDebuff:
+                // Ally tiles for buffs, enemy tiles for debuffs
+                foreach (var m in all)
+                {
+                    bool wantEnemy = item.IsDebuff;
+                    if (m.IsEnemy == wantEnemy && m.IsAlive && m.CurrentTile != null)
+                        _itemTargetTiles.Add(m.CurrentTile);
+                }
+                break;
+        }
+
+        if (_itemTargetTiles.Count == 0)
+        {
+            BattleMessage.Show("No valid targets!", 2f);
+            _pendingItemData = null;
+            return;
+        }
+
+        gridManager.HighlightTiles(_itemTargetTiles, itemTargetColor, 0.15f);
+        currentState = InputState.ItemTargetSelection;
+        Debug.Log($"[InputManager] Item targeting: '{item.DisplayName}' — {_itemTargetTiles.Count} valid tile(s).");
+    }
+
+    private void HandleItemTargetClick(Tile clickedTile)
+    {
+        if (!IsValidItemTarget(clickedTile))
+        {
+            Debug.Log("[InputManager] Clicked tile is not a valid item target.");
+            return;
+        }
+
+        ExecuteItemOnTarget(clickedTile);
+    }
+
+    private void ExecuteItemOnTarget(Tile targetTile)
+    {
+        if (_pendingItemData == null) { ExitItemTargeting(); return; }
+
+        var ptc       = playerTurnController;
+        var inventory = PlayerInventory.Instance;
+
+        if (ptc == null || inventory == null || !inventory.HasItem(_pendingItemData))
+        {
+            ExitItemTargeting();
+            return;
+        }
+
+        if (!ptc.TrySpendAPForItem(_pendingItemData.APCost))
+        {
+            ExitItemTargeting();
+            return;
+        }
+
+        inventory.RemoveItem(_pendingItemData);
+
+        switch (_pendingItemData.Archetype)
+        {
+            case ItemEnum.Archetype.Healing:
+                ApplyItemHealAtTile(targetTile, _pendingItemData);
+                break;
+
+            case ItemEnum.Archetype.BuffDebuff:
+                ApplyItemStatusAtTile(targetTile, _pendingItemData);
+                break;
+        }
+
+        ExitItemTargeting();
+        StartCoroutine(DelayedAutoEndTurn());
+    }
+
+    private void ApplyItemHealAtTile(Tile tile, ItemData item)
+    {
+        if (item.HealMode == ItemEnum.HealMode.AreaHeal)
+        {
+            // Collect all tiles in the AoE radius centred on the clicked tile
+            var areaFootprint = gridManager.GetTilesInRange(tile, item.AoeRadius, walkableOnly: false);
+            int count = 0;
+            foreach (var t in areaFootprint)
+            {
+                Monster m = t.GetMonster();
+                if (m == null || m.IsEnemy || !m.IsAlive) continue;
+                int amount = item.HealAmount + Mathf.RoundToInt(m.MaxHP * item.HealPercent);
+                m.HealHP(amount);
+                if (item.ClearsStatusEffects) m.ClearAllStatuses();
+                count++;
+            }
+            BattleMessage.Show($"Used {item.DisplayName}! {count} monster(s) healed.", 2f);
+        }
+        else // Targeted
+        {
+            Monster target = tile.GetMonster();
+            if (target == null || target.IsEnemy || !target.IsAlive)
+            {
+                BattleMessage.Show("Invalid target.", 1.5f);
+                return;
+            }
+            int amount = item.HealAmount + Mathf.RoundToInt(target.MaxHP * item.HealPercent);
+            target.HealHP(amount);
+            if (item.ClearsStatusEffects) target.ClearAllStatuses();
+            BattleMessage.Show($"Used {item.DisplayName} on {target.Data?.displayName ?? target.name}!", 2f);
+        }
+    }
+
+    private static void ApplyItemStatusAtTile(Tile tile, ItemData item)
+    {
+        Monster target = tile.GetMonster();
+        if (target == null || !target.IsAlive) { BattleMessage.Show("Invalid target.", 1.5f); return; }
+        target.ApplyStatusFromItem(item.StatusEffect, item.StatusDuration);
+        string verb = item.IsDebuff ? "debuffed" : "buffed";
+        BattleMessage.Show($"{target.Data?.displayName ?? target.name} was {verb} by {item.DisplayName}!", 2f);
+    }
+
+    private void ExitItemTargeting()
+    {
+        ClearItemAoeFootprint();
+        if (_itemTargetTiles != null)
+            foreach (var t in _itemTargetTiles) t.ResetVisuals();
+        gridManager.ClearAllHighlights();
+        currentState     = InputState.Normal;
+        _pendingItemData = null;
+        _itemTargetTiles = null;
+        if (selectedTile != null) { selectedTile.SetSelected(false); selectedTile = null; }
+    }
+
+    private bool IsValidItemTarget(Tile tile)
+        => _itemTargetTiles != null && _itemTargetTiles.Contains(tile);
+
+    private void UpdateItemAoeFootprint(Tile center)
+    {
+        if (_pendingItemData == null) return;
+        ClearItemAoeFootprint();
+        _itemAoeFootprint = gridManager.GetTilesInRange(center, _pendingItemData.AoeRadius, walkableOnly: false);
+        foreach (var t in _itemAoeFootprint)
+            t.Highlight(itemAoeFootprintColor, 0.3f);
+    }
+
+    private void ClearItemAoeFootprint()
+    {
+        if (_itemAoeFootprint == null) return;
+        foreach (var t in _itemAoeFootprint)
+        {
+            if (_itemTargetTiles != null && _itemTargetTiles.Contains(t))
+                t.Highlight(itemTargetColor, 0.15f);
+            else
+                t.ResetVisuals();
+        }
+        _itemAoeFootprint = null;
     }
 }

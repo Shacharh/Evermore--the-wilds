@@ -144,6 +144,16 @@ public abstract class TurnController : MonoBehaviour
             Debug.Log($"[{GetType().Name}] {m?.name} removed from roster ({monsters.Count} remaining).");
     }
 
+    /// <summary>
+    /// Adds a monster to this side's roster (called when a tamed monster switches teams).
+    /// </summary>
+    public void AddMonster(Monster m)
+    {
+        if (m == null || monsters.Contains(m)) return;
+        monsters.Add(m);
+        Debug.Log($"[{GetType().Name}] {m.name} added to roster ({monsters.Count} total).");
+    }
+
     // -- Monster Queries -------------------------------------------------------
 
     public List<Monster> GetUnactedMonsters()

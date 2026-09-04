@@ -1,0 +1,20 @@
+fileFormatVersion: 2
+guid: 7d7298690665789498dc42a285eb2c28
+timeCreated: 1509305659
+licenseType: Store
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 104276
+  packageName: xNode
+  packageVersion: 1.8
+  assetPath: Assets/xNode/Examples/MathGraph/Nodes/Editor/DisplayValueEditor.cs
+  uploadId: 378812

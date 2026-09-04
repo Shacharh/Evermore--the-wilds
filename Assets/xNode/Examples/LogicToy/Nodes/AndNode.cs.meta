@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: c88b3b7abe7eb324baec5d03dfa998ab
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 104276
+  packageName: xNode
+  packageVersion: 1.8
+  assetPath: Assets/xNode/Examples/LogicToy/Nodes/AndNode.cs
+  uploadId: 378812
