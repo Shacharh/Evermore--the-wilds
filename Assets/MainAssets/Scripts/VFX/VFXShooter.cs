@@ -49,7 +49,7 @@ public class VFXShooter : MonoBehaviour
 
     public void SetPoolSource(GameObject prefab) => _sourcePrefab = prefab;
 
-    public void SetFollowTransform(Transform t) => _followTransform = t;
+    public void SetFollowTransform(Transform t) { _followTransform = t; if (t != null) follow = true; }
 
     private void OnEnable()
     {
@@ -90,6 +90,7 @@ public class VFXShooter : MonoBehaviour
         _ready           = false;
         _targetSet       = false;
         _followTransform = null;
+        follow           = false;
         foreach (var vfx in GetComponentsInChildren<VisualEffect>(true))
             vfx.Stop();
     }

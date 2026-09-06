@@ -291,9 +291,6 @@ public class EnemyTurnController : TurnController
 
             AITurnQueueDebug.SetActiveIndex(i);
 
-            // Focus the camera on this monster BEFORE the delay so it has time to pan there.
-            _cameraController?.FocusOnMonster(monster.transform.position);
-
             yield return new WaitForSeconds(actionDelay);
 
             // Re-check: monster may have died during the delay (e.g. from a delayed animation event).
@@ -307,7 +304,6 @@ public class EnemyTurnController : TurnController
             if (m != null) m.MarkActed();
 
         AITurnQueueDebug.ClearActiveIndex();
-        _cameraController?.ReleaseFocus();
         Debug.Log("[EnemyAI] All actions complete — waiting for animations.");
         yield return WaitForPendingAnimations();
         Debug.Log("[EnemyAI] Animations done — ending turn.");
@@ -362,9 +358,6 @@ public class EnemyTurnController : TurnController
 
         monster.ExecuteAttack(new List<Monster> { target }, attackIndex, attackData.IsDirect);
 
-        // Briefly pan to the target so the player can see the damage result.
-        if (target.IsAlive)
-            _cameraController?.UpdateFocusTarget(target.transform.position);
 
         Debug.Log($"[EnemyAI] {monster.name} used '{attackData.DisplayName}' " +
                   $"on {target.name}! (cost {apCost} AP)");
@@ -465,7 +458,6 @@ public class EnemyTurnController : TurnController
                 if (monster == null) yield break;
                 t += Time.deltaTime * moveSpeed / Mathf.Max(dist, 0.01f);
                 monster.transform.position = Vector3.Lerp(start, end, Mathf.SmoothStep(0f, 1f, t));
-                _cameraController?.UpdateFocusTarget(monster.transform.position);
                 yield return null;
             }
 

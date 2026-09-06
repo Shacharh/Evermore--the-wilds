@@ -123,9 +123,7 @@ MonoBehaviour:
   outlineMode: 0
   outlineColor: {r: 1, g: 1, b: 1, a: 1}
   outlineWidth: 2
-  precomputeOutline: 0
-  bakeKeys: []
-  bakeValues: []
+  overrideRenderers: []
 --- !u!1 &8081228498352018174
 GameObject:
   m_ObjectHideFlags: 0
@@ -953,6 +951,14 @@ PrefabInstance:
     - target: {fileID: 6111402939895604834, guid: 527cc00d3f629a84a8397d0d5e56c28b, type: 3}
       propertyPath: m_Layer
       value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 6276103419331321380, guid: 527cc00d3f629a84a8397d0d5e56c28b, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.229
+      objectReference: {fileID: 0}
+    - target: {fileID: 6276103419331321380, guid: 527cc00d3f629a84a8397d0d5e56c28b, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.761
       objectReference: {fileID: 0}
     - target: {fileID: 6348001702940704185, guid: 527cc00d3f629a84a8397d0d5e56c28b, type: 3}
       propertyPath: m_Layer
