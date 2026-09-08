@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2671495ebd8ba49409f69fe197fca1c0, type: 3}
+  m_Name: Dialog_Assist_Hint
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  id: Dialog_Assist_Hint
+  displayName: Dialog Assist Hint
+  description: reval the correct answer during dialog
+  icon: {fileID: 0}
+  archetype: 5
+  usageContext: 1
+  apCost: 4
+  maxHeld: 1
+  healMode: 0
+  healAmount: 0
+  healPercent: 0
+  aoeRadius: 1
+  clearsStatusEffects: 0
+  revivePercent: 0.5
+  statusEffect: {fileID: 0}
+  statusDuration: 3
+  isDebuff: 0
+  apDelta: 2
+  acceptanceBonus: 0.1
+  appliesToEntireAttempt: 0
+  assistType: 0
+  usesPerSession: 1

@@ -23,4 +23,4 @@ MonoBehaviour:
   dialogueInitiationCost: 1
   apDebtPerReallyBad: 4
   partialSuccessGoldReward: 50
-  debugGuaranteeTame: 1
+  debugGuaranteeTame: 0
