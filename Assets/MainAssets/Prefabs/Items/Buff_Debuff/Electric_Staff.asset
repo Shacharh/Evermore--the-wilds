@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2671495ebd8ba49409f69fe197fca1c0, type: 3}
+  m_Name: Electric_Staff
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  id: Electric_Staff
+  displayName: Electric Staff
+  description: Inflict shock on a Serion for 3 turns. affected Serion's attacks cost
+    4 Extra AP
+  icon: {fileID: 0}
+  archetype: 2
+  usageContext: 1
+  apCost: 5
+  maxHeld: 2
+  healMode: 0
+  healAmount: 0
+  healPercent: 0
+  aoeRadius: 1
+  clearsStatusEffects: 0
+  revivePercent: 0.5
+  statusEffect: {fileID: 11400000, guid: 582b84bb578e7f24c95691a883b5dc66, type: 2}
+  statusDuration: 3
+  isDebuff: 1
+  apDelta: 2
+  acceptanceBonus: 0.1
+  appliesToEntireAttempt: 0
+  assistType: 0
+  usesPerSession: 1
