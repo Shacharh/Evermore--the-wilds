@@ -10,25 +10,25 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2671495ebd8ba49409f69fe197fca1c0, type: 3}
-  m_Name: TestItem
+  m_Name: Heal_Moderate
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  id: TestItem
-  displayName: TestI tem
-  description: TestItem
-  icon: {fileID: 21300000, guid: 13244addb39f3b842a2c5981392ef3d2, type: 3}
-  archetype: 5
+  id: Heal_Moderate
+  displayName: Heal Moderate
+  description: Heal a Serion 100 HP
+  icon: {fileID: 0}
+  archetype: 0
   usageContext: 1
-  apCost: 1
-  maxHeld: 9
+  apCost: 3
+  maxHeld: 5
   healMode: 0
-  healAmount: 0
+  healAmount: 100
   healPercent: 0
   aoeRadius: 1
   clearsStatusEffects: 0
   revivePercent: 0.5
-  statusEffect: {fileID: 11400000, guid: 6c0fa79ae077b454d83cccabeab89e78, type: 2}
+  statusEffect: {fileID: 0}
   statusDuration: 3
-  isDebuff: 1
+  isDebuff: 0
   apDelta: 2
   acceptanceBonus: 0.1
   appliesToEntireAttempt: 0
