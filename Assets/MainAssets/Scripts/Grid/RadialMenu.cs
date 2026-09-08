@@ -131,10 +131,12 @@ public class RadialMenu : MonoBehaviour
 
         Monster m = targetTile.GetMonster();
 
-        // Enemy tiles always show only Info — never expose Move/Attack to the player.
+        // Enemy tiles show Info (always) and Dialogue (when not locked).
         if (m != null && m.IsEnemy)
         {
             AddCard("Info", RadialActionType.Info);
+            if (!m.CommunicationLocked)
+                AddCard("Dialogue", RadialActionType.Dialogue);
             return;
         }
 

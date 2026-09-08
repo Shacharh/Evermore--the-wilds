@@ -1,0 +1,143 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-6393233052411373128
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc725d271077d494e86814e281f125a4, type: 3}
+  m_Name: Taming Start
+  m_EditorClassIdentifier: Assembly-CSharp::TamingStartNode
+  graph: {fileID: 11400000}
+  position: {x: -392, y: -120}
+  ports:
+    keys: []
+    values: []
+  questionsPerSession: 3
+  baseAcceptanceOverride: -1
+--- !u!114 &-3107999703012022053
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac4703cbe25d2994eab762561f7b9b2e, type: 3}
+  m_Name: Taming Question
+  m_EditorClassIdentifier: Assembly-CSharp::TamingQuestionNode
+  graph: {fileID: 11400000}
+  position: {x: -120, y: -216}
+  ports:
+    keys: []
+    values: []
+  prompt: How Are You
+  questionType: 0
+  answers:
+  - text: Good
+    tag: 0
+  - text: Ok
+    tag: 1
+  - text: Bad
+    tag: 2
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43bf947d8a94f9447b4c195a599bdc6d, type: 3}
+  m_Name: TestTamingDyalogue
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueGraph
+  nodes:
+  - {fileID: -6393233052411373128}
+  - {fileID: -3107999703012022053}
+  - {fileID: 4478118821580242137}
+  - {fileID: 1625727514366509320}
+  - {fileID: 572309218179308572}
+--- !u!114 &572309218179308572
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac4703cbe25d2994eab762561f7b9b2e, type: 3}
+  m_Name: Taming Question
+  m_EditorClassIdentifier: Assembly-CSharp::TamingQuestionNode
+  graph: {fileID: 11400000}
+  position: {x: 504, y: -216}
+  ports:
+    keys: []
+    values: []
+  prompt: are you stupid
+  questionType: 0
+  answers:
+  - text: Yes
+    tag: 0
+  - text: No
+    tag: 1
+  - text: No You Are!!!!
+    tag: 2
+--- !u!114 &1625727514366509320
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac4703cbe25d2994eab762561f7b9b2e, type: 3}
+  m_Name: Taming Question
+  m_EditorClassIdentifier: Assembly-CSharp::TamingQuestionNode
+  graph: {fileID: 11400000}
+  position: {x: 296, y: -216}
+  ports:
+    keys: []
+    values: []
+  prompt: What Job Did You Have In This Game
+  questionType: 2
+  answers:
+  - text: Artist
+    tag: 0
+  - text: Lead
+    tag: 1
+  - text: Game Dev
+    tag: 2
+--- !u!114 &4478118821580242137
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac4703cbe25d2994eab762561f7b9b2e, type: 3}
+  m_Name: Taming Question
+  m_EditorClassIdentifier: Assembly-CSharp::TamingQuestionNode
+  graph: {fileID: 11400000}
+  position: {x: 88, y: -216}
+  ports:
+    keys: []
+    values: []
+  prompt: What Are You
+  questionType: 1
+  answers:
+  - text: Player
+    tag: 0
+  - text: Enemy
+    tag: 1
+  - text: God
+    tag: 2

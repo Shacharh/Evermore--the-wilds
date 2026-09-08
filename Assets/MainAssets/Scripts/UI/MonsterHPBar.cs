@@ -28,10 +28,11 @@ public class MonsterHPBar : MonoBehaviour
 
     // ── References ────────────────────────────────────────────────────────────
 
-    private Monster  monster;
-    private Slider   hpSlider;
-    private Canvas   barCanvas;
-    private Transform _badgeParent;  // the canvas transform badges are parented to
+    private Monster   monster;
+    private Slider    hpSlider;
+    private Image     _fillImg;
+    private Canvas    barCanvas;
+    private Transform _badgeParent;
 
     private readonly Dictionary<AttackEnum.StatusEffect, GameObject> _badges = new();
     private readonly Dictionary<AttackEnum.StatusEffect, Coroutine>  _anims  = new();
@@ -45,6 +46,7 @@ public class MonsterHPBar : MonoBehaviour
         UpdateBar(monster.CurrentHP, monster.MaxHP);
         monster.OnHPChanged     += UpdateBar;
         monster.OnStatusChanged += RefreshStatusBadges;
+        Monster.OnRosterChanged += RefreshBarColor;
         RefreshStatusBadges();
     }
 
@@ -55,6 +57,7 @@ public class MonsterHPBar : MonoBehaviour
         if (monster == null) return;
         monster.OnHPChanged     -= UpdateBar;
         monster.OnStatusChanged -= RefreshStatusBadges;
+        Monster.OnRosterChanged -= RefreshBarColor;
     }
 
     private void Update()
@@ -73,6 +76,14 @@ public class MonsterHPBar : MonoBehaviour
         if (hpSlider == null) return;
         hpSlider.maxValue = Mathf.Max(1, max);
         hpSlider.value    = current;
+    }
+
+    private void RefreshBarColor()
+    {
+        if (_fillImg == null || monster == null) return;
+        _fillImg.color = monster.IsEnemy
+            ? new Color(0.9f, 0.2f, 0.2f, 1f)
+            : new Color(0.2f, 0.85f, 0.3f, 1f);
     }
 
     // ── UI construction ───────────────────────────────────────────────────────
@@ -125,12 +136,12 @@ public class MonsterHPBar : MonoBehaviour
         fillRect.anchorMax = Vector2.one;
         fillRect.sizeDelta = Vector2.zero;
 
-        var fillImg = fillGO.AddComponent<Image>();
-        fillImg.color = (monster != null && monster.IsEnemy)
-                        ? new Color(0.9f, 0.2f, 0.2f, 1f)
-                        : new Color(0.2f, 0.85f, 0.3f, 1f);
+        _fillImg       = fillGO.AddComponent<Image>();
+        _fillImg.color = (monster != null && monster.IsEnemy)
+                         ? new Color(0.9f, 0.2f, 0.2f, 1f)
+                         : new Color(0.2f, 0.85f, 0.3f, 1f);
 
-        hpSlider              = sliderGO.AddComponent<Slider>();
+        hpSlider = sliderGO.AddComponent<Slider>();
         hpSlider.direction    = Slider.Direction.LeftToRight;
         hpSlider.minValue     = 0f;
         hpSlider.maxValue     = monster != null ? monster.MaxHP : 100f;

@@ -1,0 +1,20 @@
+fileFormatVersion: 2
+guid: 76c005fc401e40f42b1e76d5ffc80292
+timeCreated: 1526084889
+licenseType: Store
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 104276
+  packageName: xNode
+  packageVersion: 1.8
+  assetPath: Assets/xNode/Examples/RuntimeMathGraph/Scripts/UGUIPort.cs
+  uploadId: 378812

@@ -49,6 +49,8 @@ Every documentation `.md` file (setup guides, system guides, feature docs) MUST 
 | `Editor/AttackEntryDrawer.cs` | `Monsters/MonsterData.cs` | PropertyDrawer for AttackEntry — VFX spawn point picker (drag root → choose child) |
 | `Editor/AttackDataEditor.cs` | `Attacks/AttackData.cs` | CustomEditor — ReorderableList for effects; draws category-specific fields including Stage Count for buff |
 | `Editor/AttackDataDrawer.cs` | `Attacks/AttackData.cs` | PropertyDrawer — renders AttackData references as a dropdown popup |
+| `Editor/ItemDataEditor.cs` | `Items/ItemData.cs` | CustomEditor — shows archetype-relevant fields; includes AcceptanceRateEnhancing and DialogAssist sections |
+| `Editor/Nodes/TamingQuestionNodeEditor.cs` | `Dialogue/Nodes/Taming/TamingQuestionNode.cs` | Custom node editor — colour-codes answers by tag, validates exactly 1 Correct/Wrong/ReallyBad |
 
 ---
 
@@ -73,14 +75,19 @@ Scripts/
 ├── AI/                  MonsterAIBrain, AIContext, AIAction, AIGameStateScorePoints, MonsterPersonality
 ├── Attacks/             AttackData, AttackDatabase, AttackEffect, TypeMatchupTable, StatusEffectData
 ├── Attributes/          ShowIfAttribute (conditional inspector fields)
-├── Editor/              TypeMatchupTable editor tools (editor-only, never included in builds)
+├── Dialogue/            DialogueGraph, DialogueRunner, DialogueEnum; Nodes/: StartNode, EndNode,
+│                        SimpleDialogueNode, OptionDialogueNode; Nodes/Taming/: TamingStartNode, TamingQuestionNode
+├── Editor/              TypeMatchupTable editor tools + ItemDataEditor; Nodes/: TamingQuestionNodeEditor
 ├── GeneralScripts/      GameInitializer (singleton, loads DB + TypeMatchupTable on start)
 ├── Grid/                GridManager, Tile, InputManager, RadialMenu, CameraController, Obstruction
+├── Items/               ItemData, ItemEnum, PlayerInventory (AcceptanceRateEnhancing + DialogAssist archetypes)
 ├── MD_FILES/            ALL documentation .md files live here (see Rule 3)
-├── Monsters/            Monster, MonsterData, MonsterAttack, MonsterSetup, MonsterSpawner
+├── Monsters/            Monster, MonsterData (+ taming fields), MonsterAttack, MonsterSetup, MonsterSpawner
 ├── Player/OverWorldPlayer/  Overworld traversal only — not used in battle
-├── TurnsSystem/         TurnManager, PlayerTurnController, EnemyTurnController, TurnController
-├── UI/                  HUDController, MonsterInfoPanel, AttackInfoPanel, MonsterHPBar, BattleMessage
+├── Taming/              TamingSystem (auto-create singleton), TamingConfig (Resources/TamingConfig)
+├── TurnsSystem/         TurnManager, PlayerTurnController (APDebt), EnemyTurnController, TurnController
+├── UI/                  HUDController, MonsterInfoPanel, AttackInfoPanel, MonsterHPBar, BattleMessage,
+│                        InventoryUI, DialogueUI (auto-create singleton, sortingOrder=300)
 └── FileLogger.cs
 ```
 

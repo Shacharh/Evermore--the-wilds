@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 93cd8c9c9c49d5a48a1b48ae3415b91b
+timeCreated: 1525818382
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 104276
+  packageName: xNode
+  packageVersion: 1.8
+  assetPath: Assets/xNode/Examples/RuntimeMathGraph/Prefabs/NodeGraph.prefab
+  uploadId: 378812

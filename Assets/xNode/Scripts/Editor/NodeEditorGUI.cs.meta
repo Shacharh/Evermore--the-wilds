@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 756276bfe9a0c2f4da3930ba1964f58d
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 104276
+  packageName: xNode
+  packageVersion: 1.8
+  assetPath: Assets/xNode/Scripts/Editor/NodeEditorGUI.cs
+  uploadId: 378812

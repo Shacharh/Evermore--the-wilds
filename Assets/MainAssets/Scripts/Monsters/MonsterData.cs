@@ -1,4 +1,5 @@
 using UnityEngine;
+using XNode;
 
 [CreateAssetMenu(menuName = "Monster/Create Monster")]
 public class MonsterData : ScriptableObject
@@ -36,6 +37,17 @@ public class MonsterData : ScriptableObject
 
     [Tooltip("Attacks this monster can learn and the level at which it learns them")]
     public AttackEntry[] movePool;
+
+    [Header("Taming")]
+    [Tooltip("Per-species taming profile: acceptance formula, AP costs, rewards.\n" +
+             "Create via: Assets → Create → Evermore → Taming → Taming Personality")]
+    public TamingPersonality tamingPersonality;
+    [Tooltip("The dialogue graph used when taming this species.\n" +
+             "Leave empty to make this species untameable (auto-fails with a warning).")]
+    public DialogueGraph dialogueGraph;
+
+    /// <summary>Base Stat Total — used to scale the HP bonus in the acceptance formula.</summary>
+    public int BST => baseHP + baseAttack + baseDefense + baseSpeed + baseCritRate + baseCritMod + baseDodge;
 
     private void OnValidate()
     {

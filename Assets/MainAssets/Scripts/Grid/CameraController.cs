@@ -58,6 +58,10 @@ public class CameraController : MonoBehaviour
     [Tooltip("Speed of the focus-in and focus-out transitions.")]
     [SerializeField] private float focusSpeed = 6f;
 
+    [Header("Mouse Controls")]
+    [Tooltip("Enable right-mouse orbit and middle-mouse pan. Off by default — tick to activate.")]
+    [SerializeField] private bool mouseControlEnabled = false;
+
     [Header("Orbit Rotation")]
     [Tooltip("How fast the camera orbits when dragging with the right mouse button.")]
     [SerializeField] private float rotateSpeed = 0.25f;
@@ -225,6 +229,7 @@ public class CameraController : MonoBehaviour
 
     private void HandleOrbitRotation()
     {
+        if (!mouseControlEnabled) return;
         var mouse = Mouse.current;
         if (mouse == null) return;
         if (!mouse.rightButton.isPressed) return;
@@ -250,6 +255,7 @@ public class CameraController : MonoBehaviour
 
     private void HandleMiddleMousePan()
     {
+        if (!mouseControlEnabled) return;
         var mouse = Mouse.current;
         if (mouse == null) return;
 

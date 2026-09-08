@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: b8e24fd1eb19b4226afebb2810e3c19b
+AssemblyDefinitionImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 104276
+  packageName: xNode
+  packageVersion: 1.8
+  assetPath: Assets/xNode/Scripts/XNode.asmdef
+  uploadId: 378812

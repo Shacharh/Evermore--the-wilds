@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 7c02acb8ebd6bcd42805aea1dfa350f5
+timeCreated: 1525820302
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 104276
+  packageName: xNode
+  packageVersion: 1.8
+  assetPath: Assets/xNode/Examples/RuntimeMathGraph/Prefabs/Connection.prefab
+  uploadId: 378812

@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 54822dcd4ea0525409ad71a5fa416755
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 104276
+  packageName: xNode
+  packageVersion: 1.8
+  assetPath: Assets/xNode/Examples/LogicToy/Nodes/PulseNode.cs
+  uploadId: 378812

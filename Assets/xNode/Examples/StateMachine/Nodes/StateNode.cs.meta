@@ -1,0 +1,20 @@
+fileFormatVersion: 2
+guid: 32ef86e1b73c7d642acaa1b75f66bbbb
+timeCreated: 1514505861
+licenseType: Store
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 104276
+  packageName: xNode
+  packageVersion: 1.8
+  assetPath: Assets/xNode/Examples/StateMachine/Nodes/StateNode.cs
+  uploadId: 378812

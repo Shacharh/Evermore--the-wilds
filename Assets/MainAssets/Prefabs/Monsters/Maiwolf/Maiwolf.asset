@@ -40,3 +40,5 @@ MonoBehaviour:
     AnimationTrigger: Ability_2
     vfxSpawnPointPath: IK_ArmPalm.L
     vfxSpawnOffset: {x: 0, y: 0, z: 0}
+  tamingPersonality: {fileID: 11400000, guid: cb9d3d62fdf82a149b89a04ee7fe77a9, type: 2}
+  dialogueGraph: {fileID: 11400000, guid: c376524734bcfbc4fa0b628b578d0620, type: 2}

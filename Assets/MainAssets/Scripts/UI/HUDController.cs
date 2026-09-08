@@ -207,31 +207,39 @@ public class HUDController : MonoBehaviour
         StyleHUDButton(menuBtn, s?.buttonSprite, new Color(0.12f, 0.12f, 0.20f, 1f));
         root.Add(menuBtn);
 
-        // ── Bottom-right: circular AP + End Turn button ───────────────────
+        // ── Bottom-right: circular AP + button column ────────────────────
         var bottomRight = new VisualElement();
         bottomRight.pickingMode = PickingMode.Ignore;
         bottomRight.style.position      = Position.Absolute;
         bottomRight.style.right         = 24;
         bottomRight.style.bottom        = 24;
         bottomRight.style.flexDirection = FlexDirection.Row;
-        bottomRight.style.alignItems    = Align.Center;
+        bottomRight.style.alignItems    = Align.FlexEnd;
 
         // Circular AP ring
         _apCircle = new CircularProgress();
         _apCircle.pickingMode = PickingMode.Ignore;
-        _apCircle.style.width  = 84;
-        _apCircle.style.height = 84;
+        _apCircle.style.width       = 84;
+        _apCircle.style.height      = 84;
         _apCircle.style.marginRight = 12;
+        _apCircle.style.marginBottom = 4;
         _apCircle.SetValue(0, 0, false);
 
-        // End Turn button
+        var inventoryBtn = new Button(() => InventoryUI.Instance?.Toggle());
+        inventoryBtn.text               = "INVENTORY";
+        inventoryBtn.style.width        = 150;
+        inventoryBtn.style.height       = 54;
+        inventoryBtn.style.marginRight  = 8;
+        StyleHUDButton(inventoryBtn, s?.buttonSprite, new Color(0.10f, 0.22f, 0.32f, 1f));
+
         _endTurnBtn = new Button();
         _endTurnBtn.text = "END TURN";
-        _endTurnBtn.style.width  = 200;
+        _endTurnBtn.style.width  = 180;
         _endTurnBtn.style.height = 54;
         StyleHUDButton(_endTurnBtn, s?.buttonSprite, new Color(0.12f, 0.12f, 0.20f, 1f));
 
         bottomRight.Add(_apCircle);
+        bottomRight.Add(inventoryBtn);
         bottomRight.Add(_endTurnBtn);
         root.Add(bottomRight);
 
