@@ -40,3 +40,5 @@ MonoBehaviour:
     AnimationTrigger: Ability_2
     vfxSpawnPointPath: Mesh/(DO_NOT_DELETE)Dragon_Inferno_23_03/Armature/RigTail7.002
     vfxSpawnOffset: {x: 0, y: 0, z: 0}
+  tamingPersonality: {fileID: 11400000, guid: 7cc572bf434f80a489377672cb45bcba, type: 2}
+  dialogueGraph: {fileID: 11400000, guid: e889d83f6dae96541a5098b5e9ae7954, type: 2}

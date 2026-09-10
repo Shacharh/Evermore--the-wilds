@@ -45,3 +45,5 @@ MonoBehaviour:
     AnimationTrigger: Ability_2
     vfxSpawnPointPath: 
     vfxSpawnOffset: {x: 0, y: 0, z: 0}
+  tamingPersonality: {fileID: 11400000, guid: f1913812b3337424ab1a5a3ee62a2ce7, type: 2}
+  dialogueGraph: {fileID: 11400000, guid: 0a702e18837bc1944b9188d8b91c2385, type: 2}
