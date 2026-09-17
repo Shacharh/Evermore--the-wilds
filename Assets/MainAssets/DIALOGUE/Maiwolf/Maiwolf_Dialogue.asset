@@ -36,16 +36,16 @@ MonoBehaviour:
   ports:
     keys: []
     values: []
-  prompt: 
+  prompt: "The Maiwolf tries to overhalm \nyour mind"
   questionType: 1
   answers:
-  - text: 
+  - text: Steady your mind
     tag: 0
-  - text: 
+  - text: try to evade his attack
     tag: 1
-  - text: 
+  - text: let him wash over your mind
     tag: 2
---- !u!114 &-7939524105969523859
+--- !u!114 &-8161909752422532751
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -58,20 +58,20 @@ MonoBehaviour:
   m_Name: Taming Question
   m_EditorClassIdentifier: Assembly-CSharp::TamingQuestionNode
   graph: {fileID: 11400000}
-  position: {x: 888, y: -136}
+  position: {x: 120, y: -72}
   ports:
     keys: []
     values: []
-  prompt: 
+  prompt: The Maiwolf challange your strengh
   questionType: 0
   answers:
-  - text: 
+  - text: welcome the chalange
     tag: 0
-  - text: 
+  - text: prepare yourself cautiously
     tag: 1
-  - text: 
+  - text: try to avoid conflict
     tag: 2
---- !u!114 &-7304591230528710195
+--- !u!114 &-5336332658215515561
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -84,20 +84,20 @@ MonoBehaviour:
   m_Name: Taming Question
   m_EditorClassIdentifier: Assembly-CSharp::TamingQuestionNode
   graph: {fileID: 11400000}
-  position: {x: 888, y: -600}
+  position: {x: -136, y: -72}
   ports:
     keys: []
     values: []
-  prompt: 
+  prompt: 'The Maiwolf doubt your resolve '
   questionType: 0
   answers:
-  - text: 
+  - text: show your will
     tag: 0
-  - text: 
+  - text: promise to be strong hearted
     tag: 1
-  - text: 
+  - text: agree he might be right
     tag: 2
---- !u!114 &-3248233223943586326
+--- !u!114 &-5328035504028881533
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -110,18 +110,18 @@ MonoBehaviour:
   m_Name: Taming Question
   m_EditorClassIdentifier: Assembly-CSharp::TamingQuestionNode
   graph: {fileID: 11400000}
-  position: {x: 376, y: -136}
+  position: {x: 376, y: -72}
   ports:
     keys: []
     values: []
-  prompt: 
-  questionType: 2
+  prompt: "The Maiwolf sense your \ndesire to earn its respect"
+  questionType: 0
   answers:
-  - text: 
+  - text: brodcast power into his mind
     tag: 0
-  - text: 
+  - text: Try harder to impress it
     tag: 1
-  - text: 
+  - text: Beg for its acceptance
     tag: 2
 --- !u!114 &-3242167764117904866
 MonoBehaviour:
@@ -140,66 +140,15 @@ MonoBehaviour:
   ports:
     keys: []
     values: []
-  prompt: 
+  prompt: "The Maiwolf resist your bond with\npride- it will not submit to a \nweak
+    being"
   questionType: 2
   answers:
-  - text: 
+  - text: 'enforce your domination '
     tag: 0
-  - text: 
+  - text: shower him with kindess
     tag: 1
-  - text: 
-    tag: 2
---- !u!114 &-2361067422486969384
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac4703cbe25d2994eab762561f7b9b2e, type: 3}
-  m_Name: Taming Question
-  m_EditorClassIdentifier: Assembly-CSharp::TamingQuestionNode
-  graph: {fileID: 11400000}
-  position: {x: 632, y: -600}
-  ports:
-    keys: []
-    values: []
-  prompt: 
-  questionType: 1
-  answers:
-  - text: 
-    tag: 0
-  - text: 
-    tag: 1
-  - text: 
-    tag: 2
---- !u!114 &-429358051041108505
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac4703cbe25d2994eab762561f7b9b2e, type: 3}
-  m_Name: Taming Question
-  m_EditorClassIdentifier: Assembly-CSharp::TamingQuestionNode
-  graph: {fileID: 11400000}
-  position: {x: 120, y: -136}
-  ports:
-    keys: []
-    values: []
-  prompt: 
-  questionType: 1
-  answers:
-  - text: 
-    tag: 0
-  - text: 
-    tag: 1
-  - text: 
+  - text: accept his autonomy
     tag: 2
 --- !u!114 &11400000
 MonoBehaviour:
@@ -218,39 +167,9 @@ MonoBehaviour:
   - {fileID: 5347609123751861606}
   - {fileID: -8235371958054634952}
   - {fileID: -3242167764117904866}
-  - {fileID: -2361067422486969384}
-  - {fileID: -7304591230528710195}
-  - {fileID: 7014683540189700889}
-  - {fileID: -429358051041108505}
-  - {fileID: -3248233223943586326}
-  - {fileID: 856271377515839730}
-  - {fileID: -7939524105969523859}
---- !u!114 &856271377515839730
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac4703cbe25d2994eab762561f7b9b2e, type: 3}
-  m_Name: Taming Question
-  m_EditorClassIdentifier: Assembly-CSharp::TamingQuestionNode
-  graph: {fileID: 11400000}
-  position: {x: 632, y: -136}
-  ports:
-    keys: []
-    values: []
-  prompt: 
-  questionType: 0
-  answers:
-  - text: 
-    tag: 0
-  - text: 
-    tag: 1
-  - text: 
-    tag: 2
+  - {fileID: -5336332658215515561}
+  - {fileID: -5328035504028881533}
+  - {fileID: -8161909752422532751}
 --- !u!114 &5347609123751861606
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -268,38 +187,12 @@ MonoBehaviour:
   ports:
     keys: []
     values: []
-  prompt: 
+  prompt: "The Maiwolf growl at you, testing \nyour merit"
   questionType: 0
   answers:
-  - text: 
+  - text: puff your cheast and stand your ground
     tag: 0
-  - text: 
+  - text: try to calm him down
     tag: 1
-  - text: 
-    tag: 2
---- !u!114 &7014683540189700889
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac4703cbe25d2994eab762561f7b9b2e, type: 3}
-  m_Name: Taming Question
-  m_EditorClassIdentifier: Assembly-CSharp::TamingQuestionNode
-  graph: {fileID: 11400000}
-  position: {x: -136, y: -136}
-  ports:
-    keys: []
-    values: []
-  prompt: 
-  questionType: 0
-  answers:
-  - text: 
-    tag: 0
-  - text: 
-    tag: 1
-  - text: 
+  - text: run away
     tag: 2
