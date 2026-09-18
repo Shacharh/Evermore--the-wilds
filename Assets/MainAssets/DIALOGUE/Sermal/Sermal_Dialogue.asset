@@ -1,57 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-7422212707998306342
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac4703cbe25d2994eab762561f7b9b2e, type: 3}
-  m_Name: Taming Question
-  m_EditorClassIdentifier: Assembly-CSharp::TamingQuestionNode
-  graph: {fileID: 11400000}
-  position: {x: 616, y: -440}
-  ports:
-    keys: []
-    values: []
-  prompt: 
-  questionType: 1
-  answers:
-  - text: 
-    tag: 0
-  - text: 
-    tag: 1
-  - text: 
-    tag: 2
---- !u!114 &-6293257800946490216
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac4703cbe25d2994eab762561f7b9b2e, type: 3}
-  m_Name: Taming Question
-  m_EditorClassIdentifier: Assembly-CSharp::TamingQuestionNode
-  graph: {fileID: 11400000}
-  position: {x: -152, y: 24}
-  ports:
-    keys: []
-    values: []
-  prompt: 
-  questionType: 0
-  answers:
-  - text: 
-    tag: 0
-  - text: 
-    tag: 1
-  - text: 
-    tag: 2
 --- !u!114 &-4354345593246115346
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -71,32 +19,6 @@ MonoBehaviour:
     values: []
   questionsPerSession: 3
   baseAcceptanceOverride: -1
---- !u!114 &-2624566988111205308
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac4703cbe25d2994eab762561f7b9b2e, type: 3}
-  m_Name: Taming Question
-  m_EditorClassIdentifier: Assembly-CSharp::TamingQuestionNode
-  graph: {fileID: 11400000}
-  position: {x: 872, y: -440}
-  ports:
-    keys: []
-    values: []
-  prompt: 
-  questionType: 0
-  answers:
-  - text: 
-    tag: 0
-  - text: 
-    tag: 1
-  - text: 
-    tag: 2
 --- !u!114 &-2533966417996499880
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -114,14 +36,14 @@ MonoBehaviour:
   ports:
     keys: []
     values: []
-  prompt: 
+  prompt: "you prob into the Sermal's mind, and \nsense he sees you as a threat"
   questionType: 0
   answers:
-  - text: 
+  - text: project an image of tall grass the Sermal can hide in
     tag: 0
-  - text: 
+  - text: 'try to make your connection known '
     tag: 1
-  - text: 
+  - text: order the Sermal to follow your orders
     tag: 2
 --- !u!114 &-141467454599834244
 MonoBehaviour:
@@ -140,14 +62,16 @@ MonoBehaviour:
   ports:
     keys: []
     values: []
-  prompt: 
+  prompt: 'The Sermal is looking your respons
+
+    to a hard-fought battle'
   questionType: 1
   answers:
-  - text: 
+  - text: you will use every trick and tactic in order to secure victory
     tag: 0
-  - text: 
+  - text: you will do everyhing to win, including putting your Serions in danger
     tag: 1
-  - text: 
+  - text: 'you fight straight on, relaying only on your streangh  '
     tag: 2
 --- !u!114 &11400000
 MonoBehaviour:
@@ -166,39 +90,6 @@ MonoBehaviour:
   - {fileID: -2533966417996499880}
   - {fileID: -141467454599834244}
   - {fileID: 8016701793854884122}
-  - {fileID: -7422212707998306342}
-  - {fileID: -2624566988111205308}
-  - {fileID: -6293257800946490216}
-  - {fileID: 8200171074293914809}
-  - {fileID: 8892441239978871393}
-  - {fileID: 1941001556282872475}
-  - {fileID: 8170841713129886493}
---- !u!114 &1941001556282872475
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac4703cbe25d2994eab762561f7b9b2e, type: 3}
-  m_Name: Taming Question
-  m_EditorClassIdentifier: Assembly-CSharp::TamingQuestionNode
-  graph: {fileID: 11400000}
-  position: {x: 616, y: 24}
-  ports:
-    keys: []
-    values: []
-  prompt: 
-  questionType: 0
-  answers:
-  - text: 
-    tag: 0
-  - text: 
-    tag: 1
-  - text: 
-    tag: 2
 --- !u!114 &8016701793854884122
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -216,90 +107,14 @@ MonoBehaviour:
   ports:
     keys: []
     values: []
-  prompt: 
+  prompt: "The Sermal is projection an image \nof a dark, black cave, and waiting
+    to\nsee your reation"
   questionType: 2
   answers:
-  - text: 
+  - text: a dark cave is a safe place you hide in
     tag: 0
-  - text: 
+  - text: you hasitate to enter te cave, not knowing what inside
     tag: 1
-  - text: 
-    tag: 2
---- !u!114 &8170841713129886493
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac4703cbe25d2994eab762561f7b9b2e, type: 3}
-  m_Name: Taming Question
-  m_EditorClassIdentifier: Assembly-CSharp::TamingQuestionNode
-  graph: {fileID: 11400000}
-  position: {x: 872, y: 24}
-  ports:
-    keys: []
-    values: []
-  prompt: 
-  questionType: 0
-  answers:
-  - text: 
-    tag: 0
-  - text: 
-    tag: 1
-  - text: 
-    tag: 2
---- !u!114 &8200171074293914809
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac4703cbe25d2994eab762561f7b9b2e, type: 3}
-  m_Name: Taming Question
-  m_EditorClassIdentifier: Assembly-CSharp::TamingQuestionNode
-  graph: {fileID: 11400000}
-  position: {x: 104, y: 24}
-  ports:
-    keys: []
-    values: []
-  prompt: 
-  questionType: 1
-  answers:
-  - text: 
-    tag: 0
-  - text: 
-    tag: 1
-  - text: 
-    tag: 2
---- !u!114 &8892441239978871393
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac4703cbe25d2994eab762561f7b9b2e, type: 3}
-  m_Name: Taming Question
-  m_EditorClassIdentifier: Assembly-CSharp::TamingQuestionNode
-  graph: {fileID: 11400000}
-  position: {x: 360, y: 24}
-  ports:
-    keys: []
-    values: []
-  prompt: 
-  questionType: 2
-  answers:
-  - text: 
-    tag: 0
-  - text: 
-    tag: 1
-  - text: 
+  - text: you don't like the dark and prefer to stay in the light, outside of the
+      cave
     tag: 2

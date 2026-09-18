@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21606a304c0a8a042a6799396a7a265a, type: 3}
   m_Name: Maiwolf_TamingPersonality
   m_EditorClassIdentifier: Assembly-CSharp::TamingPersonality
-  baseAcceptance: 0.05
-  hpBonusMax: 0.25
+  baseAcceptance: 0.25
+  hpBonusMax: 0.5
   bstNormDivisor: 300
-  critBonus: 0.1
+  critBonus: 0.15
   statusEffectBonus: 0.05
   superEffectiveBonus: 0.1
   failedAttemptPenalty: 0.05
