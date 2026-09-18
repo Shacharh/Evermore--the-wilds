@@ -1,57 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-8339784650207060276
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac4703cbe25d2994eab762561f7b9b2e, type: 3}
-  m_Name: Taming Question
-  m_EditorClassIdentifier: Assembly-CSharp::TamingQuestionNode
-  graph: {fileID: 11400000}
-  position: {x: -104, y: 120}
-  ports:
-    keys: []
-    values: []
-  prompt: 
-  questionType: 1
-  answers:
-  - text: 
-    tag: 0
-  - text: 
-    tag: 1
-  - text: 
-    tag: 2
---- !u!114 &-7637786177360486167
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac4703cbe25d2994eab762561f7b9b2e, type: 3}
-  m_Name: Taming Question
-  m_EditorClassIdentifier: Assembly-CSharp::TamingQuestionNode
-  graph: {fileID: 11400000}
-  position: {x: 664, y: 120}
-  ports:
-    keys: []
-    values: []
-  prompt: 
-  questionType: 0
-  answers:
-  - text: 
-    tag: 0
-  - text: 
-    tag: 1
-  - text: 
-    tag: 2
 --- !u!114 &-7297498875003112090
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -69,66 +17,14 @@ MonoBehaviour:
   ports:
     keys: []
     values: []
-  prompt: 
+  prompt: "The Draignis search your \nfeelings on difficults battles"
   questionType: 1
   answers:
-  - text: 
+  - text: 'you love to test your skills and improve on any opportunity '
     tag: 0
-  - text: 
+  - text: you avoid difficult scenarios and look for easy ways out
     tag: 1
-  - text: 
-    tag: 2
---- !u!114 &-2134888408100041700
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac4703cbe25d2994eab762561f7b9b2e, type: 3}
-  m_Name: Taming Question
-  m_EditorClassIdentifier: Assembly-CSharp::TamingQuestionNode
-  graph: {fileID: 11400000}
-  position: {x: 408, y: -344}
-  ports:
-    keys: []
-    values: []
-  prompt: 
-  questionType: 1
-  answers:
-  - text: 
-    tag: 0
-  - text: 
-    tag: 1
-  - text: 
-    tag: 2
---- !u!114 &-1311438689061179273
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac4703cbe25d2994eab762561f7b9b2e, type: 3}
-  m_Name: Taming Question
-  m_EditorClassIdentifier: Assembly-CSharp::TamingQuestionNode
-  graph: {fileID: 11400000}
-  position: {x: 664, y: -344}
-  ports:
-    keys: []
-    values: []
-  prompt: 
-  questionType: 0
-  answers:
-  - text: 
-    tag: 0
-  - text: 
-    tag: 1
-  - text: 
+  - text: you hate difficuty and only intrested in easily won battles
     tag: 2
 --- !u!114 &11400000
 MonoBehaviour:
@@ -147,13 +43,7 @@ MonoBehaviour:
   - {fileID: 1964073452498452286}
   - {fileID: -7297498875003112090}
   - {fileID: 4697350711516638656}
-  - {fileID: -2134888408100041700}
-  - {fileID: -1311438689061179273}
   - {fileID: 3621199565071742482}
-  - {fileID: -8339784650207060276}
-  - {fileID: 7292929178968309060}
-  - {fileID: 4378340228682234206}
-  - {fileID: -7637786177360486167}
 --- !u!114 &1964073452498452286
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -171,14 +61,17 @@ MonoBehaviour:
   ports:
     keys: []
     values: []
-  prompt: 
-  questionType: 0
+  prompt: "The Draignis send you an image of\nyou leading him into battle. \nyour
+    losse seem inevitable"
+  questionType: 1
   answers:
-  - text: 
+  - text: charge in anyway- no challnge will deter you
     tag: 0
-  - text: 
+  - text: back up and regroup- you wil fight another day
     tag: 1
-  - text: 
+  - text: 'stop and think of a way out
+
+      of the battle'
     tag: 2
 --- !u!114 &3621199565071742482
 MonoBehaviour:
@@ -197,14 +90,16 @@ MonoBehaviour:
   ports:
     keys: []
     values: []
-  prompt: 
+  prompt: 'The Draignis question what kind
+
+    of tamer you will be to him'
   questionType: 0
   answers:
-  - text: 
+  - text: you will get him into battle after battle, growing him strong and powerfull
     tag: 0
-  - text: 
+  - text: you will shower him with kindness and fairness
     tag: 1
-  - text: 
+  - text: you will protect him, making sure no harm will come to him
     tag: 2
 --- !u!114 &4344582840012782970
 MonoBehaviour:
@@ -225,32 +120,6 @@ MonoBehaviour:
     values: []
   questionsPerSession: 3
   baseAcceptanceOverride: -1
---- !u!114 &4378340228682234206
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac4703cbe25d2994eab762561f7b9b2e, type: 3}
-  m_Name: Taming Question
-  m_EditorClassIdentifier: Assembly-CSharp::TamingQuestionNode
-  graph: {fileID: 11400000}
-  position: {x: 408, y: 120}
-  ports:
-    keys: []
-    values: []
-  prompt: 
-  questionType: 0
-  answers:
-  - text: 
-    tag: 0
-  - text: 
-    tag: 1
-  - text: 
-    tag: 2
 --- !u!114 &4697350711516638656
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -268,38 +137,14 @@ MonoBehaviour:
   ports:
     keys: []
     values: []
-  prompt: 
+  prompt: 'You been defeated in battle.
+
+    what is your respons?'
   questionType: 2
   answers:
-  - text: 
+  - text: you learn what you could have done better and move on
     tag: 0
-  - text: 
+  - text: dwel in self pity and the feeling your'e arn't good enough
     tag: 1
-  - text: 
-    tag: 2
---- !u!114 &7292929178968309060
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac4703cbe25d2994eab762561f7b9b2e, type: 3}
-  m_Name: Taming Question
-  m_EditorClassIdentifier: Assembly-CSharp::TamingQuestionNode
-  graph: {fileID: 11400000}
-  position: {x: 152, y: 120}
-  ports:
-    keys: []
-    values: []
-  prompt: 
-  questionType: 2
-  answers:
-  - text: 
-    tag: 0
-  - text: 
-    tag: 1
-  - text: 
+  - text: 'clearly the opponent had cheated and it''s not your fault '
     tag: 2

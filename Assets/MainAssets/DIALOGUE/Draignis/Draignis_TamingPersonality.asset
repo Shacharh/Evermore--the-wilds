@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: Draignis_TamingPersonality
   m_EditorClassIdentifier: Assembly-CSharp::TamingPersonality
   baseAcceptance: 0.2
-  hpBonusMax: 0.3
+  hpBonusMax: 0.5
   bstNormDivisor: 300
   critBonus: 0.1
   statusEffectBonus: 0.15
   superEffectiveBonus: 0.1
-  failedAttemptPenalty: 0.1
+  failedAttemptPenalty: 0.05
   dialogueMaxBonus: 0.4
   dialogueInitiationCost: 2
   apDebtPerReallyBad: 2
