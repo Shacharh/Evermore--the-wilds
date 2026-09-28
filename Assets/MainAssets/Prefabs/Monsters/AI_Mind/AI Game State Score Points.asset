@@ -15,27 +15,27 @@ MonoBehaviour:
   focusFireHPThreshold: 0.4
   lowHPCautionThreshold: 0.5
   dangerHPThreshold: 0.5
-  repositionPenalty: 20
+  repositionPenalty: 45
   unknownStatusScore: 5
   obstructedDamageMultiplier: 0.5
   damageRollMidpoint: 0.925
-  randomJitter: 7.5
+  randomJitter: 5
   firstActorFatigueLimit: 3
   firstActorFatiguePenalty: 80
-  repetitionPenalty: 35
+  repetitionPenalty: 45
   killShotBonus: 45
   damageEfficiencyMultiplier: 1
   focusFireBonus: 10
   freezeBonus: 40
   dotBonus: 20
   shockBonus: 15
-  aggressionBonus: 50
-  multiTargetBonus: 15
+  aggressionBonus: 55
+  multiTargetBonus: 20
   obstructionPenalty: 15
   lowHPCautionPenalty: 30
   survivalInstinctBonus: 30
-  enemyCloseThreshold: 3
-  enemyCloseBonus: 25
+  enemyCloseThreshold: 1
+  enemyCloseBonus: 35
   attackFrozenBonus: 35
   freezeBonusTurnDuration: 2
   allyLowHPThreshold: 0.5

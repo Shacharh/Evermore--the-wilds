@@ -23,7 +23,7 @@ MonoBehaviour:
   obstructionPenalty: 10
   lowHPCautionPenalty: 60
   survivalInstinctBonus: 80
-  enemyCloseBonus: 25
+  enemyCloseBonus: 30
   attackFrozenBonus: 15
   allyHealBonus: 0
   guaranteedAppearanceEnabled: 0
